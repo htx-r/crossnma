@@ -22,16 +22,17 @@ knitr::opts_chunk$set(
 
 
 ```{r mm, warning=FALSE,message=FALSE}
-library(crosnma)
+devtools::install_github("htx-r/crossnma",force = TRUE)
+library(crossnma)
 library(rjags) # only for bias.method='adjust2' - to use the function load.module() 
 load.module('mix') # only for bias.method='adjust2' - to call the bimodal normal models to JAGS
 ```
 
 # Introduction 
 
-In network meta-analysis we synthesize all relevant available evidence about health outcomes from competing treatments. That evidence might come from different study designs and in different formats: from non-randomized studies (NRS) or randomized controlled trials (RCT) as individual participant data (IPD) or as aggregate data (AD). We set up the package `crosnma` to synthesize all available evidence.
+In network meta-analysis we synthesize all relevant available evidence about health outcomes from competing treatments. That evidence might come from different study designs and in different formats: from non-randomized studies (NRS) or randomized controlled trials (RCT) as individual participant data (IPD) or as aggregate data (AD). We set up the package `crossnma` to synthesize all available evidence.
 
-This document demonstrates how to use `crosnma` to synthesize cross-design evidence and cross-format data via Bayesian network meta-analysis and meta-regression (NMA and NMR). All models are implemented in JAGS [@plummer_jags].
+This document demonstrates how to use `crossnma` to synthesize cross-design evidence and cross-format data via Bayesian network meta-analysis and meta-regression (NMA and NMR). All models are implemented in JAGS [@plummer_jags].
 
 We describe the workflow within the package using a worked example from a network meta-analysis of studies for treatments in  relapsing remitting multiple sclerosis (RRMS). The primary outcome is the occurrence of relapses in two years (binary outcome). In the analysis, the relative effect will be the odds ratio (OR). The aim is to compare the efficacy of four treatments using the data from 6 different studies in different formats and different designs. 
 
@@ -39,7 +40,7 @@ We describe the workflow within the package using a worked example from a networ
 
 We first introduce the model that synthesizes studies  with individual-level (IPD) or/and aggregate data (AD) ignoring their design (naïve synthesis).  Then, we present three possible models that account for the different study designs. In the table below we set the notation that will be used in the description of the four models. 
 
-| Notation 	| Description| Argument in `crosnma.model()`| 
+| Notation 	| Description| Argument in `crossnma.model()`| 
 |:-------------------|:-----------|:------|
 |$i=1, ..., np_j$ | participant id|  |
 |$j=1, ..., ns$ | study id|  |
@@ -91,7 +92,7 @@ $$
 
 ## Using non-randomized studies (NRS) as a prior
 
-First we estimate the relative treatment effects using only the NRS (use `run.nrs` in `crosnma.model()` to control this process). Then we use the NRS estimates ($\tilde{d}^{NRS}_{Ak},V^{NRS}_{Ak}$) as a prior information for the basic parameters of RCT data, $d_{Ak} \sim N(\tilde{d}^{NRS}_{Ak},V^{NRS}_{Ak})$. To control the NRS influence in the RCT estimates, we can either inflate the prior variance by dividing it by a common inflation factor $w$ (the inflated variances are $V^{NRS}_{Ak}/w$) or shift the NRS means by $\zeta$.
+First we estimate the relative treatment effects using only the NRS (use `run.nrs` in `crossnma.model()` to control this process). Then we use the NRS estimates ($\tilde{d}^{NRS}_{Ak},V^{NRS}_{Ak}$) as a prior information for the basic parameters of RCT data, $d_{Ak} \sim N(\tilde{d}^{NRS}_{Ak},V^{NRS}_{Ak})$. To control the NRS influence in the RCT estimates, we can either inflate the prior variance by dividing it by a common inflation factor $w$ (the inflated variances are $V^{NRS}_{Ak}/w$) or shift the NRS means by $\zeta$.
 
 ## Bias-adjusted model 1
 
@@ -161,7 +162,7 @@ $$
 
 The table below summarizes the different assumptions implemented in the package about combining the parameters in the models described above. 
 
-| Parameter 	| Assumptions| Argument in `crosnma.model()`|  	
+| Parameter 	| Assumptions| Argument in `crossnma.model()`|  	
 |:----------------------|:-----------|:------|
 |relative treatment effect ($\delta_{jk}$)| Random-effects: $\delta_{jk} \sim N(d_{Ak}-d_{Ab}, \tau_\delta^2)$| `trt.effect='random'` |
 | |Common-effect: $\delta_{jk}=d_{Ak}-d_{Ab}$| `trt.effect='common'`|
@@ -201,18 +202,18 @@ The network should be checked for its connectivity before running the analysis. 
 
 
 ```{r}
-netplot(prt.data,std.data)
+#netplot(prt.data,std.data)
 ```
 
 
 In the following table, we summarize the number of studies from each design and each data format:
 
 ```{r}
-knitr::kable(ns.tab(prt.data,std.data))
+#knitr::kable(ns.tab(prt.data,std.data))
 ```
 
 
-There are two steps to run the NMA/NMR model. The first step is to create a JAGS model using `crosnma.model()` which produces the JAGS code and the data. In the second step, the output of that function will be used in `crosnma.run()` to run the analysis through JAGS. 
+There are two steps to run the NMA/NMR model. The first step is to create a JAGS model using `crossnma.model()` which produces the JAGS code and the data. In the second step, the output of that function will be used in `crossnma.run()` to run the analysis through JAGS. 
 
 ### Naïve network meta-analysis 
 
@@ -223,13 +224,13 @@ Optionally, we can specify a prior to the common heterogeneity of the treatment 
 
 ```{r}
 # jags model: code+data
- mod1 <- crosnma.model(prt.data=prt.data,
+ mod1 <- crossnma.model(prt.data=prt.data,
                    std.data=std.data,
-                   trt=c('trt','trt'),
-                   study=c('study','study'),
-                   outcome=c('outcome','outcome'),
+                   trt='trt',
+                   study='study',
+                   outcome='outcome',
                    n='n',
-                   design=c('design','design'),
+                   design='design',
                    trt.effect='random',
                    reference='A',
                    method.bias = 'naive',
@@ -238,11 +239,11 @@ Optionally, we can specify a prior to the common heterogeneity of the treatment 
                     )
 ```
 
-Next, we fit the NMA model using `crosnma.run()`which requires us to set the number of adaptations, iterations, thinning and chains.
+Next, we fit the NMA model using `crossnma.run()`which requires us to set the number of adaptations, iterations, thinning and chains.
 
 ```{r}
 # run jags
-jagsfit1 <- crosnma.run(model=mod1,
+jagsfit1 <- crossnma.run(model=mod1,
                         n.adapt = 50,
                         n.iter=500,
                         n.burnin = 200,
@@ -270,17 +271,17 @@ In this part, we run NMR model by adding age as a covariate from both datasets. 
 
 ```{r}
 # jags model: code+data
-mod2 <- crosnma.model(prt.data=prt.data,
+mod2 <- crossnma.model(prt.data=prt.data,
                    std.data=std.data,
-                   trt=c('trt','trt'),
-                   study=c('study','study'),
-                   outcome=c('outcome','outcome'),
+                   trt='trt',
+                   study='study',
+                   outcome='outcome',
                    n='n',
-                   design=c('design','design'),
+                   design='design',
                    reference='A',
                    trt.effect='random',
                    #----------  meta-regression ---------- 
-                   covariate = list(c('age'),c('age')),
+                   covariate = 'age',
                    split.regcoef = F,
                    #---------- bias adjustment ---------- 
                    method.bias='naive'
@@ -291,7 +292,7 @@ The MCMC is run under the same set up as in the network meta-analysis.
 
 ```{r}
 # run jags
-jagsfit2 <- crosnma.run(model=mod2,
+jagsfit2 <- crossnma.run(model=mod2,
                         n.adapt = 50,
                         n.iter=500,
                         n.burnin = 200,
@@ -321,17 +322,17 @@ In this method, the prior for the basic parameters is set to a normal distributi
 
 ```{r}
 # jags model: code+data
-mod3 <- crosnma.model(prt.data=prt.data,
+mod3 <- crossnma.model(prt.data=prt.data,
                    std.data=std.data,
-                   trt=c('trt','trt'),
-                   study=c('study','study'),
-                   outcome=c('outcome','outcome'),
+                   trt='trt',
+                   study='study',
+                   outcome='outcome',
                    n='n',
-                   design=c('design','design'),
+                   design='design',
                    reference='A',
                    trt.effect='random',
                    #----------  meta-regression ---------- 
-                   covariate = list(c('age'),c('age')),
+                   covariate = 'age',
                    split.regcoef = F,
                    #---------- bias adjustment ---------- 
                    method.bias='prior',
@@ -346,7 +347,7 @@ mod3 <- crosnma.model(prt.data=prt.data,
 
 ```{r}
 # run jags
-jagsfit3 <- crosnma.run(model=mod3,
+jagsfit3 <- crossnma.run(model=mod3,
                         n.adapt = 50,
                         n.iter=500,
                         n.burnin = 200,
@@ -373,21 +374,23 @@ To fit the model, we set `method.bias='adjust1'` and we need to provide the name
 
 ```{r}
 # jags model: code+data
-mod4 <- crosnma.model(prt.data=prt.data,
+mod4 <- crossnma.model(prt.data=prt.data,
                    std.data=std.data,
-                   trt=c('trt','trt'),
-                   study=c('study','study'),
-                   outcome=c('outcome','outcome'),
+                   trt='trt',
+                   study='study',
+                   outcome='outcome',
                    n='n',
-                   design=c('design','design'),
+                   design='design',
                    reference='A',
                    trt.effect='random',
                    #---------- bias adjustment ---------- 
                    method.bias='adjust1',
-                   bias=c('bias','bias'), 
+                   bias='bias', 
                    bias.type='add',
+                   unfav='unfav',
+                   bias.group="bias.group",
                    bias.effect='common',
-                   bias.covariate = c('year','year')
+                   bias.covariate = 'year'
                   )
 ```
 
@@ -395,7 +398,7 @@ mod4 <- crosnma.model(prt.data=prt.data,
 
 ```{r}
 # run jags
-jagsfit4 <- crosnma.run(model=mod4,
+jagsfit4 <- crossnma.run(model=mod4,
                        n.adapt = 50,
                         n.iter=500,
                         n.burnin = 200,
@@ -424,28 +427,30 @@ The arguments for `method.bias='adjust2'` are similar to the ones used before in
 
 ```{r}
 # jags model: code+data
-mod5 <- crosnma.model(prt.data=prt.data,
+mod5 <- crossnma.model(prt.data=prt.data,
                    std.data=std.data,
-                   trt=c('trt','trt'),
-                   study=c('study','study'),
-                   outcome=c('outcome','outcome'),
+                   trt='trt',
+                   study='study',
+                   outcome='outcome',
                    n='n',
-                   design=c('design','design'),
+                   design='design',
                    reference='A',
                    trt.effect='random',
                    #---------- bias adjustment ----------
                    method.bias='adjust2',
-                   bias=c('bias','bias'),
+                   bias='bias',
                    bias.type='add',
-                   bias.effect='common',
-                   bias.covariate = c('year','year')
+                   unfav='unfav',
+                   bias.group="bias.group",
+                   bias.effect='common'#,
+                   #bias.covariate = 'year'
 )
 ```
 
 
 ```{r}
 # run jags
-jagsfit5 <- crosnma.run(model=mod5,
+jagsfit5 <- crossnma.run(model=mod5,
                        n.adapt = 50,
                         n.iter=500,
                         n.burnin = 200,

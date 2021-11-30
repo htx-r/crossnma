@@ -1,0 +1,5 @@
+"","X","id","study","r","n","treat","year","route","diagnosis","PriorDMTuse","design","bias","sex","age","edss"
+"1",7,4,"Bornstein",19,25,"Placebo",1987,1,"Poser",1,"rct","high",0.2,34.3,2
+"2",8,4,"Bornstein",11,25,"Glatiramer acetate",1987,1,"Poser",1,"rct","high",0.3,34.3,3
+"3",9,5,"Johnson",97,126,"Placebo",1995,1,"Poser",1,"rct","high",0.4,30,5
+"4",10,5,"Johnson",89,125,"Glatiramer acetate",1995,1,"Poser",1,"rct","high",0.5,30,6
