@@ -297,6 +297,14 @@ crossnma.model <- function(prt.data,
   #   data22 <- NULL
   # }
 
+  # discard NA's
+  excl1 <- is.na(data11$r) |is.na(data11$study) |is.na(data11$trt) |is.na(data11$design) | if(!is.null(data11$bias)){is.na(data11$bias)}else{FALSE} | if(!is.null(data11$unfav)){is.na(data11$unfav)}else{FALSE} | if(!is.null(data11$bias.group2)){is.na(data11$bias.group2)}else{FALSE}
+  excl2 <- is.na(data22$r) | is.na(data22$n) |is.na(data22$study) |is.na(data22$trt) |is.na(data22$design) | if(!is.null(data22$bias)){is.na(data22$bias)}else{FALSE} | if(!is.null(data22$unfav)){is.na(data22$unfav)}else{FALSE} | if(!is.null(data22$bias.group2)){is.na(data22$bias.group2)}else{FALSE}
+  if (sum(excl1)>0) warning('Participants with missing data in one of these variables: outcome, trt, design, study, bias, unfav or bias.group are discarded from the analysis')
+  if (sum(excl1)>0|sum(excl2)>0) warning('Arms with missing data in these variables: outcome, n, bias, unfav or bias.group are discarded from the analysis')
+  data11 <- data11[!excl1,]
+  data22 <- data22[!excl2,]
+
   # checking ------------------------
   # 1. formatting
   # factor to character: trt & study
@@ -374,13 +382,7 @@ crossnma.model <- function(prt.data,
 
     if(any(chk.bias2)) stop("The 'bias' should be a vector of length 2 where the first element is the name of the variable in prt.data and the second for the std.data")
   }
-  # discard NA's
-  excl1 <- is.na(data11$r) | if(!is.null(data11$bias)){is.na(data11$bias)}else{FALSE} | if(!is.null(data11$unfav)){is.na(data11$unfav)}else{FALSE} | if(!is.null(data11$bias.group2)){is.na(data11$bias.group2)}else{FALSE}
-  excl2 <- is.na(data22$r) | is.na(data22$n) | if(!is.null(data22$bias)){is.na(data22$bias)}else{FALSE} | if(!is.null(data22$unfav)){is.na(data22$unfav)}else{FALSE} | if(!is.null(data22$bias.group2)){is.na(data22$bias.group2)}else{FALSE}
-  if (sum(excl1)>0) warning('Participants with missing data in these variables: outcome, bias, unfav or bias.group are discarded from the analysis')
-  if (sum(excl1)>0|sum(excl2)>0) warning('Arms with missing data in these variables: outcome, n, bias, unfav or bias.group are discarded from the analysis')
-  data11 <- data11[!excl1,]
-  data22 <- data22[!excl2,]
+
 
   #====================================
   # jagsdata for IPD
