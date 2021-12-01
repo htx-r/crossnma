@@ -243,18 +243,18 @@ Next, we fit the NMA model using `crossnma.run()`which requires us to set the nu
 
 ```{r}
 # run jags
-# jagsfit1 <- crossnma.run(model=mod1,
-#                         n.adapt = 50,
-#                         n.iter=500,
-#                         n.burnin = 200,
-#                         thin=1,
-#                         n.chains=2)
+jagsfit1 <- crossnma.run(model=mod1,
+                        n.adapt = 50,
+                        n.iter=500,
+                        n.burnin = 200,
+                        thin=1,
+                        n.chains=2)
 ```
 
 We summarize the estimated parameters in the following table. 
 
 ```{r}
-#knitr::kable(summary(jagsfit1,expo=F))
+knitr::kable(summary(jagsfit1,expo=F))
 ```
 
 The estimated OR of B vs A can be obtained as exp(d.B) and similarly for exp(d.C) and exp(d.D) are the ORs of C and D relative to A, respectively. The value of tau refers to the estimates of the heterogeneity standard deviation in the relative treatment effects across studies.
@@ -262,7 +262,7 @@ The estimated OR of B vs A can be obtained as exp(d.B) and similarly for exp(d.C
 We need also to assess the convergence of the MCMC chains either by visually inspect the trace plot or checking the Gelman and Rubin statistic, Rhat (it should be approximately 1) in the table above.
 
 ```{r,out.width='.49\\linewidth', fig.width=3, fig.height=3,fig.show='hold',fig.align='center'}
-#coda::traceplot(jagsfit1$samples)
+coda::traceplot(jagsfit1$samples)
 ```
 
 ### Naïve network meta-regression 
@@ -271,39 +271,39 @@ In this part, we run NMR model by adding age as a covariate from both datasets. 
 
 ```{r}
 # jags model: code+data
-# mod2 <- crossnma.model(prt.data=prt.data,
-#                    std.data=std.data,
-#                    trt='trt',
-#                    study='study',
-#                    outcome='outcome',
-#                    n='n',
-#                    design='design',
-#                    reference='A',
-#                    trt.effect='random',
-#                    #----------  meta-regression ---------- 
-#                    covariate = 'age',
-#                    split.regcoef = F,
-#                    #---------- bias adjustment ---------- 
-#                    method.bias='naive'
-#                    )
+mod2 <- crossnma.model(prt.data=prt.data,
+                   std.data=std.data,
+                   trt='trt',
+                   study='study',
+                   outcome='outcome',
+                   n='n',
+                   design='design',
+                   reference='A',
+                   trt.effect='random',
+                   #----------  meta-regression ----------
+                   covariate = 'age',
+                   split.regcoef = F,
+                   #---------- bias adjustment ----------
+                   method.bias='naive'
+                   )
 ```
 
 The MCMC is run under the same set up as in the network meta-analysis.
 
 ```{r}
 # run jags
-# jagsfit2 <- crossnma.run(model=mod2,
-#                         n.adapt = 50,
-#                         n.iter=500,
-#                         n.burnin = 200,
-#                         thin=1,
-#                         n.chains=2)
+jagsfit2 <- crossnma.run(model=mod2,
+                        n.adapt = 50,
+                        n.iter=500,
+                        n.burnin = 200,
+                        thin=1,
+                        n.chains=2)
 ```
 
 and the output table is presented below
 
 ```{r}
-#knitr::kable(summary(jagsfit2,expo=FALSE))
+knitr::kable(summary(jagsfit2,expo=FALSE))
 ```
 
 Now, we additionally estimate b_1 which indicates the mean effect of age and tau.b_1 which refers to the heterogeneity standard deviation in the effect of age across studies. Here, we obtain a single estimate  because we choose to not split the within- and between-study age coefficients $(\beta^W_{1,jk} = \beta^B_{1,jk}=\beta_{1,jk})$ to improve the convergence of MCMC.
@@ -311,7 +311,7 @@ Now, we additionally estimate b_1 which indicates the mean effect of age and tau
 Again, we check convergence with trace plots
 
 ```{r,out.width='.49\\linewidth', fig.width=3, fig.height=3,fig.show='hold',fig.align='center'}
-#coda::traceplot(jagsfit2$samples)
+coda::traceplot(jagsfit2$samples)
 ```
 
 ### Using non-randomized studies as a prior in network meta-regression
@@ -322,47 +322,47 @@ In this method, the prior for the basic parameters is set to a normal distributi
 
 ```{r}
 # jags model: code+data
-# mod3 <- crossnma.model(prt.data=prt.data,
-#                    std.data=std.data,
-#                    trt='trt',
-#                    study='study',
-#                    outcome='outcome',
-#                    n='n',
-#                    design='design',
-#                    reference='A',
-#                    trt.effect='random',
-#                    #----------  meta-regression ---------- 
-#                    covariate = 'age',
-#                    split.regcoef = F,
-#                    #---------- bias adjustment ---------- 
-#                    method.bias='prior',
-#                    run.nrs=list(var.infl=0.6, 
-#                                 n.adapt = 500,
-#                                 n.iter=10000,
-#                                 n.burnin = 4000,
-#                                 thin=1,
-#                                 n.chains=2))
+mod3 <- crossnma.model(prt.data=prt.data,
+                   std.data=std.data,
+                   trt='trt',
+                   study='study',
+                   outcome='outcome',
+                   n='n',
+                   design='design',
+                   reference='D',
+                   trt.effect='random',
+                   #----------  meta-regression ----------
+                   covariate = 'age',
+                   split.regcoef = F,
+                   #---------- bias adjustment ----------
+                   method.bias='prior',
+                   run.nrs=list(var.infl=0.6,
+                                n.adapt = 500,
+                                n.iter=10000,
+                                n.burnin = 4000,
+                                thin=1,
+                                n.chains=2))
 ```
 
 
 ```{r}
 # run jags
-# jagsfit3 <- crossnma.run(model=mod3,
-#                         n.adapt = 50,
-#                         n.iter=500,
-#                         n.burnin = 200,
-#                         thin=1,
-#                         n.chains=2)
+jagsfit3 <- crossnma.run(model=mod3,
+                        n.adapt = 50,
+                        n.iter=500,
+                        n.burnin = 200,
+                        thin=1,
+                        n.chains=2)
 ```
 
 
 ```{r}
-#knitr::kable(summary(jagsfit3,expo=F))
+knitr::kable(summary(jagsfit3,expo=F))
 ```
 
 
 ```{r,out.width='.49\\linewidth', fig.width=3, fig.height=3,fig.show='hold',fig.align='center'}
-#coda::traceplot(jagsfit3$samples)
+coda::traceplot(jagsfit3$samples)
 ```
 
 
@@ -374,42 +374,42 @@ To fit the model, we set `method.bias='adjust1'` and we need to provide the name
 
 ```{r}
 # jags model: code+data
-# mod4 <- crossnma.model(prt.data=prt.data,
-#                    std.data=std.data,
-#                    trt='trt',
-#                    study='study',
-#                    outcome='outcome',
-#                    n='n',
-#                    design='design',
-#                    reference='A',
-#                    trt.effect='random',
-#                    #---------- bias adjustment ---------- 
-#                    method.bias='adjust1',
-#                    bias='bias', 
-#                    bias.type='add',
-#                    unfav='unfav',
-#                    bias.group="bias.group",
-#                    bias.effect='common',
-#                    bias.covariate = 'year'
-#                   )
+mod4 <- crossnma.model(prt.data=prt.data,
+                   std.data=std.data,
+                   trt='trt',
+                   study='study',
+                   outcome='outcome',
+                   n='n',
+                   design='design',
+                   reference='A',
+                   trt.effect='random',
+                   #---------- bias adjustment ----------
+                   method.bias='adjust1',
+                   bias='bias',
+                   bias.type='add',
+                   unfav='unfav',
+                   bias.group="bias.group",
+                   bias.effect='common',
+                   bias.covariate = 'year'
+                  )
 ```
 
 
 
 ```{r}
 # run jags
-# jagsfit4 <- crossnma.run(model=mod4,
-#                        n.adapt = 50,
-#                         n.iter=500,
-#                         n.burnin = 200,
-#                         thin=1,
-#                         n.chains=2)
+jagsfit4 <- crossnma.run(model=mod4,
+                       n.adapt = 50,
+                        n.iter=500,
+                        n.burnin = 200,
+                        thin=1,
+                        n.chains=2)
 ```
 
 The results are presented below
 
 ```{r}
-#knitr::kable(summary(jagsfit4,expo=F))
+knitr::kable(summary(jagsfit4,expo=F))
 ```
 
 The parameter `g` refers to the mean bias effect, common for all studies.
@@ -417,7 +417,7 @@ The parameter `g` refers to the mean bias effect, common for all studies.
 The trace plots are shown below
 
 ```{r,out.width='.49\\linewidth', fig.width=3, fig.height=3,fig.show='hold',fig.align='center'}
-#coda::traceplot(jagsfit4$samples)
+coda::traceplot(jagsfit4$samples)
 ```
 
 
@@ -427,47 +427,47 @@ The arguments for `method.bias='adjust2'` are similar to the ones used before in
 
 ```{r}
 # jags model: code+data
-# mod5 <- crossnma.model(prt.data=prt.data,
-#                    std.data=std.data,
-#                    trt='trt',
-#                    study='study',
-#                    outcome='outcome',
-#                    n='n',
-#                    design='design',
-#                    reference='A',
-#                    trt.effect='random',
-#                    #---------- bias adjustment ----------
-#                    method.bias='adjust2',
-#                    bias='bias',
-#                    bias.type='add',
-#                    unfav='unfav',
-#                    bias.group="bias.group",
-#                    bias.effect='common'#,
-#                    #bias.covariate = 'year'
-# )
+mod5 <- crossnma.model(prt.data=prt.data,
+                   std.data=std.data,
+                   trt='trt',
+                   study='study',
+                   outcome='outcome',
+                   n='n',
+                   design='design',
+                   reference='A',
+                   trt.effect='random',
+                   #---------- bias adjustment ----------
+                   method.bias='adjust2',
+                   bias='bias',
+                   bias.type='add',
+                   unfav='unfav',
+                   bias.group="bias.group",
+                   bias.effect='common'#,
+                   #bias.covariate = 'year'
+)
 ```
 
 
 ```{r}
 # run jags
-# jagsfit5 <- crossnma.run(model=mod5,
-#                        n.adapt = 50,
-#                         n.iter=500,
-#                         n.burnin = 200,
-#                         thin=1,
-#                         n.chains=2)
+jagsfit5 <- crossnma.run(model=mod5,
+                       n.adapt = 50,
+                        n.iter=500,
+                        n.burnin = 200,
+                        thin=1,
+                        n.chains=2)
 ```
 
 
 
 ```{r}
-#knitr::kable(summary(jagsfit5,expo=F))
+knitr::kable(summary(jagsfit5,expo=F))
 ```
 
 
 
 ```{r,out.width='.49\\linewidth', fig.width=3, fig.height=3,fig.show='hold',fig.align='center'}
-#coda::traceplot(jagsfit5$samples)
+coda::traceplot(jagsfit5$samples)
 ```
 
 

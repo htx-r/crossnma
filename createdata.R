@@ -2,24 +2,24 @@ library('dplyr')
 library(magrittr)
 library(plyr)
 # manipulate IPD data
-myprt.data <- read.csv("IPD for analysis")
+prt.data <- read.csv("IPD for analysis")
 #** add unfav and bias.group columns
 # IPD
-myprt.data$unfav <- myprt.data$bias.group <- NA
-study_plac <- unique(myprt.data$STUDYID[myprt.data$TRT01A=="Placebo"]) # index of studies with placebo
-for(i in 1:length(study_plac)){
-  myprt.data[myprt.data$STUDYID==study_plac[i]&myprt.data$TRT01A=="Placebo",]["unfav"] <- 0
-  myprt.data[myprt.data$STUDYID==study_plac[i]&myprt.data$TRT01A!="Placebo",]["unfav"]  <- 1
-  myprt.data[myprt.data$STUDYID==study_plac[i],]["bias.group"]<- 1
-}
-
-# NRS
-myprt.data[myprt.data$STUDYID=="NRS"&myprt.data$TRT01A=="Glatiramer acetate",]["unfav"] <- 0
-myprt.data[myprt.data$STUDYID=="NRS"&myprt.data$TRT01A!="Glatiramer acetate",]["unfav"]  <- 1
-myprt.data[myprt.data$STUDYID=="NRS",]["bias.group"]<- 1
-prt.data <- myprt.data
+# myprt.data$unfav <- myprt.data$bias.group <- NA
+# study_plac <- unique(myprt.data$STUDYID[myprt.data$TRT01A=="Placebo"]) # index of studies with placebo
+# for(i in 1:length(study_plac)){
+#   myprt.data[myprt.data$STUDYID==study_plac[i]&myprt.data$TRT01A=="Placebo",]["unfav"] <- 0
+#   myprt.data[myprt.data$STUDYID==study_plac[i]&myprt.data$TRT01A!="Placebo",]["unfav"]  <- 1
+#   myprt.data[myprt.data$STUDYID==study_plac[i],]["bias.group"]<- 1
+# }
+#
+# # NRS
+# myprt.data[myprt.data$STUDYID=="NRS"&myprt.data$TRT01A=="Glatiramer acetate",]["unfav"] <- 0
+# myprt.data[myprt.data$STUDYID=="NRS"&myprt.data$TRT01A!="Glatiramer acetate",]["unfav"]  <- 1
+# myprt.data[myprt.data$STUDYID=="NRS",]["bias.group"]<- 1
+# prt.data <- myprt.data
 newdata <- list()
-i=4
+i=1
 for (i in 1:4) {
 prt.data.t <- prt.data[prt.data$STUDYID==levels(prt.data$STUDYID)[i],]
 prt.data.t$trt <- as.factor(as.character(prt.data.t$TRT01A))
@@ -49,9 +49,9 @@ newdata0 <- data.frame(study=i,
                            design=ifelse(prt.data.t$design=='nrs','nrs','rct'),
                            age=agenew,
                            sex=sex,
-                           bias=prt.data.t$bias,
-                           unfav=prt.data.t$unfav,
-                           bias.group=prt.data.t$bias.group
+                           bias=prt.data.t$bias
+                           # unfav=prt.data.t$unfav,
+                           # bias.group=prt.data.t$bias.group
                            )
 if(prt.data.t$design=='nrs'){
   newdata[[i]] <- newdata0[1:150,]
@@ -78,6 +78,20 @@ newdata2 %<>% mutate(year=mapvalues(as.character(study),
 
 names(newdata2)
 prt.data <- newdata2
+
+prt.data$unfav <- prt.data$bias.group <- NA
+study_plac <- unique(prt.data$study[prt.data$trt=="A"]) # index of studies with placebo
+for(i in 1:length(study_plac)){
+  prt.data[prt.data$study==study_plac[i]&prt.data$trt=="A",]["unfav"] <- 0
+  prt.data[prt.data$study==study_plac[i]&prt.data$trt!="A",]["unfav"]  <- 1
+  prt.data[prt.data$study==study_plac[i],]["bias.group"]<- 1
+}
+prt.data[prt.data$study=="nrs",]
+# NRS
+prt.data[prt.data$design=="nrs"&prt.data$trt=="B",]["unfav"] <- 0
+prt.data[prt.data$design=="nrs"&prt.data$trt!="B",]["unfav"]  <- 1
+prt.data[prt.data$design=="nrs",]["bias.group"]<- 1
+
 # prt.data <- newdata2[,c("STUDYID","RELAPSE2year","TRT01A","design",  "AGE","SEX","bias","unfav","bias.group")]
 # names(prt.data) <- c("study","r","treat","design","age","bias","unfav","bias.group")
 

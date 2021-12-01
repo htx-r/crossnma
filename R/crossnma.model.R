@@ -345,8 +345,8 @@ crossnma.model <- function(prt.data,
   if(regw.effect=='random'&!is.null(prior$tau.regw)) warning(" The prior of the heterogeneity between within-study interaction parameters is ignored")
   if(regb.effect=='random'&!is.null(prior$tau.regb)) warning(" The prior of the heterogeneity between between-study interaction parameters is ignored")
   if(bias.effect=='random'&!is.null(prior$tau.gamma)) warning(" The prior of the heterogeneity between bias effect parameters is ignored")
-  if(!is.null(unfav)){if(!data11$unfav%in%c(0,1)) stop("The values of 'unfav' should be either 0 or 1")}
-  if(!is.null(unfav)){if(!data22$unfav%in%c(0,1)) stop("The values of 'unfav' should be either 0 or 1")}
+  if(!is.null(data11)&!is.null(unfav)){if(!data11$unfav%in%c(0,1)) stop("The values of 'unfav' should be either 0 or 1")}
+  if(!is.null(data22)&!is.null(unfav)){if(!data22$unfav%in%c(0,1)) stop("The values of 'unfav' should be either 0 or 1")}
 
   # check unfav: unique value 0 per study (repeated for the same treatment)
   if(!is.null(data11$unfav)){
