@@ -420,12 +420,12 @@ crossnma.model <- function(prt.data,
 
   trt.key <- trt.df$trt %>% unique %>% sort %>% tibble(trt.ini=.) %>%
     filter(trt.ini!=reference) %>% add_row(trt.ini=reference, .before=1) %>%
-    mutate(trt.jags = 1:dim(.)[1])
+    dplyr::mutate(trt.jags = 1:dim(.)[1])
   # set a study key from the two datasets
   data1$study <- paste0(data1$study,".ipd")
   data2$study <- paste0(data2$study,".ad")
   study.df <- data.frame(std.id= c(unique(prt.data$study),unique(std.data$study)))
-  study.key <- study.df%>% mutate(study.jags = 1:dim(.)[1])
+  study.key <- study.df%>% dplyr::mutate(study.jags = 1:dim(.)[1])
 
   if(!is.null(prt.data)){
     #Trt mapping
@@ -470,7 +470,7 @@ crossnma.model <- function(prt.data,
           data1$x.bias <- as.numeric(data1$x.bias != levels(data1$x.bias)[1])
           data1 <- data1%>%
             group_by(study.jags)%>%
-            mutate(x.bias=mean(x.bias,na.rm = TRUE))
+            dplyr::mutate(x.bias=mean(x.bias,na.rm = TRUE))
         } else {stop("Invalid datatype for bias covariate.")}
 
         # bias_index.ipd <- NULL
@@ -489,7 +489,7 @@ crossnma.model <- function(prt.data,
         # mean covariate
         data1 <- data1%>%
           group_by(study.jags)%>%
-          mutate(xm1.ipd=mean(x1,na.rm = TRUE))
+          dplyr::mutate(xm1.ipd=mean(x1,na.rm = TRUE))
         # Factor with 2 levels
       } else if (is.factor(data1$x1) == TRUE || is.character(data1$x1) == TRUE ) {
         #check that covariate has fewer than 3 levels and convert strings and factors to binary covariates
@@ -502,7 +502,7 @@ crossnma.model <- function(prt.data,
         data1$x1 <- as.numeric(data1$x1 != levels(data1$x1)[1])
         data1 <- data1%>%
           group_by(study.jags)%>%
-          mutate(xm1.ipd=mean(x1,na.rm = TRUE))
+          dplyr::mutate(xm1.ipd=mean(x1,na.rm = TRUE))
       } else {stop("Invalid datatype for covariate.")}
       # covariate2
       if(!is.null(data1$x2)){
@@ -511,7 +511,7 @@ crossnma.model <- function(prt.data,
           # mean covariate if continuous
           data1 <- data1%>%
             group_by(study.jags)%>%
-            mutate(xm2.ipd=mean(x2,na.rm = TRUE))
+            dplyr::mutate(xm2.ipd=mean(x2,na.rm = TRUE))
           # Factor with 2 levels
         } else if (is.factor(data1$x2) == TRUE || is.character(data1$x2) == TRUE) {
           #check that covariate has fewer than 3 levels and convert strings and factors to binary covariates
@@ -524,7 +524,7 @@ crossnma.model <- function(prt.data,
           data1$x2 <- as.numeric(data1$x2 != levels(data1$x2)[1])
           data1 <- data1%>%
             group_by(study.jags)%>%
-            mutate(xm2.ipd=mean(x2,na.rm = TRUE))
+            dplyr::mutate(xm2.ipd=mean(x2,na.rm = TRUE))
         } else {stop("Invalid datatype for covariate.")}
       }else {xm2.ipd <- NULL}
       # covariate3
@@ -534,7 +534,7 @@ crossnma.model <- function(prt.data,
           # mean covariate
           data1 <- data1%>%
             group_by(study.jags)%>%
-            mutate(xm3.ipd=mean(x3,na.rm = TRUE))
+            dplyr::mutate(xm3.ipd=mean(x3,na.rm = TRUE))
           # Factor with 2 levels
         } else if (is.factor(data1$x3) == TRUE || is.character(data1$x3) == TRUE) {
           #check that covariate has fewer than 3 levels and convert strings and factors to binary covariates
@@ -547,7 +547,7 @@ crossnma.model <- function(prt.data,
           data1$x3 <- as.numeric(data1$x3 != levels(data1$x3)[1])
           data1 <- data1%>%
             group_by(study.jags)%>%
-            mutate(xm3.ipd=mean(x3,na.rm = TRUE))
+            dplyr::mutate(xm3.ipd=mean(x3,na.rm = TRUE))
         } else {stop("Invalid datatype for covariate.")}
       }else {xm3.ipd <- NULL}
     } else{
@@ -566,7 +566,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
 # From the unfav column create new ref treatment per study
   dd0 <- data1%>%
     group_by(study.jags)%>%
-    mutate(ref.trt.std=.data[["trt"]][unfav==0][1])
+    dplyr::mutate(ref.trt.std=.data[["trt"]][unfav==0][1])
 # For each study, arrange treatments by the new ref
   ns <- length(unique(dd0$study.jags))
   dd1 <-sapply(1:ns,
@@ -580,7 +580,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
   jagsdata1$t.ipd <- dd2 %>%
     select(trt.jags,study.jags)%>% unique()%>%
     group_by(study.jags)%>%
-    mutate(arm = row_number())%>%ungroup() %>%
+    dplyr::mutate(arm = row_number())%>%ungroup() %>%
     spread(arm, trt.jags)%>%
     select(-study.jags)%>%
     as.matrix()
@@ -678,7 +678,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
           data2$x.bias <- as.numeric(data2$x.bias != levels(data2$x.bias)[1])
           data2 <- data2%>%
             group_by(study)%>%
-            mutate(x.bias=mean(x.bias,na.rm = TRUE))
+            dplyr::mutate(x.bias=mean(x.bias,na.rm = TRUE))
         } else {stop("Invalid datatype for bias covariate.")}
 
         # bias_index.ad <- NULL
@@ -698,7 +698,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
         # mean covariate
         data2 <- data2%>%
           group_by(study)%>%
-          mutate(xm1.ad=mean(x1,na.rm = TRUE))
+          dplyr::mutate(xm1.ad=mean(x1,na.rm = TRUE))
         # Factor with 2 levels
       } else if (is.factor(data2$x1) == TRUE || is.character(data2$x1) == TRUE) {
         #check that covariate has fewer than 3 levels and convert strings and factors to binary covariates
@@ -711,7 +711,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
         data2$x1 <- as.numeric(data2$x1 != levels(data2$x1)[1])
         data2 <- data2%>%
           group_by(study)%>%
-          mutate(xm1.ad=mean(x1,na.rm = TRUE))
+          dplyr::mutate(xm1.ad=mean(x1,na.rm = TRUE))
       } else {stop("Invalid datatype for covariate.")}
 
       # covariate2
@@ -721,7 +721,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
           # mean covariate
           data2 <- data2%>%
             group_by(study)%>%
-            mutate(xm2.ad=mean(x2,na.rm = TRUE))
+            dplyr::mutate(xm2.ad=mean(x2,na.rm = TRUE))
           # Factor with 2 levels
         } else if (is.factor(data2$x2) == TRUE || is.character(data2$x2) == TRUE) {
           #check that covariate has fewer than 3 levels and convert strings and factors to binary covariates
@@ -734,7 +734,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
           data2$x2 <- as.numeric(data2$x2 != levels(data2$x2)[1])
           data2 <- data2%>%
             group_by(study)%>%
-            mutate(xm2.ad=mean(x2,na.rm = TRUE))
+            dplyr::mutate(xm2.ad=mean(x2,na.rm = TRUE))
         } else {stop("Invalid datatype for covariate.")}
       }else {xm2.ad <- NULL}
       # covariate3
@@ -744,7 +744,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
           # mean covariate
           data2 <- data2%>%
             group_by(study)%>%
-            mutate(xm3.ad=mean(x3,na.rm = TRUE))
+            dplyr::mutate(xm3.ad=mean(x3,na.rm = TRUE))
           # Factor with 2 levels
         } else if (is.factor(data2$x3) == TRUE || is.character(data2$x3) == TRUE) {
           #check that covariate has fewer than 3 levels and convert strings and factors to binary covariates
@@ -757,7 +757,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
           data2$x3 <- as.numeric(data2$x3 != levels(data2$x3)[1])
           data2 <- data2%>%
             group_by(study)%>%
-            mutate(xm3.ad=mean(x3,na.rm = TRUE))
+            dplyr::mutate(xm3.ad=mean(x3,na.rm = TRUE))
         } else {stop("Invalid datatype for covariate.")}
       }else {xm3.ad <- NULL}
     } else{
@@ -785,7 +785,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
       # From the unfav column create new ref treatment per study
       dd0 <- data2%>%
         group_by(study.jags)%>%
-        mutate(ref.trt.std=.data[["trt"]][unfav==0])
+        dplyr::mutate(ref.trt.std=.data[["trt"]][unfav==0])
       # For each study, arrange treatments by the new ref
       ns <- length(unique(dd0$study.jags))
       dd1 <-sapply(1:ns,
@@ -862,7 +862,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
 
     trt.key.nrs <- trt.df.nrs$trt %>% unique %>% sort %>% tibble(trt.ini=.) %>%
       filter(trt.ini!=reference) %>% add_row(trt.ini=reference, .before=1) %>%
-      mutate(trt.jags = 1:dim(.)[1])
+      dplyr::mutate(trt.jags = 1:dim(.)[1])
 
 
     #====================================
@@ -982,7 +982,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
     # Output: prior for d's
 
     # map NRS trt to RCT trt
-    trt.key2 <- trt.key %>% mutate(trt.jags.nrs=mapvalues(trt.ini,
+    trt.key2 <- trt.key %>% dplyr::mutate(trt.jags.nrs=mapvalues(trt.ini,
                                                           from=trt.key.nrs$trt.ini,
                                                           to=trt.key.nrs$trt.jags,
                                                           warn_missing = FALSE)%>%as.integer)
