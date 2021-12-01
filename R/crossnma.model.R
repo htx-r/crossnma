@@ -1,4 +1,5 @@
 # delete the message from study.jags once I run the adjust1 and adjust2 models
+# delete NA from data is not applied! CHECK
 #' Create JAGS model to synthesize cross-design evidence and cross-format data in NMA and NMR for dichotomous outcomes
 #' @description This function creates a JAGS model and the needed data. The JAGS code is created from the internal function \code{crossnma.code}.
 #'
@@ -300,8 +301,8 @@ crossnma.model <- function(prt.data,
   # discard NA's
   excl1 <- is.na(data11$r) |is.na(data11$study) |is.na(data11$trt) |is.na(data11$design) | if(!is.null(data11$bias)){is.na(data11$bias)}else{FALSE} | if(!is.null(data11$unfav)){is.na(data11$unfav)}else{FALSE} | if(!is.null(data11$bias.group2)){is.na(data11$bias.group2)}else{FALSE}
   excl2 <- is.na(data22$r) | is.na(data22$n) |is.na(data22$study) |is.na(data22$trt) |is.na(data22$design) | if(!is.null(data22$bias)){is.na(data22$bias)}else{FALSE} | if(!is.null(data22$unfav)){is.na(data22$unfav)}else{FALSE} | if(!is.null(data22$bias.group2)){is.na(data22$bias.group2)}else{FALSE}
-  if (sum(excl1)>0) warning('Participants with missing data in one of these variables: outcome, trt, design, study, bias, unfav or bias.group are discarded from the analysis')
-  if (sum(excl1)>0|sum(excl2)>0) warning('Arms with missing data in these variables: outcome, n, bias, unfav or bias.group are discarded from the analysis')
+  if (sum(excl1)>0) message('Participants with missing data in one of these variables: outcome, trt, design, study, bias, unfav or bias.group are discarded from the analysis')
+  if (sum(excl1)>0|sum(excl2)>0) message('Arms with missing data in these variables: outcome, n, bias, unfav or bias.group are discarded from the analysis')
   data11 <- data11[!excl1,]
   data22 <- data22[!excl2,]
 

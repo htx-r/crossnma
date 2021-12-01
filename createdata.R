@@ -56,10 +56,11 @@ newdata0 <- data.frame(study=i,
 if(prt.data.t$design=='nrs'){
   newdata[[i]] <- newdata0[1:150,]
 }else{
-  newdata[[i]] <- newdata0[1:900,]
+  newdata[[i]] <- newdata0[sort(sample(1:nrow(newdata0),round(nrow(newdata0)/2))),]
 }
 
 }
+newdata2[sort(sample(1:nrow(newdata2),round(nrow(newdata2)/2))),]
 newdata2 <- do.call(rbind,newdata)
 
 newdata2 %<>% mutate(trt.new=mapvalues(as.character(trt),
@@ -78,15 +79,16 @@ newdata2 %<>% mutate(year=mapvalues(as.character(study),
 
 names(newdata2)
 prt.data <- newdata2
-
+table(prt.data$bias.group)
 prt.data$unfav <- prt.data$bias.group <- NA
 study_plac <- unique(prt.data$study[prt.data$trt=="A"]) # index of studies with placebo
+i=1
 for(i in 1:length(study_plac)){
   prt.data[prt.data$study==study_plac[i]&prt.data$trt=="A",]["unfav"] <- 0
   prt.data[prt.data$study==study_plac[i]&prt.data$trt!="A",]["unfav"]  <- 1
   prt.data[prt.data$study==study_plac[i],]["bias.group"]<- 1
 }
-prt.data[prt.data$study=="nrs",]
+
 # NRS
 prt.data[prt.data$design=="nrs"&prt.data$trt=="B",]["unfav"] <- 0
 prt.data[prt.data$design=="nrs"&prt.data$trt!="B",]["unfav"]  <- 1
@@ -125,7 +127,7 @@ std.data$study <- rep(1:length(unique(std.data$study)),each=2)
 
 
 usethis::use_data(prt.data,std.data)
-
+std.data$
 # create all Vignette related files
 #usethis::use_vignette("gnma")
 #devtools::document()
