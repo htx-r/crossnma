@@ -422,6 +422,8 @@ crossnma.model <- function(prt.data,
     filter(trt.ini!=reference) %>% add_row(trt.ini=reference, .before=1) %>%
     mutate(trt.jags = 1:dim(.)[1])
   # set a study key from the two datasets
+  data1$study <- paste0(data1$study,".ipd")
+  data2$study <- paste0(data2$study,".ad")
   study.df <- data.frame(std.id= c(unique(prt.data$study),unique(std.data$study)))
   study.key <- study.df%>% mutate(study.jags = 1:dim(.)[1])
 
