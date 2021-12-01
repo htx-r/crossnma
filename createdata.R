@@ -19,6 +19,7 @@ myprt.data[myprt.data$STUDYID=="NRS"&myprt.data$TRT01A!="Glatiramer acetate",]["
 myprt.data[myprt.data$STUDYID=="NRS",]["bias.group"]<- 1
 prt.data <- myprt.data
 newdata <- list()
+i=4
 for (i in 1:4) {
 prt.data.t <- prt.data[prt.data$STUDYID==levels(prt.data$STUDYID)[i],]
 prt.data.t$trt <- as.factor(as.character(prt.data.t$TRT01A))
@@ -53,7 +54,7 @@ newdata0 <- data.frame(study=i,
                            bias.group=prt.data.t$bias.group
                            )
 if(prt.data.t$design=='nrs'){
-  newdata[[i]] <- newdata0[1:250,]
+  newdata[[i]] <- newdata0[1:150,]
 }else{
   newdata[[i]] <- newdata0[1:900,]
 }
@@ -112,7 +113,7 @@ std.data$study <- rep(1:length(unique(std.data$study)),each=2)
 usethis::use_data(prt.data,std.data)
 
 # create all Vignette related files
-usethis::use_vignette("gnma")
-devtools::document()
+#usethis::use_vignette("gnma")
+#devtools::document()
 
 
