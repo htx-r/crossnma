@@ -161,7 +161,7 @@ crossnma.run <- function(model,
                          model=model,
                          "trt.key"=model$trt.key),
                     class = "crossnma")
-  return(crosrun)
+  return(crossrun)
 }
 
 
