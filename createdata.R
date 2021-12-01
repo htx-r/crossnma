@@ -82,7 +82,7 @@ prt.data <- newdata2
 table(prt.data$bias.group)
 prt.data$unfav <- prt.data$bias.group <- NA
 study_plac <- unique(prt.data$study[prt.data$trt=="A"]) # index of studies with placebo
-i=1
+
 for(i in 1:length(study_plac)){
   prt.data[prt.data$study==study_plac[i]&prt.data$trt=="A",]["unfav"] <- 0
   prt.data[prt.data$study==study_plac[i]&prt.data$trt!="A",]["unfav"]  <- 1
@@ -127,7 +127,7 @@ std.data$study <- rep(1:length(unique(std.data$study)),each=2)
 
 
 usethis::use_data(prt.data,std.data)
-std.data$
+std.data
 # create all Vignette related files
 #usethis::use_vignette("gnma")
 #devtools::document()
