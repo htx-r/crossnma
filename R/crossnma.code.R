@@ -1,3 +1,4 @@
+# for common bias effect model, add prec.gamma -> 0 (twice)
 crossnma.code <- function(ipd = T,
                          ad = T,
                          trt.effect='random',

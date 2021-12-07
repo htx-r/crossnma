@@ -194,7 +194,7 @@ crossnma.model <- function(prt.data,
 
     data11 <- prt.data[,c(varlist1,covlist1)]
     names(data11) <- c(names(varlist1), names(covlist1))
-    data11$study <- paste0(data1$study,".ipd")
+    data11$study <- paste0(data11$study,".ipd")
   } else{
     data11 <- NULL
   }
@@ -220,7 +220,7 @@ crossnma.model <- function(prt.data,
     covlist2 <- c(x1=x12,x2=x22,x3=x32)
     data22 <-std.data[, c(varlist2,covlist2)]
     names(data22) <- c(names(varlist2), names(covlist2))
-    data22$study <- paste0(data2$study,".ad")
+    data22$study <- paste0(data22$study,".ad")
   }else{
     data22 <- NULL
   }
@@ -424,7 +424,7 @@ crossnma.model <- function(prt.data,
     filter(trt.ini!=reference) %>% add_row(trt.ini=reference, .before=1) %>%
     dplyr::mutate(trt.jags = 1:dim(.)[1])
   # set a study key from the two datasets
-  study.df <- data.frame(std.id= c(unique(prt.data$study),unique(std.data$study)))
+  study.df <- data.frame(std.id= c(unique(data1$study),unique(data2$study)))
   study.key <- study.df%>% dplyr::mutate(study.jags = 1:dim(.)[1])
 
   if(!is.null(prt.data)){

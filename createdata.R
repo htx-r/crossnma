@@ -126,7 +126,7 @@ std.data$year <-  mapvalues(as.character(std.data$study),
 std.data$study <- rep(1:length(unique(std.data$study)),each=2)
 
 
-usethis::use_data(prt.data,std.data)
+#usethis::use_data(prt.data,std.data)
 
 # create all Vignette related files
 #usethis::use_vignette("gnma")
