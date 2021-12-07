@@ -402,7 +402,7 @@ crossnma.code <- function(ipd = T,
                                     ifelse(add.std.act.yes,paste0("for (j in std.act.yes) {gamma",i,"[j]<-g.act",i,"}\n"),""),
                                     ifelse(add.std.in,paste0("g",i,"~dnorm(0, 0.01)\n"),""),
                                     ifelse(add.std.act.yes,paste0("g.act",i,"~dnorm(0, 0.01)\n"),""),
-                                    "prec.gamma -> 0"
+                                    "prec.gamma <- 0"
             )
             gamma.effect <- paste0(gamma.effect,gamma.effect0)
           }
@@ -426,7 +426,7 @@ crossnma.code <- function(ipd = T,
                                   ifelse(add.std.act.yes,"for (j in std.act.yes) {gamma[j]<-g.act}\n",""),
                                   ifelse(add.std.in,"g~dnorm(0, 0.01)\n",""),
                                   ifelse(add.std.act.yes,"g.act~dnorm(0, 0.01)\n",""),
-                                 "prec.gamma -> 0"
+                                 "prec.gamma <- 0"
                                  )
 
           warning("Bias effect is assumed common across studies")
