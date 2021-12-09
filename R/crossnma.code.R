@@ -405,7 +405,7 @@ crossnma.code <- function(ipd = T,
             )
             gamma.effect <- paste0(gamma.effect,gamma.effect0)
           }
-          gamma.effect <- paste0(gamma.effect,"prec.gamma <- 0")
+          gamma.effect <- paste0(gamma.effect,"\n prec.gamma <- 0")
           warning("Bias effect is assumed common across studies")
         }
       }else {
