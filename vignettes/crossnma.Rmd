@@ -198,8 +198,6 @@ The table below summarizes the different assumptions implemented in the package 
 |  	|Common-effect: $\beta_{1,jbk}^B = B_{1, Ak}^B-B_{1, Ab}^B$| `regb.effect='common'`|
 |Bias effect ($\gamma_{m,jbk}$), $m={1,2}$| Random-effects: $\gamma_{m,jbk} \sim N(g_{m, bk}, \tau_{\gamma})$| `bias.effect='random'` |
 | 	|Common-effect: $\gamma_{m,jbk}=g_{m,bk}$| `bias.effect='common'`|
-|Bias probability ($\pi_j$)| $\pi_j \sim Beta(a,b)$|  |
-|| $\pi_j = e+fz_j$|  |
 |Mean bias effect $g_{m,bk}$|No bias effect on active-active: \begin{equation}
   g_{m,bk} =
     \begin{cases}
@@ -214,6 +212,8 @@ The table below summarizes the different assumptions implemented in the package 
       (-1)^{dir_{bk}} g_m^{act} & \text{if $b$ and $k$ are active treatments}
     \end{cases}       
 \end{equation}|`unfav = 0 (inactive), 1 (active)` and `bias.group=1` $(g_{m,bk}=g_m)$ or `2` $(g_{m,bk}=g_m^{act})$|
+|Bias probability ($\pi_j$)| $\pi_j \sim Beta(a,b)$|  |
+|| $\pi_j = e+fz_j$|  |
 
 # Synthesis of studies comparing drugs for relapsing-remitting multiple sclerosis
 
