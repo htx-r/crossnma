@@ -467,7 +467,8 @@ crossnma.code <- function(ipd = T,
       md[j,t.ipd[j,k]]<- mean[j,k] + sw[j,k]
       w[j,k]<- (theta[j,t.ipd[j,k]]  - mean[j,k])
       sw[j,k]<- sum(w[j,1:(k-1)])/(k-1)
-      precd[j,t.ipd[j,k]]<- prec *2*(k-1)/k"
+      precd[j,t.ipd[j,k]]<- prec *2*(k-1)/k
+        "
 
         theta.effect.ad <- "
         theta1[j+ns.ipd,t.ad[j,k]]~dnorm(md.ad[j,t.ad[j,k]],precd.ad[j,t.ad[j,k]])
