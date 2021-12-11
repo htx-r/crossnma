@@ -611,17 +611,6 @@ if (method.bias%in%c("adjust1","adjust2")) {
     jagsdata1[[v]] <- jagstemp %>% pull(v)
   }
 }
-
-    # create baseline vector
-    # data1 %<>% mutate(bl=mapvalues(study,
-    #                                from=unique(data1$study),
-    #                                to=jagsdata1$t.ipd[,1],
-    #                                warn_missing = FALSE) %>% as.integer)
-
-
-
-
-
     # add number of treatments, studies, and arms to JAGS data object
     jagsdata1$nt <- trt.key %>% nrow()
     jagsdata1$ns.ipd <- ifelse(!is.null(data1),data1$study%>% unique() %>% length(),0)
@@ -648,6 +637,16 @@ if (method.bias%in%c("adjust1","adjust2")) {
 
     if(!is.numeric(data2$r)) stop("Outcome must be numeric.")
 
+    #add treatment mapping to data
+    data2 %<>% mutate(trt.jags=mapvalues(trt,
+                                         from=trt.key$trt.ini,
+                                         to=trt.key$trt.jags,
+                                         warn_missing = FALSE) %>% as.integer)
+    #add study mapping to data
+    data2 %<>% mutate(study.jags=mapvalues(study,
+                                           from=study.key$std.id,
+                                           to=study.key$study.jags,
+                                           warn_missing = FALSE) %>% as.integer)
 
     # add bias_index based on RoB and study design RCT or NRS. when method.bias ='adjust1' or 'adjust2'
     if(!is.null(bias)){
@@ -658,13 +657,14 @@ if (method.bias%in%c("adjust1","adjust2")) {
         design=='nrs'&bias=='low'~ 4,
         bias=='unclear'~ 5
       ))
-      bias_index.ad<- data2%>%group_by(study,bias_index)%>%group_keys()%>%select('bias_index')
+      bias_index.ad<- data2%>%arrange(study.jags)%>%group_by(study.jags,bias_index)%>%group_keys()%>%select('bias_index')
       if(!is.null(bias.covariate)){
         # continuous
         if (is.numeric(data2$x.bias) == TRUE) {
           # mean covariate if continuous
           xbias.ad <- data2%>%
-            group_by(study)%>%
+            arrange(study.jags)%>%
+            group_by(study.jags)%>%
             group_map(~mean(.x$x.bias,na.rm = TRUE))%>%unlist()
           # Factor with 2 levels
         } else if (is.factor(data2$x.bias) == TRUE || is.character(data2$x.bias) == TRUE) {
@@ -677,7 +677,8 @@ if (method.bias%in%c("adjust1","adjust2")) {
             data2$x.bias <- as.factor(data2$x.bias)
           data2$x.bias <- as.numeric(data2$x.bias != levels(data2$x.bias)[1])
           data2 <- data2%>%
-            group_by(study)%>%
+            arrange(study.jags)%>%
+            group_by(study.jags)%>%
             dplyr::mutate(x.bias=mean(x.bias,na.rm = TRUE))
         } else {stop("Invalid datatype for bias covariate.")}
 
@@ -697,7 +698,8 @@ if (method.bias%in%c("adjust1","adjust2")) {
       if (is.numeric(data2$x1) == TRUE) {
         # mean covariate
         data2 <- data2%>%
-          group_by(study)%>%
+          arrange(study.jags)%>%
+          group_by(study.jags)%>%
           dplyr::mutate(xm1.ad=mean(x1,na.rm = TRUE))
         # Factor with 2 levels
       } else if (is.factor(data2$x1) == TRUE || is.character(data2$x1) == TRUE) {
@@ -710,7 +712,8 @@ if (method.bias%in%c("adjust1","adjust2")) {
           data2$x1 <- as.factor(data2$x1)
         data2$x1 <- as.numeric(data2$x1 != levels(data2$x1)[1])
         data2 <- data2%>%
-          group_by(study)%>%
+          arrange(study.jags)%>%
+          group_by(study.jags)%>%
           dplyr::mutate(xm1.ad=mean(x1,na.rm = TRUE))
       } else {stop("Invalid datatype for covariate.")}
 
@@ -720,7 +723,8 @@ if (method.bias%in%c("adjust1","adjust2")) {
         if (is.numeric(data2$x2) == TRUE) {
           # mean covariate
           data2 <- data2%>%
-            group_by(study)%>%
+            arrange(study.jags)%>%
+            group_by(study.jags)%>%
             dplyr::mutate(xm2.ad=mean(x2,na.rm = TRUE))
           # Factor with 2 levels
         } else if (is.factor(data2$x2) == TRUE || is.character(data2$x2) == TRUE) {
@@ -733,7 +737,8 @@ if (method.bias%in%c("adjust1","adjust2")) {
             data2$x2 <- as.factor(data2$x2)
           data2$x2 <- as.numeric(data2$x2 != levels(data2$x2)[1])
           data2 <- data2%>%
-            group_by(study)%>%
+            arrange(study.jags)%>%
+            group_by(study.jags)%>%
             dplyr::mutate(xm2.ad=mean(x2,na.rm = TRUE))
         } else {stop("Invalid datatype for covariate.")}
       }else {xm2.ad <- NULL}
@@ -743,7 +748,8 @@ if (method.bias%in%c("adjust1","adjust2")) {
         if (is.numeric(data2$x3) == TRUE) {
           # mean covariate
           data2 <- data2%>%
-            group_by(study)%>%
+            arrange(study.jags)%>%
+            group_by(study.jags)%>%
             dplyr::mutate(xm3.ad=mean(x3,na.rm = TRUE))
           # Factor with 2 levels
         } else if (is.factor(data2$x3) == TRUE || is.character(data2$x3) == TRUE) {
@@ -756,7 +762,8 @@ if (method.bias%in%c("adjust1","adjust2")) {
             data2$x3 <- as.factor(data2$x3)
           data2$x3 <- as.numeric(data2$x3 != levels(data2$x3)[1])
           data2 <- data2%>%
-            group_by(study)%>%
+            arrange(study.jags)%>%
+            group_by(study.jags)%>%
             dplyr::mutate(xm3.ad=mean(x3,na.rm = TRUE))
         } else {stop("Invalid datatype for covariate.")}
       }else {xm3.ad <- NULL}
@@ -768,22 +775,13 @@ if (method.bias%in%c("adjust1","adjust2")) {
 
     #generate JAGS data object
 
-    #add treatment mapping to data
-    data2 %<>% mutate(trt.jags=mapvalues(trt,
-                                         from=trt.key$trt.ini,
-                                         to=trt.key$trt.jags,
-                                         warn_missing = FALSE) %>% as.integer)
-    #add study mapping to data
-    data2 %<>% mutate(study.jags=mapvalues(study,
-                                           from=study.key$std.id,
-                                           to=study.key$study.jags,
-                                           warn_missing = FALSE) %>% as.integer)
-    # create the matrix of trt index following the values of unfav column (adjust 1&2)
+      # create the matrix of trt index following the values of unfav column (adjust 1&2)
     if (method.bias%in%c("adjust1","adjust2")) {
       if(is.null(bias.group)){data2$bias.group <- 1} # Default, make bias adjustment when bias.group is no provided
 
       # From the unfav column create new ref treatment per study
       dd0 <- data2%>%
+        arrange(study.jags)%>%
         group_by(study.jags)%>%
         dplyr::mutate(ref.trt.std=.data[["trt"]][unfav==0])
       # For each study, arrange treatments by the new ref
@@ -799,24 +797,24 @@ if (method.bias%in%c("adjust1","adjust2")) {
 
       # create a matrix with the treatment index
       jagstemp2 <- dd2 %>%arrange(study.jags) %>% group_by(study.jags) %>% dplyr::mutate(arm = row_number()) %>%
-        ungroup()%>% dplyr::select(-c(trt,design,bias,ref.trt.std,unfav,bias.group,bias_index))  %>% gather("variable", "value", -study,-study.jags, -arm) %>% spread(arm, value)
+        ungroup()%>% dplyr::select(-c(trt,design,bias,ref.trt.std,unfav,bias.group,bias_index,study))  %>% gather("variable", "value",-study.jags, -arm) %>% spread(arm, value)
       jagsdata2 <- list()
       for (v in unique(jagstemp2$variable)){
-        jagsdata2[[v]] <- as.matrix(jagstemp2 %>% filter(variable == v) %>% select(-study,-study.jags, -variable))
+        jagsdata2[[v]] <- as.matrix(jagstemp2 %>% filter(variable == v) %>% select(-study.jags, -variable))
       }
     }else{
       jagstemp2 <- data2 %>% arrange(study.jags,trt.jags) %>% group_by(study.jags) %>% dplyr::mutate(arm = row_number()) %>%
-        ungroup()%>% select(-c(trt,design,bias))  %>% gather("variable", "value", -study,-study.jags, -arm) %>% spread(arm, value)
+        ungroup()%>% select(-c(trt,design,bias,study))  %>% gather("variable", "value",-study.jags, -arm) %>% spread(arm, value)
 
       jagsdata2 <- list()
       for (v in unique(jagstemp2$variable)){
-        jagsdata2[[v]] <- as.matrix(jagstemp2 %>% filter(variable == v) %>% select(-study,-study.jags, -variable))
+        jagsdata2[[v]] <- as.matrix(jagstemp2 %>% filter(variable == v) %>% select(-study.jags, -variable))
       }
     }
 
     # add number of treatments, studies, and arms to JAGS data object
     jagsdata2$ns.ad <- ifelse(!is.null(data2),data2$study.jags %>% unique()%>%length(),0)
-    jagsdata2$na.ad <- data2 %>% group_by(study.jags) %>%dplyr::summarize(n.arms = n()) %>%
+    jagsdata2$na.ad <- data2%>%arrange(study.jags) %>% group_by(study.jags) %>%dplyr::summarize(n.arms = n()) %>%
       ungroup() %>% select(n.arms) %>% t() %>% as.vector
     # add covariate
     jagsdata2$x1 <- jagsdata2$x2 <- jagsdata2$x3 <- NULL
@@ -844,8 +842,13 @@ if (method.bias%in%c("adjust1","adjust2")) {
   # 1. studies need bias adjustment and has inactive treatment (bias.group=1)
   # 2. studies need bias adjustment but has only active treatment (bias.group=2)
   # 3. studies don't need any bias adjustment
-  bmat <- rbind(ifelse(!is.null(data1),list(data1%>% group_by(study.jags)%>%select(bias.group)%>%unique()%>%select(bias.group)), list(NULL))[[1]],
-                ifelse(!is.null(data2),list(data2%>% group_by(study.jags)%>%select(bias.group)%>%unique()), list(NULL))[[1]]
+  bmat <- rbind(ifelse(!is.null(data1),list(data1%>%
+                                              arrange(study.jags)%>%
+                                              group_by(study.jags)%>%
+                                              select(bias.group)%>%unique()%>%select(bias.group)), list(NULL))[[1]],
+                ifelse(!is.null(data2),list(data2%>%
+                                              arrange(study.jags)%>%
+                                              group_by(study.jags)%>%select(bias.group)%>%unique()), list(NULL))[[1]]
                 )
   jagsdata$std.in <-bmat$study.jags[bmat$bias.group==1]
   jagsdata$std.act.no <-bmat$study.jags[bmat$bias.group==0]
@@ -863,6 +866,9 @@ if (method.bias%in%c("adjust1","adjust2")) {
     trt.key.nrs <- trt.df.nrs$trt %>% unique %>% sort %>% tibble(trt.ini=.) %>%
       filter(trt.ini!=reference) %>% add_row(trt.ini=reference, .before=1) %>%
       dplyr::mutate(trt.jags = 1:dim(.)[1])
+    # set a study key from the two datasets
+    study.df.nrs <- data.frame(std.id= c(unique(data1.nrs$study),unique(data2.nrs$study)))
+    study.key.nrs <- study.df.nrs%>% dplyr::mutate(study.jags = 1:dim(.)[1])
 
 
     #====================================
@@ -875,21 +881,27 @@ if (method.bias%in%c("adjust1","adjust2")) {
                                              from=trt.key.nrs$trt.ini,
                                              to=trt.key.nrs$trt.jags,
                                              warn_missing = FALSE)%>%as.integer)
+    # data1.nrs %<>% mutate(study.jags=mapvalues(study,
+    #                                            from=unique(study),
+    #                                            to=seq_len(length(unique(study))),
+    #                                            warn_missing = FALSE
+    # ) %>% as.character %>% as.integer)
+    #add study mapping to data
     data1.nrs %<>% mutate(study.jags=mapvalues(study,
-                                               from=unique(study),
-                                               to=seq_len(length(unique(study))),
-                                               warn_missing = FALSE
-    ) %>% as.character %>% as.integer)
-
+                                           from=study.key.nrs$std.id,
+                                           to=study.key.nrs$study.jags,
+                                           warn_missing = FALSE)%>% as.integer)
 
     # add a matrix of treatment per study row
     jagsdata.nrs <- list()
 
-    jagsdata.nrs$t.ipd <- data1.nrs %>% group_by(study,trt.jags)%>% group_keys()%>%
-      group_by(study)%>%
+    jagsdata.nrs$t.ipd <- data1.nrs %>%
+      arrange(study.jags)%>%
+      group_by(study.jags,trt.jags)%>% group_keys()%>%
+      group_by(study.jags)%>%
       dplyr::mutate(arm = row_number())%>%ungroup() %>%
       spread(arm, trt.jags)%>%
-      select(-study)%>%
+      select(-study.jags)%>%
       as.matrix()
     # add baseline vector
     # data1.nrs %<>% mutate(bl=mapvalues(study,
@@ -923,18 +935,24 @@ if (method.bias%in%c("adjust1","adjust2")) {
                                              from=trt.key.nrs$trt.ini,
                                              to=trt.key.nrs$trt.jags,
                                              warn_missing = FALSE) %>% as.integer)
+    #add study mapping to data
+    data2.nrs %<>% mutate(study.jags=mapvalues(study,
+                                           from=study.key.nrs$std.id,
+                                           to=study.key.nrs$study.jags,
+                                           warn_missing = FALSE) %>% as.integer)
 
-    jagstemp.nrs2 <- data2.nrs %>% arrange(study) %>% group_by(study) %>% dplyr::mutate(arm = row_number()) %>%
-      ungroup()%>% select(-c(trt,design))  %>% gather("variable", "value", -study, -arm) %>% spread(arm, value)
+
+    jagstemp.nrs2 <- data2.nrs %>% arrange(study.jags) %>% group_by(study.jags) %>% dplyr::mutate(arm = row_number()) %>%
+      ungroup()%>% select(-c(trt,design,study))  %>% gather("variable", "value", -study.jags, -arm) %>% spread(arm, value)
 
     for (v in unique(jagstemp.nrs2$variable)){
-      jagsdata.nrs[[v]] <- as.matrix(jagstemp.nrs2 %>% filter(variable == v) %>% select(-study, -variable))
+      jagsdata.nrs[[v]] <- as.matrix(jagstemp.nrs2 %>% filter(variable == v) %>% select(-study.jags, -variable))
     }
     names(jagsdata.nrs)[names(jagsdata.nrs) == "trt.jags"] <- "t.ad"
 
     #add number of treatments, studies, and arms to JAGS data object
     jagsdata.nrs$ns.ad <- ifelse(!is.null(std.data),data2.nrs$study %>% unique()%>%length(),0)
-    jagsdata.nrs$na.ad <- data2.nrs %>% group_by(study) %>%dplyr::summarize(n.arms = n()) %>%
+    jagsdata.nrs$na.ad <- data2.nrs %>% arrange(study.jags)%>% group_by(study.jags) %>%dplyr::summarize(n.arms = n()) %>%
       ungroup() %>% select(n.arms) %>% t() %>% as.vector
 
 
