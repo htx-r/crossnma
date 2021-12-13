@@ -1089,6 +1089,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
     # AD - NRS
     #add treatment mapping to data
     if(!is.null(data2.nrs)){
+      jagsdata2.nrs <- list()
       data2.nrs %<>% mutate(trt.jags=mapvalues(trt,
                                                from=trt.key.nrs$trt.ini,
                                                to=trt.key.nrs$trt.jags,
@@ -1112,7 +1113,6 @@ if (method.bias%in%c("adjust1","adjust2")) {
       jagsdata2.nrs$ns.ad <- ifelse(!is.null(std.data),data2.nrs$study %>% unique()%>%length(),0)
       jagsdata2.nrs$na.ad <- data2.nrs %>% arrange(study.jags)%>% group_by(study.jags) %>%dplyr::summarize(n.arms = n()) %>%
         ungroup() %>% select(n.arms) %>% t() %>% as.vector
-      jagsdata2.nrs$ns.ad <- 0
 
     }else{
       jagsdata2.nrs <- list(ns.ad=0)
@@ -1143,10 +1143,6 @@ if (method.bias%in%c("adjust1","adjust2")) {
                                method.bias = NULL,
                                d.prior.nrs=NULL)
     # jags run NRS
-    cat(model.nrs)
-    cat(mod1$jagsmodel)
-    mod1$data$trt
-    jagsdata.nrs$trt
     seeds <- sample(.Machine$integer.max, run.nrs[['n.chains']], replace = FALSE)
     inits <- list()
     for (i in 1:run.nrs[['n.chains']])
@@ -1165,11 +1161,6 @@ if (method.bias%in%c("adjust1","adjust2")) {
 
     # # # # # # # # # # # #
     # Output: prior for d's
-    trt.df <- data.frame(trt=unique(c(as.character(mydata$treat),as.character(mystd.data$treat))))
-
-    trt.key <- trt.df$trt %>% unique %>% sort %>% tibble(trt.ini=.) %>%
-      filter(trt.ini!=reference) %>% add_row(trt.ini=reference, .before=1) %>%
-      dplyr::mutate(trt.jags = 1:dim(.)[1])
     # map NRS trt to RCT trt
     trt.key2 <- trt.key %>% dplyr::mutate(trt.jags.nrs=mapvalues(trt.ini,
                                                                  from=trt.key.nrs$trt.ini,
