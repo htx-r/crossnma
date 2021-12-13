@@ -861,7 +861,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
   if(method.bias=='prior'){
     # data NRS
     if(!(reference %in% data1.nrs$trt)&!(reference %in% data2.nrs$trt)) stop("Reference treatment should be present in the list of treatments in NRS.")
-    trt.df.nrs <- data.frame(trt=unique(c(data1.nrs$trt,as.character(data2.nrs$trt))))
+    trt.df.nrs <- data.frame(trt=unique(c(as.character(data1.nrs$trt),as.character(data2.nrs$trt))))
 
     trt.key.nrs <- trt.df.nrs$trt %>% unique %>% sort %>% tibble(trt.ini=.) %>%
       filter(trt.ini!=reference) %>% add_row(trt.ini=reference, .before=1) %>%
