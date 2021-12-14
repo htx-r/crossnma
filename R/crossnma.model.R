@@ -861,292 +861,125 @@ if (method.bias%in%c("adjust1","adjust2")) {
   # use NRS as prior, jags need to be run for only NRS
 
   if(method.bias=='prior'){
-#     # data NRS
-#     if(!(reference %in% data1.nrs$trt)&!(reference %in% data2.nrs$trt)) stop("Reference treatment should be present in the list of treatments in NRS.")
-#     trt.df.nrs <- data.frame(trt=unique(c(as.character(data1.nrs$trt),as.character(data2.nrs$trt))))
-#      # check we might don't need as.characrter if that is chnaged from the begining
-#     trt.key.nrs <- trt.df.nrs$trt %>% unique %>% sort %>% tibble(trt.ini=.) %>%
-#       filter(trt.ini!=reference) %>% add_row(trt.ini=reference, .before=1) %>%
-#       dplyr::mutate(trt.jags = 1:dim(.)[1])
-#     # set a study key from the two datasets
-#     study.df.nrs <- data.frame(std.id= c(unique(data1.nrs$study),unique(data2.nrs$study)))
-#     # check we might don't need as.characrter if that is chnaged from the begining
-#     study.key.nrs <- study.df.nrs%>% dplyr::mutate(study.jags = 1:dim(.)[1])
-#
-#
-#     #====================================
-#     # 1. IPD-NRS
-# if(!is.null(data1.nrs)){
-#     if(!(reference %in% data1.nrs$trt)) stop("Reference treatment is not present in the list of treatments.")
-#
-#     #Trt mapping
-#     data1.nrs %<>% mutate(trt.jags=mapvalues(trt,
-#                                              from=trt.key.nrs$trt.ini,
-#                                              to=trt.key.nrs$trt.jags,
-#                                              warn_missing = FALSE)%>%as.integer) # check as.character
-#
-#     #add study mapping to data
-#     data1.nrs %<>% mutate(study.jags=mapvalues(study,
-#                                            from=study.key.nrs$std.id,
-#                                            to=study.key.nrs$study.jags,
-#                                            warn_missing = FALSE)%>% as.integer) # check as.character
-#
-#     # add a matrix of treatment per study row
-#     jagsdata1.nrs <- list()
-#
-#     jagsdata1.nrs$t.ipd <- data1.nrs %>%
-#       arrange(study.jags)%>%
-#       group_by(study.jags,trt.jags)%>% group_keys()%>%
-#       group_by(study.jags)%>%
-#       dplyr::mutate(arm = row_number())%>%ungroup() %>%
-#       spread(arm, trt.jags)%>%
-#       select(-study.jags)%>%
-#       as.matrix()
-#
-#     #generate JAGS data object
-#
-#     jagstemp.nrs1 <- data1.nrs %>% select(-c(study,trt,design))
-#     for (v in names(jagstemp.nrs1)){
-#       jagsdata1.nrs[[v]] <- jagstemp.nrs1 %>% pull(v) #%>% as.vector() #%>% select(-trial, -variable)
-#     }
-#     #modify BUGS object for the various family/link combinations
-#     names(jagsdata1.nrs)[names(jagsdata1.nrs) == "r"]  <- "y"
-#     names(jagsdata1.nrs)[names(jagsdata1.nrs) == "trt.jags"] <- "trt"
-#     names(jagsdata1.nrs)[names(jagsdata1.nrs) == "study.jags"] <- "study"
-#
-#     #add number of treatments, studies, and arms to BUGS data object
-#     jagsdata1.nrs$nt <- trt.key.nrs %>% nrow()
-#     jagsdata1.nrs$ns.ipd <- data1.nrs$study%>% unique() %>% length()
-#     jagsdata1.nrs$na.ipd <- data1.nrs%>% arrange(study.jags)%>% group_by(study.jags)%>% group_map(~length(unique(.x$trt)))%>%
-#       unlist()
-#     jagsdata1.nrs$np <- data1.nrs %>% nrow()
-# } else {
-#   jagsdata1.nrs <- list(ns.ipd=0, nt = trt.key.nrs %>% nrow())
-# }
-#     #====================================
-#     # AD - NRS
-# if(!is.null(data2.nrs)){
-#   jagsdata2.nrs <- list()
-#     #add treatment mapping to data
-#     data2.nrs %<>% mutate(trt.jags=mapvalues(trt,
-#                                              from=trt.key.nrs$trt.ini,
-#                                              to=trt.key.nrs$trt.jags,
-#                                              warn_missing = FALSE) %>% as.integer)
-#     #add study mapping to data
-#     data2.nrs %<>% mutate(study.jags=mapvalues(study,
-#                                            from=study.key.nrs$std.id,
-#                                            to=study.key.nrs$study.jags,
-#                                            warn_missing = FALSE) %>% as.integer)
-#
-#
-#     jagstemp.nrs2 <- data2.nrs %>% arrange(study.jags) %>% group_by(study.jags) %>% dplyr::mutate(arm = row_number()) %>%
-#       ungroup()%>% select(-c(trt,design,study))  %>% gather("variable", "value", -study.jags, -arm) %>% spread(arm, value)
-#
-#     for (v in unique(jagstemp.nrs2$variable)){
-#       jagsdata2.nrs[[v]] <- as.matrix(jagstemp.nrs2 %>% filter(variable == v) %>% select(-study.jags, -variable))
-#     }
-#     names(jagsdata2.nrs)[names(jagsdata2.nrs) == "trt.jags"] <- "t.ad"
-#
-#     #add number of treatments, studies, and arms to JAGS data object
-#     jagsdata2.nrs$ns.ad <- data2.nrs$study %>% unique()%>%length()
-#     jagsdata2.nrs$na.ad <- data2.nrs %>% arrange(study.jags)%>% group_by(study.jags) %>%dplyr::summarize(n.arms = n()) %>%
-#       ungroup() %>% select(n.arms) %>% t() %>% as.vector
-# } else{
-#   jagsdata2.nrs <- list(ns.ad=0)
-# }
-#
-#     # combine jagsdata of IPD and AD
-#     jagsdata.nrs <- c(jagsdata1.nrs,jagsdata2.nrs)
-#
-#     # jags code NRS
-#     model.nrs <- crossnma.code(ipd = ifelse(nrow(data1.nrs)==0,F,T),
-#                            ad = ifelse(nrow(data2.nrs)==0,F,T),
-#                            trt.effect=run.nrs[["trt.effect"]],
-#                            covariate=NULL,
-#                            split.regcoef=F,
-#                            reg0.effect=NULL,
-#                            regb.effect=NULL,
-#                            regw.effect=NULL,
-#                            bias.effect=NULL,
-#                            bias.type=NULL,
-#                            prior.tau.trt=NULL,
-#                            prior.tau.reg0=NULL,
-#                            prior.tau.regb=NULL,
-#                            prior.tau.regw=NULL,
-#                            prior.tau.gamma=NULL,
-#                            prior.pi.high.rct=NULL,
-#                            prior.pi.low.rct=NULL,
-#                            prior.pi.high.nrs=NULL,
-#                            prior.pi.low.nrs=NULL,
-#                            method.bias = NULL,
-#                            d.prior.nrs=NULL)
-#     # jags run NRS
-#
-#     seeds <- sample(.Machine$integer.max, run.nrs[['n.chains']], replace = FALSE)
-#     inits <- list()
-#     for (i in 1:run.nrs[['n.chains']])
-#       inits[[i]] <- list(.RNG.seed = seeds[i], .RNG.name = "base::Mersenne-Twister")
-#
-#     jagsmodel.nrs <- jags.model(textConnection(model.nrs),        #Create a connection so JAGS can access the variables
-#                                 jagsdata.nrs,
-#                                 n.chains=run.nrs[['n.chains']],
-#                                 n.adapt=run.nrs[['n.adapt']],
-#                                 inits = inits)
-#     jagssamples.nrs <- coda.samples(jagsmodel.nrs,
-#                                     variable.names="d",
-#                                     n.iter=run.nrs[['n.iter']],
-#                                     thin=run.nrs[['thin']]
-#     )
-#
-#     # # # # # # # # # # # #
-#     # Output: prior for d's
-#
-#     # map NRS trt to RCT trt
-#     trt.key2 <- trt.key %>% dplyr::mutate(trt.jags.nrs=mapvalues(trt.ini,
-#                                                           from=trt.key.nrs$trt.ini,
-#                                                           to=trt.key.nrs$trt.jags,
-#                                                           warn_missing = FALSE)%>%as.integer)
-#     d.nrs <- summary(jagssamples.nrs)[[1]][,'Mean']+ifelse(is.null(run.nrs$mean.shift),0,run.nrs$mean.shift)
-#     prec.nrs <- ifelse(is.null(run.nrs$var.infl),1,run.nrs$var.infl)/(summary(jagssamples.nrs)[[1]][,'SD']^2)
-#
-#     d.prior.nrs <- ""
-#     for (i in 2:nrow(trt.key2)) {
-#       d.prior0 <- paste0("d[",trt.key2$trt.jags[i],
-#                          "]~dnorm(",
-#                          ifelse(is.na(d.nrs[trt.key2$trt.jags.nrs[i]])|d.nrs[trt.key2$trt.jags.nrs[i]]==0,0,d.nrs[trt.key2$trt.jags.nrs[i]]),",",
-#                          ifelse(is.na(prec.nrs[trt.key2$trt.jags.nrs[i]])|prec.nrs[trt.key2$trt.jags.nrs[i]]==Inf,10^-4,prec.nrs[trt.key2$trt.jags.nrs[i]]),
-#                          ")
-#                     ")
-#       d.prior.nrs <- paste0(d.prior.nrs,d.prior0)
-#     }
-
-#    }
-
+    # data NRS
     if(!(reference %in% data1.nrs$trt)&!(reference %in% data2.nrs$trt)) stop("Reference treatment should be present in the list of treatments in NRS.")
     trt.df.nrs <- data.frame(trt=unique(c(as.character(data1.nrs$trt),as.character(data2.nrs$trt))))
-
+     # check we might don't need as.characrter if that is chnaged from the begining
     trt.key.nrs <- trt.df.nrs$trt %>% unique %>% sort %>% tibble(trt.ini=.) %>%
       filter(trt.ini!=reference) %>% add_row(trt.ini=reference, .before=1) %>%
       dplyr::mutate(trt.jags = 1:dim(.)[1])
     # set a study key from the two datasets
-    study.df.nrs <- data.frame(std.id= c(as.character(unique(data1.nrs$study)),as.character(unique(data2.nrs$study))))
-
+    study.df.nrs <- data.frame(std.id= c(unique(data1.nrs$study),unique(data2.nrs$study)))
+    # check we might don't need as.characrter if that is chnaged from the begining
     study.key.nrs <- study.df.nrs%>% dplyr::mutate(study.jags = 1:dim(.)[1])
 
 
     #====================================
     # 1. IPD-NRS
-    if(!is.null(data1.nrs)){
-      if(!(reference %in% data1.nrs$trt)) stop("Reference treatment is not present in the list of treatments.")
+if(!is.null(data1.nrs)){
+    if(!(reference %in% data1.nrs$trt)) stop("Reference treatment is not present in the list of treatments.")
 
-      #Trt mapping
-      data1.nrs %<>% mutate(trt.jags=mapvalues(trt,
-                                               from=trt.key.nrs$trt.ini,
-                                               to=trt.key.nrs$trt.jags,
-                                               warn_missing = FALSE)%>%as.character()%>%as.integer)
-      # data1.nrs %<>% mutate(study.jags=mapvalues(study,
-      #                                            from=unique(study),
-      #                                            to=seq_len(length(unique(study))),
-      #                                            warn_missing = FALSE
-      # ) %>% as.character %>% as.integer)
-      #add study mapping to data
+    #Trt mapping
+    data1.nrs %<>% mutate(trt.jags=mapvalues(trt,
+                                             from=trt.key.nrs$trt.ini,
+                                             to=trt.key.nrs$trt.jags,
+                                             warn_missing = FALSE)%>%as.integer) # check as.character
 
-      data1.nrs %<>% mutate(study.jags=mapvalues(study,
-                                                 from=study.key.nrs$std.id,
-                                                 to=study.key.nrs$study.jags,
-                                                 warn_missing = FALSE)%>% as.character() %>% as.integer)
+    #add study mapping to data
+    data1.nrs %<>% mutate(study.jags=mapvalues(study,
+                                           from=study.key.nrs$std.id,
+                                           to=study.key.nrs$study.jags,
+                                           warn_missing = FALSE)%>% as.integer) # check as.character
 
-      # add a matrix of treatment per study row
-      jagsdata1.nrs <- list()
+    # add a matrix of treatment per study row
+    jagsdata1.nrs <- list()
 
-      jagsdata1.nrs$t.ipd <- data1.nrs %>%
-        arrange(study.jags)%>%
-        group_by(study.jags,trt.jags)%>% group_keys()%>%
-        group_by(study.jags)%>%
-        dplyr::mutate(arm = row_number())%>%ungroup() %>%
-        spread(arm, trt.jags)%>%
-        select(-study.jags)%>%
-        as.matrix()
+    jagsdata1.nrs$t.ipd <- data1.nrs %>%
+      arrange(study.jags)%>%
+      group_by(study.jags,trt.jags)%>% group_keys()%>%
+      group_by(study.jags)%>%
+      dplyr::mutate(arm = row_number())%>%ungroup() %>%
+      spread(arm, trt.jags)%>%
+      select(-study.jags)%>%
+      as.matrix()
 
-      #generate JAGS data object
+    #generate JAGS data object
 
-      jagstemp.nrs1 <- data1.nrs %>% select(-c(study,trt,design))
-      for (v in names(jagstemp.nrs1)){
-        jagsdata1.nrs[[v]] <- jagstemp.nrs1 %>% pull(v) #%>% as.vector() #%>% select(-trial, -variable)
-      }
-      #modify BUGS object for the various family/link combinations
-      names(jagsdata1.nrs)[names(jagsdata1.nrs) == "r"]  <- "y"
-      names(jagsdata1.nrs)[names(jagsdata1.nrs) == "trt.jags"] <- "trt"
-      names(jagsdata1.nrs)[names(jagsdata1.nrs) == "study.jags"] <- "study"
-
-      #add number of treatments, studies, and arms to BUGS data object
-      jagsdata1.nrs$nt <- trt.key.nrs %>% nrow()
-      jagsdata1.nrs$ns.ipd <- data1.nrs$study%>% unique() %>% length()
-      jagsdata1.nrs$na.ipd <- data1.nrs%>% arrange(study.jags)%>% group_by(study.jags)%>% group_map(~length(unique(.x$trt)))%>%
-        unlist()
-      jagsdata1.nrs$np <- data1.nrs %>% nrow()
-    }else{
-      jagsdata1.nrs <- list(ns.ipd=0, nt = trt.key.nrs %>% nrow())
+    jagstemp.nrs1 <- data1.nrs %>% select(-c(study,trt,design))
+    for (v in names(jagstemp.nrs1)){
+      jagsdata1.nrs[[v]] <- jagstemp.nrs1 %>% pull(v) #%>% as.vector() #%>% select(-trial, -variable)
     }
+    #modify BUGS object for the various family/link combinations
+    names(jagsdata1.nrs)[names(jagsdata1.nrs) == "r"]  <- "y"
+    names(jagsdata1.nrs)[names(jagsdata1.nrs) == "trt.jags"] <- "trt"
+    names(jagsdata1.nrs)[names(jagsdata1.nrs) == "study.jags"] <- "study"
+
+    #add number of treatments, studies, and arms to BUGS data object
+    jagsdata1.nrs$nt <- trt.key.nrs %>% nrow()
+    jagsdata1.nrs$ns.ipd <- data1.nrs$study%>% unique() %>% length()
+    jagsdata1.nrs$na.ipd <- data1.nrs%>% arrange(study.jags)%>% group_by(study.jags)%>% group_map(~length(unique(.x$trt)))%>%
+      unlist()
+    jagsdata1.nrs$np <- data1.nrs %>% nrow()
+} else {
+  jagsdata1.nrs <- list(ns.ipd=0, nt = trt.key.nrs %>% nrow())
+}
     #====================================
     # AD - NRS
+if(!is.null(data2.nrs)){
+  jagsdata2.nrs <- list()
     #add treatment mapping to data
-    if(!is.null(data2.nrs)){
-      jagsdata2.nrs <- list()
-      data2.nrs %<>% mutate(trt.jags=mapvalues(trt,
-                                               from=trt.key.nrs$trt.ini,
-                                               to=trt.key.nrs$trt.jags,
-                                               warn_missing = FALSE) %>% as.integer)
-      #add study mapping to data
-      data2.nrs %<>% mutate(study.jags=mapvalues(study,
-                                                 from=study.key.nrs$std.id,
-                                                 to=study.key.nrs$study.jags,
-                                                 warn_missing = FALSE) %>% as.integer)
+    data2.nrs %<>% mutate(trt.jags=mapvalues(trt,
+                                             from=trt.key.nrs$trt.ini,
+                                             to=trt.key.nrs$trt.jags,
+                                             warn_missing = FALSE) %>% as.integer)
+    #add study mapping to data
+    data2.nrs %<>% mutate(study.jags=mapvalues(study,
+                                           from=study.key.nrs$std.id,
+                                           to=study.key.nrs$study.jags,
+                                           warn_missing = FALSE) %>% as.integer)
 
 
-      jagstemp.nrs2 <- data2.nrs %>% arrange(study.jags) %>% group_by(study.jags) %>% dplyr::mutate(arm = row_number()) %>%
-        ungroup()%>% select(-c(trt,design,study))  %>% gather("variable", "value", -study.jags, -arm) %>% spread(arm, value)
+    jagstemp.nrs2 <- data2.nrs %>% arrange(study.jags) %>% group_by(study.jags) %>% dplyr::mutate(arm = row_number()) %>%
+      ungroup()%>% select(-c(trt,design,study))  %>% gather("variable", "value", -study.jags, -arm) %>% spread(arm, value)
 
-      for (v in unique(jagstemp.nrs2$variable)){
-        jagsdata2.nrs[[v]] <- as.matrix(jagstemp.nrs2 %>% filter(variable == v) %>% select(-study.jags, -variable))
-      }
-      names(jagsdata2.nrs)[names(jagsdata2.nrs) == "trt.jags"] <- "t.ad"
-
-      #add number of treatments, studies, and arms to JAGS data object
-      jagsdata2.nrs$ns.ad <- ifelse(!is.null(std.data),data2.nrs$study %>% unique()%>%length(),0)
-      jagsdata2.nrs$na.ad <- data2.nrs %>% arrange(study.jags)%>% group_by(study.jags) %>%dplyr::summarize(n.arms = n()) %>%
-        ungroup() %>% select(n.arms) %>% t() %>% as.vector
-      jagsdata2.nrs$ns.ad <- 0
-
-    }else{
-      jagsdata2.nrs <- list(ns.ad=0)
+    for (v in unique(jagstemp.nrs2$variable)){
+      jagsdata2.nrs[[v]] <- as.matrix(jagstemp.nrs2 %>% filter(variable == v) %>% select(-study.jags, -variable))
     }
+    names(jagsdata2.nrs)[names(jagsdata2.nrs) == "trt.jags"] <- "t.ad"
+
+    #add number of treatments, studies, and arms to JAGS data object
+    jagsdata2.nrs$ns.ad <- data2.nrs$study %>% unique()%>%length()
+    jagsdata2.nrs$na.ad <- data2.nrs %>% arrange(study.jags)%>% group_by(study.jags) %>%dplyr::summarize(n.arms = n()) %>%
+      ungroup() %>% select(n.arms) %>% t() %>% as.vector
+} else{
+  jagsdata2.nrs <- list(ns.ad=0)
+}
+
     # combine jagsdata of IPD and AD
     jagsdata.nrs <- c(jagsdata1.nrs,jagsdata2.nrs)
 
     # jags code NRS
     model.nrs <- crossnma.code(ipd = ifelse(nrow(data1.nrs)==0,F,T),
-                               ad = ifelse(nrow(data2.nrs)==0,F,T),
-                               trt.effect='common',
-                               covariate=NULL,
-                               split.regcoef=F,
-                               reg0.effect=NULL,
-                               regb.effect=NULL,
-                               regw.effect=NULL,
-                               bias.effect=NULL,
-                               bias.type=NULL,
-                               prior.tau.trt=NULL,
-                               prior.tau.reg0=NULL,
-                               prior.tau.regb=NULL,
-                               prior.tau.regw=NULL,
-                               prior.tau.gamma=NULL,
-                               prior.pi.high.rct=NULL,
-                               prior.pi.low.rct=NULL,
-                               prior.pi.high.nrs=NULL,
-                               prior.pi.low.nrs=NULL,
-                               method.bias = NULL,
-                               d.prior.nrs=NULL)
-
+                           ad = ifelse(nrow(data2.nrs)==0,F,T),
+                           trt.effect=run.nrs[["trt.effect"]],
+                           covariate=NULL,
+                           split.regcoef=F,
+                           reg0.effect=NULL,
+                           regb.effect=NULL,
+                           regw.effect=NULL,
+                           bias.effect=NULL,
+                           bias.type=NULL,
+                           prior.tau.trt=NULL,
+                           prior.tau.reg0=NULL,
+                           prior.tau.regb=NULL,
+                           prior.tau.regw=NULL,
+                           prior.tau.gamma=NULL,
+                           prior.pi.high.rct=NULL,
+                           prior.pi.low.rct=NULL,
+                           prior.pi.high.nrs=NULL,
+                           prior.pi.low.nrs=NULL,
+                           method.bias = NULL,
+                           d.prior.nrs=NULL)
     # jags run NRS
 
     seeds <- sample(.Machine$integer.max, run.nrs[['n.chains']], replace = FALSE)
@@ -1167,16 +1000,12 @@ if (method.bias%in%c("adjust1","adjust2")) {
 
     # # # # # # # # # # # #
     # Output: prior for d's
-    trt.df <- data.frame(trt=unique(c(as.character(mydata$treat),as.character(mystd.data$treat))))
 
-    trt.key <- trt.df$trt %>% unique %>% sort %>% tibble(trt.ini=.) %>%
-      filter(trt.ini!=reference) %>% add_row(trt.ini=reference, .before=1) %>%
-      dplyr::mutate(trt.jags = 1:dim(.)[1])
     # map NRS trt to RCT trt
     trt.key2 <- trt.key %>% dplyr::mutate(trt.jags.nrs=mapvalues(trt.ini,
-                                                                 from=trt.key.nrs$trt.ini,
-                                                                 to=trt.key.nrs$trt.jags,
-                                                                 warn_missing = FALSE)%>%as.integer)
+                                                          from=trt.key.nrs$trt.ini,
+                                                          to=trt.key.nrs$trt.jags,
+                                                          warn_missing = FALSE)%>%as.integer)
     d.nrs <- summary(jagssamples.nrs)[[1]][,'Mean']+ifelse(is.null(run.nrs$mean.shift),0,run.nrs$mean.shift)
     prec.nrs <- ifelse(is.null(run.nrs$var.infl),1,run.nrs$var.infl)/(summary(jagssamples.nrs)[[1]][,'SD']^2)
 
@@ -1190,6 +1019,175 @@ if (method.bias%in%c("adjust1","adjust2")) {
                     ")
       d.prior.nrs <- paste0(d.prior.nrs,d.prior0)
     }
+
+    # if(!(reference %in% data1.nrs$trt)&!(reference %in% data2.nrs$trt)) stop("Reference treatment should be present in the list of treatments in NRS.")
+    # trt.df.nrs <- data.frame(trt=unique(c(as.character(data1.nrs$trt),as.character(data2.nrs$trt))))
+    #
+    # trt.key.nrs <- trt.df.nrs$trt %>% unique %>% sort %>% tibble(trt.ini=.) %>%
+    #   filter(trt.ini!=reference) %>% add_row(trt.ini=reference, .before=1) %>%
+    #   dplyr::mutate(trt.jags = 1:dim(.)[1])
+    # # set a study key from the two datasets
+    # study.df.nrs <- data.frame(std.id= c(as.character(unique(data1.nrs$study)),as.character(unique(data2.nrs$study))))
+    #
+    # study.key.nrs <- study.df.nrs%>% dplyr::mutate(study.jags = 1:dim(.)[1])
+    #
+    #
+    # #====================================
+    # # 1. IPD-NRS
+    # if(!is.null(data1.nrs)){
+    #   if(!(reference %in% data1.nrs$trt)) stop("Reference treatment is not present in the list of treatments.")
+    #
+    #   #Trt mapping
+    #   data1.nrs %<>% mutate(trt.jags=mapvalues(trt,
+    #                                            from=trt.key.nrs$trt.ini,
+    #                                            to=trt.key.nrs$trt.jags,
+    #                                            warn_missing = FALSE)%>%as.character()%>%as.integer)
+    #   # data1.nrs %<>% mutate(study.jags=mapvalues(study,
+    #   #                                            from=unique(study),
+    #   #                                            to=seq_len(length(unique(study))),
+    #   #                                            warn_missing = FALSE
+    #   # ) %>% as.character %>% as.integer)
+    #   #add study mapping to data
+    #
+    #   data1.nrs %<>% mutate(study.jags=mapvalues(study,
+    #                                              from=study.key.nrs$std.id,
+    #                                              to=study.key.nrs$study.jags,
+    #                                              warn_missing = FALSE)%>% as.character() %>% as.integer)
+    #
+    #   # add a matrix of treatment per study row
+    #   jagsdata1.nrs <- list()
+    #
+    #   jagsdata1.nrs$t.ipd <- data1.nrs %>%
+    #     arrange(study.jags)%>%
+    #     group_by(study.jags,trt.jags)%>% group_keys()%>%
+    #     group_by(study.jags)%>%
+    #     dplyr::mutate(arm = row_number())%>%ungroup() %>%
+    #     spread(arm, trt.jags)%>%
+    #     select(-study.jags)%>%
+    #     as.matrix()
+    #
+    #   #generate JAGS data object
+    #
+    #   jagstemp.nrs1 <- data1.nrs %>% select(-c(study,trt,design))
+    #   for (v in names(jagstemp.nrs1)){
+    #     jagsdata1.nrs[[v]] <- jagstemp.nrs1 %>% pull(v) #%>% as.vector() #%>% select(-trial, -variable)
+    #   }
+    #   #modify BUGS object for the various family/link combinations
+    #   names(jagsdata1.nrs)[names(jagsdata1.nrs) == "r"]  <- "y"
+    #   names(jagsdata1.nrs)[names(jagsdata1.nrs) == "trt.jags"] <- "trt"
+    #   names(jagsdata1.nrs)[names(jagsdata1.nrs) == "study.jags"] <- "study"
+    #
+    #   #add number of treatments, studies, and arms to BUGS data object
+    #   jagsdata1.nrs$nt <- trt.key.nrs %>% nrow()
+    #   jagsdata1.nrs$ns.ipd <- data1.nrs$study%>% unique() %>% length()
+    #   jagsdata1.nrs$na.ipd <- data1.nrs%>% arrange(study.jags)%>% group_by(study.jags)%>% group_map(~length(unique(.x$trt)))%>%
+    #     unlist()
+    #   jagsdata1.nrs$np <- data1.nrs %>% nrow()
+    # }else{
+    #   jagsdata1.nrs <- list(ns.ipd=0, nt = trt.key.nrs %>% nrow())
+    # }
+    # #====================================
+    # # AD - NRS
+    # #add treatment mapping to data
+    # if(!is.null(data2.nrs)){
+    #   jagsdata2.nrs <- list()
+    #   data2.nrs %<>% mutate(trt.jags=mapvalues(trt,
+    #                                            from=trt.key.nrs$trt.ini,
+    #                                            to=trt.key.nrs$trt.jags,
+    #                                            warn_missing = FALSE) %>% as.integer)
+    #   #add study mapping to data
+    #   data2.nrs %<>% mutate(study.jags=mapvalues(study,
+    #                                              from=study.key.nrs$std.id,
+    #                                              to=study.key.nrs$study.jags,
+    #                                              warn_missing = FALSE) %>% as.integer)
+    #
+    #
+    #   jagstemp.nrs2 <- data2.nrs %>% arrange(study.jags) %>% group_by(study.jags) %>% dplyr::mutate(arm = row_number()) %>%
+    #     ungroup()%>% select(-c(trt,design,study))  %>% gather("variable", "value", -study.jags, -arm) %>% spread(arm, value)
+    #
+    #   for (v in unique(jagstemp.nrs2$variable)){
+    #     jagsdata2.nrs[[v]] <- as.matrix(jagstemp.nrs2 %>% filter(variable == v) %>% select(-study.jags, -variable))
+    #   }
+    #   names(jagsdata2.nrs)[names(jagsdata2.nrs) == "trt.jags"] <- "t.ad"
+    #
+    #   #add number of treatments, studies, and arms to JAGS data object
+    #   jagsdata2.nrs$ns.ad <- ifelse(!is.null(std.data),data2.nrs$study %>% unique()%>%length(),0)
+    #   jagsdata2.nrs$na.ad <- data2.nrs %>% arrange(study.jags)%>% group_by(study.jags) %>%dplyr::summarize(n.arms = n()) %>%
+    #     ungroup() %>% select(n.arms) %>% t() %>% as.vector
+    #   jagsdata2.nrs$ns.ad <- 0
+    #
+    # }else{
+    #   jagsdata2.nrs <- list(ns.ad=0)
+    # }
+    # # combine jagsdata of IPD and AD
+    # jagsdata.nrs <- c(jagsdata1.nrs,jagsdata2.nrs)
+    #
+    # # jags code NRS
+    # model.nrs <- crossnma.code(ipd = ifelse(nrow(data1.nrs)==0,F,T),
+    #                            ad = ifelse(nrow(data2.nrs)==0,F,T),
+    #                            trt.effect='common',
+    #                            covariate=NULL,
+    #                            split.regcoef=F,
+    #                            reg0.effect=NULL,
+    #                            regb.effect=NULL,
+    #                            regw.effect=NULL,
+    #                            bias.effect=NULL,
+    #                            bias.type=NULL,
+    #                            prior.tau.trt=NULL,
+    #                            prior.tau.reg0=NULL,
+    #                            prior.tau.regb=NULL,
+    #                            prior.tau.regw=NULL,
+    #                            prior.tau.gamma=NULL,
+    #                            prior.pi.high.rct=NULL,
+    #                            prior.pi.low.rct=NULL,
+    #                            prior.pi.high.nrs=NULL,
+    #                            prior.pi.low.nrs=NULL,
+    #                            method.bias = NULL,
+    #                            d.prior.nrs=NULL)
+    #
+    # # jags run NRS
+    #
+    # seeds <- sample(.Machine$integer.max, run.nrs[['n.chains']], replace = FALSE)
+    # inits <- list()
+    # for (i in 1:run.nrs[['n.chains']])
+    #   inits[[i]] <- list(.RNG.seed = seeds[i], .RNG.name = "base::Mersenne-Twister")
+    #
+    # jagsmodel.nrs <- jags.model(textConnection(model.nrs),        #Create a connection so JAGS can access the variables
+    #                             jagsdata.nrs,
+    #                             n.chains=run.nrs[['n.chains']],
+    #                             n.adapt=run.nrs[['n.adapt']],
+    #                             inits = inits)
+    # jagssamples.nrs <- coda.samples(jagsmodel.nrs,
+    #                                 variable.names="d",
+    #                                 n.iter=run.nrs[['n.iter']],
+    #                                 thin=run.nrs[['thin']]
+    # )
+    #
+    # # # # # # # # # # # # #
+    # # Output: prior for d's
+    # trt.df <- data.frame(trt=unique(c(as.character(mydata$treat),as.character(mystd.data$treat))))
+    #
+    # trt.key <- trt.df$trt %>% unique %>% sort %>% tibble(trt.ini=.) %>%
+    #   filter(trt.ini!=reference) %>% add_row(trt.ini=reference, .before=1) %>%
+    #   dplyr::mutate(trt.jags = 1:dim(.)[1])
+    # # map NRS trt to RCT trt
+    # trt.key2 <- trt.key %>% dplyr::mutate(trt.jags.nrs=mapvalues(trt.ini,
+    #                                                              from=trt.key.nrs$trt.ini,
+    #                                                              to=trt.key.nrs$trt.jags,
+    #                                                              warn_missing = FALSE)%>%as.integer)
+    # d.nrs <- summary(jagssamples.nrs)[[1]][,'Mean']+ifelse(is.null(run.nrs$mean.shift),0,run.nrs$mean.shift)
+    # prec.nrs <- ifelse(is.null(run.nrs$var.infl),1,run.nrs$var.infl)/(summary(jagssamples.nrs)[[1]][,'SD']^2)
+    #
+    # d.prior.nrs <- ""
+    # for (i in 2:nrow(trt.key2)) {
+    #   d.prior0 <- paste0("d[",trt.key2$trt.jags[i],
+    #                      "]~dnorm(",
+    #                      ifelse(is.na(d.nrs[trt.key2$trt.jags.nrs[i]])|d.nrs[trt.key2$trt.jags.nrs[i]]==0,0,d.nrs[trt.key2$trt.jags.nrs[i]]),",",
+    #                      ifelse(is.na(prec.nrs[trt.key2$trt.jags.nrs[i]])|prec.nrs[trt.key2$trt.jags.nrs[i]]==Inf,10^-4,prec.nrs[trt.key2$trt.jags.nrs[i]]),
+    #                      ")
+    #                 ")
+    #   d.prior.nrs <- paste0(d.prior.nrs,d.prior0)
+    # }
 
 
   }else {d.prior.nrs <- NULL}
