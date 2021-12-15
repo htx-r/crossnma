@@ -374,6 +374,7 @@ mod3 <- crossnma.model(prt.data=prt.data,
                    #---------- bias adjustment ----------
                    method.bias='prior',
                    run.nrs=list(var.infl=0.6,
+                                trt.effect="common",
                                 n.adapt = 500,
                                 n.iter=10000,
                                 n.burnin = 4000,

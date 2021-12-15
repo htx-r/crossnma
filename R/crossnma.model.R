@@ -156,8 +156,8 @@ crossnma.model <- function(prt.data,
                                     mean.shift=0,
                                     trt.effect="common",
                                     n.adapt = 2000,
-                                    n.iter=100000,
-                                    n.burnin = 40000,
+                                    n.iter=10000,
+                                    n.burnin = 4000,
                                     thin=1,
                                     n.chains=2)
 ){
@@ -957,11 +957,19 @@ if(!is.null(data2.nrs)){
 
     # combine jagsdata of IPD and AD
     jagsdata.nrs <- c(jagsdata1.nrs,jagsdata2.nrs)
-
+    # set default values to the list in run.nrs
+    var.infl.nrs <- ifelse(is.null(run.nrs[["var.infl"]]),1,run.nrs[["var.infl"]])
+    mean.shift.nrs <- ifelse(is.null(run.nrs[["mean.shift"]]),0,run.nrs[["mean.shift"]])
+    trt.effect.nrs <- ifelse(is.null(run.nrs[["trt.effect"]]),"common",run.nrs[["trt.effect"]])
+    n.chains.nrs <- ifelse(is.null(run.nrs[["n.chains"]]),2,run.nrs[["n.chains"]])
+    n.adapt.nrs <- ifelse(is.null(run.nrs[["n.adapt"]]),500,run.nrs[["n.adapt"]])
+    n.iter.nrs <- ifelse(is.null(run.nrs[["n.iter"]]),10000,run.nrs[["n.iter"]])
+    thin.nrs <- ifelse(is.null(run.nrs[["thin"]]),1,run.nrs[["thin"]])
+    n.burnin.nrs <-ifelse(is.null(run.nrs[["n.burnin"]]),4000,run.nrs[["n.burnin"]])
     # jags code NRS
     model.nrs <- crossnma.code(ipd = ifelse(nrow(data1.nrs)==0,F,T),
                            ad = ifelse(nrow(data2.nrs)==0,F,T),
-                           trt.effect=run.nrs[["trt.effect"]],
+                           trt.effect=trt.effect.nrs,
                            covariate=NULL,
                            split.regcoef=F,
                            reg0.effect=NULL,
@@ -982,20 +990,22 @@ if(!is.null(data2.nrs)){
                            d.prior.nrs=NULL)
     # jags run NRS
 
-    seeds <- sample(.Machine$integer.max, run.nrs[['n.chains']], replace = FALSE)
+    seeds <- sample(.Machine$integer.max, n.chains.nrs , replace = FALSE)
     inits <- list()
-    for (i in 1:run.nrs[['n.chains']])
+    for (i in 1:n.chains.nrs)
       inits[[i]] <- list(.RNG.seed = seeds[i], .RNG.name = "base::Mersenne-Twister")
 
     jagsmodel.nrs <- jags.model(textConnection(model.nrs),        #Create a connection so JAGS can access the variables
                                 jagsdata.nrs,
-                                n.chains=run.nrs[['n.chains']],
-                                n.adapt=run.nrs[['n.adapt']],
+                                n.chains=n.chains.nrs,
+                                n.adapt=n.adapt.nrs,
                                 inits = inits)
+    if(n.burnin.nrs!=0) update(jagsmodel.nrs, n.burnin.nrs)
+
     jagssamples.nrs <- coda.samples(jagsmodel.nrs,
                                     variable.names="d",
-                                    n.iter=run.nrs[['n.iter']],
-                                    thin=run.nrs[['thin']]
+                                    n.iter=n.iter.nrs,
+                                    thin=thin.nrs
     )
 
     # # # # # # # # # # # #
@@ -1006,15 +1016,15 @@ if(!is.null(data2.nrs)){
                                                           from=trt.key.nrs$trt.ini,
                                                           to=trt.key.nrs$trt.jags,
                                                           warn_missing = FALSE)%>%as.integer)
-    d.nrs <- summary(jagssamples.nrs)[[1]][,'Mean']+ifelse(is.null(run.nrs$mean.shift),0,run.nrs$mean.shift)
-    prec.nrs <- ifelse(is.null(run.nrs$var.infl),1,run.nrs$var.infl)/(summary(jagssamples.nrs)[[1]][,'SD']^2)
+    d.nrs <- summary(jagssamples.nrs)[[1]][,'Mean']+mean.shift.nrs)
+    prec.nrs <- ifelse(is.null(var.infl.nrs),1,var.infl.nrs)/(summary(jagssamples.nrs)[[1]][,'SD']^2)
 
     d.prior.nrs <- ""
     for (i in 2:nrow(trt.key2)) {
       d.prior0 <- paste0("d[",trt.key2$trt.jags[i],
                          "]~dnorm(",
                          ifelse(is.na(d.nrs[trt.key2$trt.jags.nrs[i]])|d.nrs[trt.key2$trt.jags.nrs[i]]==0,0,d.nrs[trt.key2$trt.jags.nrs[i]]),",",
-                         ifelse(is.na(prec.nrs[trt.key2$trt.jags.nrs[i]])|prec.nrs[trt.key2$trt.jags.nrs[i]]==Inf,10^-4,prec.nrs[trt.key2$trt.jags.nrs[i]]),
+                         ifelse(is.na(prec.nrs[trt.key2$trt.jags.nrs[i]])|prec.nrs[trt.key2$trt.jags.nrs[i]]==Inf,10^-2,prec.nrs[trt.key2$trt.jags.nrs[i]]),
                          ")
                     ")
       d.prior.nrs <- paste0(d.prior.nrs,d.prior0)
