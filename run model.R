@@ -9,6 +9,31 @@ n.burnin = 40
 thin=1
 n.chains=2
 
+# prior method
+mod3 <- crossnma.model(prt.data=prt.data,
+                       std.data=std.data,
+                       trt='trt',
+                       study='study',
+                       outcome='outcome',
+                       n='n',
+                       design='design',
+                       reference='D',
+                       trt.effect='common',
+                       #---------- bias adjustment ----------
+                       method.bias='prior'
+)
+
+
+# run jags
+jagsfit3 <- crossnma.run(model=mod3,
+                         n.adapt = n.adapt,
+                         n.iter=n.iter,
+                         n.burnin = n.burnin,
+                         thin=thin,
+                         n.chains=n.chains,
+                         monitor=c('LOR'))
+
+# adjust1
 mod3 <- crossnma.model(prt.data=NULL,
                        std.data=std.data,
                        trt='trt',

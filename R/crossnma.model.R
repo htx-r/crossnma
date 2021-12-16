@@ -1016,7 +1016,7 @@ if(!is.null(data2.nrs)){
                                                           from=trt.key.nrs$trt.ini,
                                                           to=trt.key.nrs$trt.jags,
                                                           warn_missing = FALSE)%>%as.integer)
-    d.nrs <- summary(jagssamples.nrs)[[1]][,'Mean']+mean.shift.nrs)
+    d.nrs <- summary(jagssamples.nrs)[[1]][,'Mean']+mean.shift.nrs
     prec.nrs <- ifelse(is.null(var.infl.nrs),1,var.infl.nrs)/(summary(jagssamples.nrs)[[1]][,'SD']^2)
 
     d.prior.nrs <- ""
