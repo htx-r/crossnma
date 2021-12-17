@@ -391,7 +391,7 @@ crossnma.code <- function(ipd = T,
                                     ifelse(add.std.in,paste0("g",i,"~dnorm(0, 0.01)\n"),""),
                                     ifelse(add.std.act.yes,paste0("g.act",i,"~dnorm(0, 0.01)\n"),""),
                                     "prec.gamma",i," <- pow(tau.gamma",i,",-2)",
-                                    "tau.gamma",i,prior.tau.gamma)
+                                    "\n tau.gamma",i,"~",prior.tau.gamma)
             gamma.effect <- paste0(gamma.effect,gamma.effect0)
           }
         }else{
