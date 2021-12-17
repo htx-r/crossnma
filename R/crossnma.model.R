@@ -345,11 +345,13 @@ crossnma.model <- function(prt.data,
   if(!is.null(split.regcoef)){ if(!is.logical(split.regcoef)) stop("split.regcoef is a logical value TRUE/FALSE")}
 
   # 4. dependency
-  if(trt.effect=='random'&!is.null(prior$tau.trt)) warning(" The prior of the heterogeneity between relative treatments parameters is ignored")
-  if(reg0.effect=='random'&!is.null(prior$tau.reg0)) warning(" The prior of the heterogeneity between progonostic parameters is ignored")
-  if(regw.effect=='random'&!is.null(prior$tau.regw)) warning(" The prior of the heterogeneity between within-study interaction parameters is ignored")
-  if(regb.effect=='random'&!is.null(prior$tau.regb)) warning(" The prior of the heterogeneity between between-study interaction parameters is ignored")
-  if(bias.effect=='random'&!is.null(prior$tau.gamma)) warning(" The prior of the heterogeneity between bias effect parameters is ignored")
+  if(!is.null(prior)){
+  if(trt.effect=='common'&!is.null(prior$tau.trt)) warning(" The prior of the heterogeneity between relative treatments parameters is ignored")
+  if(reg0.effect=='common'&!is.null(prior$tau.reg0)) warning(" The prior of the heterogeneity between progonostic parameters is ignored")
+  if(regw.effect=='common'&!is.null(prior$tau.regw)) warning(" The prior of the heterogeneity between within-study interaction parameters is ignored")
+  if(regb.effect=='common'&!is.null(prior$tau.regb)) warning(" The prior of the heterogeneity between between-study interaction parameters is ignored")
+  if(bias.effect=='common'&!is.null(prior$tau.gamma)) warning(" The prior of the heterogeneity between bias effect parameters is ignored")
+  }
   if(!is.null(data11)&!is.null(unfav)){if(!data11$unfav%in%c(0,1)) stop("The values of 'unfav' should be either 0 or 1")}
   if(!is.null(data22)&!is.null(unfav)){if(!data22$unfav%in%c(0,1)) stop("The values of 'unfav' should be either 0 or 1")}
 
