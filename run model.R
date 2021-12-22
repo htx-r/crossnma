@@ -1,7 +1,6 @@
 devtools::install_github("htx-r/crossnma",force = TRUE)
 library(crossnma)
-library(rjags)
-load.module("mix")
+
 #-------- MCMC settings --------#
 n.adapt = 20
 n.iter=100
@@ -18,7 +17,7 @@ mod3 <- crossnma.model(prt.data=prt.data,
                        n='n',
                        design='design',
                        reference='D',
-                       trt.effect='common',
+                       trt.effect='random',
                        #---------- bias adjustment ----------
                        method.bias='prior'
 )
@@ -42,17 +41,16 @@ mod3 <- crossnma.model(prt.data=NULL,
                        n='n',
                        design='design',
                        reference='A',
-                       trt.effect='common',
+                       trt.effect='random',
                        #---------- bias adjustment ----------
                        method.bias='adjust2',
                        bias='bias',
                        bias.type='add',
                        bias.effect='common',
                        unfav="unfav",
-                       bias.group="bias.group"
-)
+                       bias.group="bias.group")
 
-
+cat(mod3$jagsmodel)
 # run jags
 jagsfit3 <- crossnma.run(model=mod3,
                          n.adapt = n.adapt,

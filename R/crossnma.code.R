@@ -462,7 +462,7 @@ crossnma.code <- function(ipd = T,
 
         theta.effect.ipd <- "
         theta1[j,t.ipd[j,k]] ~dnorm(md[j,t.ipd[j,k]],precd[j,t.ipd[j,k]])
-        theta2[j,t.ipd[j,k]] ~dnorm(md[j,t.ipd[j,k]]+gamma[j],precd[j,t.ipd[j,k]]+prec.gamma)
+        theta2[j,t.ipd[j,k]] ~dnorm(md[j,t.ipd[j,k]]+gamma[j],precd[j,t.ipd[j,k]]+(prec.gamma*2*(k-1)/k))
         theta[j,t.ipd[j,k]] <- (1-pi[bias_index[j]])*theta1[j,t.ipd[j,k]]+pi[bias_index[j]]*theta2[j,t.ipd[j,k]]
         # multi-arm correction
       md[j,t.ipd[j,k]]<- mean[j,k] + sw[j,k]
@@ -473,7 +473,7 @@ crossnma.code <- function(ipd = T,
 
         theta.effect.ad <- "
         theta1[j+ns.ipd,t.ad[j,k]]~dnorm(md.ad[j,t.ad[j,k]],precd.ad[j,t.ad[j,k]])
-      theta2[j+ns.ipd,t.ad[j,k]]~dnorm(md.ad[j,t.ad[j,k]]+gamma[j+ns.ipd],precd.ad[j,t.ad[j,k]]+prec.gamma)
+      theta2[j+ns.ipd,t.ad[j,k]]~dnorm(md.ad[j,t.ad[j,k]]+gamma[j+ns.ipd],precd.ad[j,t.ad[j,k]]+(prec.gamma*2*(k-1)/k))
       theta[j+ns.ipd,t.ad[j,k]] <- (1-pi[bias_index[j]])*theta1[j+ns.ipd,t.ad[j,k]]+pi[bias_index[j]]*theta2[j+ns.ipd,t.ad[j,k]]
         # multi-arm correction
       md.ad[j,t.ad[j,k]]<- mean.ad[j,k] + sw.ad[j,k]
