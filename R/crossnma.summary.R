@@ -13,9 +13,7 @@
 #'@return \code{n.eff} an estimate of the effective sample size. The smaller the value of n.eff the greater the uncertainty associated with the corresponding parameter.
 #'
 #'@export
-#'
-#'
-#'
+
 
 summary.crossnma <- function(x, digits = 3,  quantiles = c(0.025, 0.5, 0.975), expo=TRUE, ...)
 {

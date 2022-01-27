@@ -1,4 +1,3 @@
-# delete the message from study.jags once I run the adjust1 and adjust2 models
 # delete NA from data is not applied! CHECK
 # add trt.effect to nrs.run in Vignette and the manuscript
 #' Create JAGS model to synthesize cross-design evidence and cross-format data in NMA and NMR for dichotomous outcomes
@@ -41,6 +40,7 @@
 #' @param bias.group An optional charachter which defines the names of the variables in prt.data and std.data that indicates the bias effect in each study (can be provided when method.bias='adjust1' or 'adjust2')
 #' The entries of these variables should be either 1 (study has inactive treatment and its estimate should be adjusted for bias effect), 2 (study has only active treatments and its estimate should be adjusted for bias effect (different from inactive bias effect)
 #' or 0 (study doesn't need bias adjustment). The values need to be repeated for the participants that belong to the same study. Default is 1 which means applying bias adjustment to all study-specific estimates if the study is at high risk of bias.
+#' @param down.wgt An optional numeric indicating the percent to which studies at high risk of bias will be down-weighted on average. The value ranges between 0 and 1. It can be provided when method.bias='adjust1' or 'adjust2'.
 #' @param prior An optional list to control the prior for various parameters in JAGS model. When effects are set as 'random', we can set the heterogeneity parameters for: tau.trt for the treatment effects,
 #' tau.reg0 for the effect of prognostic covariates, tau.regb and tau.regw for within- and between-study covariate effect, respectively.
 #' and tau.gamma for bias effect. The default of all heterogeneity parameters is 'dunif(0,2)'. Currently only the uniform distribution is supported.
@@ -140,6 +140,7 @@ crossnma.model <- function(prt.data,
                        bias.type=NULL,#c('add','mult','both'),
                        bias.covariate=NULL,
                        bias.effect='common',
+                       down.wgt=NULL,
                        # ---------- prior ----------
                        prior=list(tau.trt=NULL,
                                   tau.reg0=NULL,
@@ -226,83 +227,8 @@ crossnma.model <- function(prt.data,
   }else{
     data22 <- NULL
   }
-  # if(!is.null(prt.data)){
-  #   varlist1 <- c(trt = trt[1],
-  #                 study = study[1],
-  #                 r = outcome[1],
-  #                 design=design[1],
-  #                 bias=bias[1],
-  #                 x.bias=bias.covariate[1],
-  #                 bias.group=bias.group[1],
-  #                 unfav=unfav[1])
-  #
-  #   if(!is.null(covariate)){
-  #     x11 <- covariate[[1]][1]
-  #     x21<- ifelse(is.na(covariate[[1]][2]),list(NULL),covariate[[1]][2])[[1]]
-  #     x31<- ifelse(is.na(covariate[[1]][3]),list(NULL),covariate[[1]][3])[[1]]
-  #   } else {
-  #     x11 <- NULL
-  #     x21 <- NULL
-  #     x31 <- NULL
-  #   }
-  #   covlist1 <- c(x1=x11,x2=x21,x3=x31)
-  #
-  #   data11 <- prt.data[,c(varlist1,covlist1)]
-  #   names(data11) <- c(names(varlist1), names(covlist1))
-  # } else{
-  #   data11 <- NULL
-  # }
-  # if(!is.null(std.data)){
-  #   if(!is.null(prt.data)){
-  #     varlist2 <- c(trt = trt[2],
-  #                   study = study[2],
-  #                   r = outcome[2],
-  #                   n = n,
-  #                   design=design[2],
-  #                   bias=bias[2],
-  #                   x.bias=bias.covariate[2],
-  #                   bias.group=bias.group[2],
-  #                   unfav=unfav[2])
-  #     if(!is.null(covariate)){
-  #       x12 <- covariate[[2]][1]
-  #       x22<- ifelse(is.na(covariate[[2]][2]),list(NULL),covariate[[2]][2])[[1]]
-  #       x32<- ifelse(is.na(covariate[[2]][3]),list(NULL),covariate[[2]][3])[[1]]
-  #     } else {
-  #       x12 <- NULL
-  #       x22 <- NULL
-  #       x32 <- NULL
-  #     }
-  #     covlist2 <- c(x1=x12,x2=x22,x3=x32)
-  #     data22 <-std.data[, c(varlist2,covlist2)]
-  #     names(data22) <- c(names(varlist2), names(covlist2))
-  #   }else{
-  #     varlist2 <- c(trt = trt[1],
-  #                   study = study[1],
-  #                   r = outcome[1],
-  #                   n = n,
-  #                   design=design[1],
-  #                   bias=bias[1],
-  #                   x.bias=bias.covariate[1],
-  #                   bias.group=bias.group[1],
-  #                   unfav=unfav[1])
-  #     if(!is.null(covariate)){
-  #       x12 <- covariate[[1]][1]
-  #       x22<- ifelse(is.na(covariate[[1]][2]),list(NULL),covariate[[1]][2])[[1]]
-  #       x32<- ifelse(is.na(covariate[[1]][3]),list(NULL),covariate[[1]][3])[[1]]
-  #     } else {
-  #       x12 <- NULL
-  #       x22 <- NULL
-  #       x32 <- NULL
-  #     }
-  #     covlist2 <- c(x1=x12,x2=x22,x3=x32)
-  #     data22 <-std.data[, c(varlist2,covlist2)]
-  #     names(data22) <- c(names(varlist2), names(covlist2))
-  #   }
-  # } else{
-  #   data22 <- NULL
-  # }
 
-  # discard NA's
+  # delete NA's
   excl1 <- is.na(data11$r) |is.na(data11$study) |is.na(data11$trt) |is.na(data11$design) | if(!is.null(data11$bias)){is.na(data11$bias)}else{FALSE} | if(!is.null(data11$unfav)){is.na(data11$unfav)}else{FALSE} | if(!is.null(data11$bias.group2)){is.na(data11$bias.group2)}else{FALSE}
   excl2 <- is.na(data22$r) | is.na(data22$n) |is.na(data22$study) |is.na(data22$trt) |is.na(data22$design) | if(!is.null(data22$bias)){is.na(data22$bias)}else{FALSE} | if(!is.null(data22$unfav)){is.na(data22$unfav)}else{FALSE} | if(!is.null(data22$bias.group2)){is.na(data22$bias.group2)}else{FALSE}
   if (sum(excl1)>0) message('Participants with missing data in one of these variables: outcome, trt, design, study, bias, unfav or bias.group are discarded from the analysis')
@@ -390,6 +316,10 @@ crossnma.model <- function(prt.data,
     if(any(chk.bias2)) stop("The 'bias' should be a vector of length 2 where the first element is the name of the variable in prt.data and the second for the std.data")
   }
 
+  # check down.wgt
+  if(!is.null(down.wgt)){if(!(down.wgt>0&down.wgt<1 | down.wgt==1 )) stop("The values of 'down.wgt' should be between 0 and 1")}
+  if(!is.null(down.wgt)){if(!is.null(prior$tau.gamma)) message("The assigned prior for the heterogeneity parameters of bias effect is ignored when 'down.wgt' is provided")}
+  if(!is.null(down.wgt)){if(!method.bias%in%c('adjust1','adjust2')) stop("'down.wgt' should be specified only if method.bias = 'adjust1' or 'adjust2'")}
 
   #====================================
   # jagsdata for IPD
@@ -589,14 +519,6 @@ if (method.bias%in%c("adjust1","adjust2")) {
     select(-study.jags)%>%
     as.matrix()
 
-    # this returns a message when I run crossnma.model:
-    # jagsdata1$t.ipd <-  dd2 %>% group_by(study.jags,trt.jags)%>%
-    #   select(trt.jags)%>% unique()%>%
-    #   group_by(study.jags)%>%
-    #   dplyr::mutate(arm = row_number())%>%ungroup() %>%
-    #   spread(arm, trt.jags)%>%
-    #   select(-study.jags)%>%
-    #   as.matrix()
     # generate JAGS data object
     jagstemp <- data1 %>% select(-c(study,trt,design,bias.group,unfav,bias_index,bias))
     for (v in names(jagstemp)){
@@ -622,8 +544,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
       unlist()
     jagsdata1$np <- data1 %>% nrow()
     jagsdata1$x.bias <- NULL
-    # jagsdata1$bias_index <- NULL
-    # jagsdata1$bias <- NULL
+
     # modify names in JAGS object
     names(jagsdata1)[names(jagsdata1) == "r"]  <- "y"
     names(jagsdata1)[names(jagsdata1) == "trt.jags"] <- "trt"
@@ -686,7 +607,6 @@ if (method.bias%in%c("adjust1","adjust2")) {
             dplyr::mutate(x.bias=mean(x.bias,na.rm = TRUE))
         } else {stop("Invalid datatype for bias covariate.")}
 
-        # bias_index.ad <- NULL
       }else{
       xbias.ad <- NULL
       }
@@ -777,7 +697,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
       xm3.ad <- NULL}
 
 
-    #generate JAGS data object
+    # generate JAGS data object
 
       # create the matrix of trt index following the values of unfav column (adjust 1&2)
     if (method.bias%in%c("adjust1","adjust2")) {
@@ -826,8 +746,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
     jagsdata2$xm2.ad <- unique(data2$xm2.ad)
     jagsdata2$xm3.ad <- unique(data2$xm3.ad)
     jagsdata2$x.bias <- NULL
-    # jagsdata2$bias_index <- NULL
-    # jagsdata2$bias <- NULL
+
     # change names
     names(jagsdata2)[names(jagsdata2) == "trt.jags"] <- "t.ad"
   }else{
@@ -984,6 +903,9 @@ if(!is.null(data2.nrs)){
                            prior.tau.regb=NULL,
                            prior.tau.regw=NULL,
                            prior.tau.gamma=NULL,
+                           v=ifelse(is.null(down.wgt),
+                                    list(NULL),
+                                    list(down.wgt/(1-down.wgt)))[[1]],
                            prior.pi.high.rct=NULL,
                            prior.pi.low.rct=NULL,
                            prior.pi.high.nrs=NULL,
@@ -1032,177 +954,29 @@ if(!is.null(data2.nrs)){
       d.prior.nrs <- paste0(d.prior.nrs,d.prior0)
     }
 
-    # if(!(reference %in% data1.nrs$trt)&!(reference %in% data2.nrs$trt)) stop("Reference treatment should be present in the list of treatments in NRS.")
-    # trt.df.nrs <- data.frame(trt=unique(c(as.character(data1.nrs$trt),as.character(data2.nrs$trt))))
-    #
-    # trt.key.nrs <- trt.df.nrs$trt %>% unique %>% sort %>% tibble(trt.ini=.) %>%
-    #   filter(trt.ini!=reference) %>% add_row(trt.ini=reference, .before=1) %>%
-    #   dplyr::mutate(trt.jags = 1:dim(.)[1])
-    # # set a study key from the two datasets
-    # study.df.nrs <- data.frame(std.id= c(as.character(unique(data1.nrs$study)),as.character(unique(data2.nrs$study))))
-    #
-    # study.key.nrs <- study.df.nrs%>% dplyr::mutate(study.jags = 1:dim(.)[1])
-    #
-    #
-    # #====================================
-    # # 1. IPD-NRS
-    # if(!is.null(data1.nrs)){
-    #   if(!(reference %in% data1.nrs$trt)) stop("Reference treatment is not present in the list of treatments.")
-    #
-    #   #Trt mapping
-    #   data1.nrs %<>% mutate(trt.jags=mapvalues(trt,
-    #                                            from=trt.key.nrs$trt.ini,
-    #                                            to=trt.key.nrs$trt.jags,
-    #                                            warn_missing = FALSE)%>%as.character()%>%as.integer)
-    #   # data1.nrs %<>% mutate(study.jags=mapvalues(study,
-    #   #                                            from=unique(study),
-    #   #                                            to=seq_len(length(unique(study))),
-    #   #                                            warn_missing = FALSE
-    #   # ) %>% as.character %>% as.integer)
-    #   #add study mapping to data
-    #
-    #   data1.nrs %<>% mutate(study.jags=mapvalues(study,
-    #                                              from=study.key.nrs$std.id,
-    #                                              to=study.key.nrs$study.jags,
-    #                                              warn_missing = FALSE)%>% as.character() %>% as.integer)
-    #
-    #   # add a matrix of treatment per study row
-    #   jagsdata1.nrs <- list()
-    #
-    #   jagsdata1.nrs$t.ipd <- data1.nrs %>%
-    #     arrange(study.jags)%>%
-    #     group_by(study.jags,trt.jags)%>% group_keys()%>%
-    #     group_by(study.jags)%>%
-    #     dplyr::mutate(arm = row_number())%>%ungroup() %>%
-    #     spread(arm, trt.jags)%>%
-    #     select(-study.jags)%>%
-    #     as.matrix()
-    #
-    #   #generate JAGS data object
-    #
-    #   jagstemp.nrs1 <- data1.nrs %>% select(-c(study,trt,design))
-    #   for (v in names(jagstemp.nrs1)){
-    #     jagsdata1.nrs[[v]] <- jagstemp.nrs1 %>% pull(v) #%>% as.vector() #%>% select(-trial, -variable)
-    #   }
-    #   #modify BUGS object for the various family/link combinations
-    #   names(jagsdata1.nrs)[names(jagsdata1.nrs) == "r"]  <- "y"
-    #   names(jagsdata1.nrs)[names(jagsdata1.nrs) == "trt.jags"] <- "trt"
-    #   names(jagsdata1.nrs)[names(jagsdata1.nrs) == "study.jags"] <- "study"
-    #
-    #   #add number of treatments, studies, and arms to BUGS data object
-    #   jagsdata1.nrs$nt <- trt.key.nrs %>% nrow()
-    #   jagsdata1.nrs$ns.ipd <- data1.nrs$study%>% unique() %>% length()
-    #   jagsdata1.nrs$na.ipd <- data1.nrs%>% arrange(study.jags)%>% group_by(study.jags)%>% group_map(~length(unique(.x$trt)))%>%
-    #     unlist()
-    #   jagsdata1.nrs$np <- data1.nrs %>% nrow()
-    # }else{
-    #   jagsdata1.nrs <- list(ns.ipd=0, nt = trt.key.nrs %>% nrow())
-    # }
-    # #====================================
-    # # AD - NRS
-    # #add treatment mapping to data
-    # if(!is.null(data2.nrs)){
-    #   jagsdata2.nrs <- list()
-    #   data2.nrs %<>% mutate(trt.jags=mapvalues(trt,
-    #                                            from=trt.key.nrs$trt.ini,
-    #                                            to=trt.key.nrs$trt.jags,
-    #                                            warn_missing = FALSE) %>% as.integer)
-    #   #add study mapping to data
-    #   data2.nrs %<>% mutate(study.jags=mapvalues(study,
-    #                                              from=study.key.nrs$std.id,
-    #                                              to=study.key.nrs$study.jags,
-    #                                              warn_missing = FALSE) %>% as.integer)
-    #
-    #
-    #   jagstemp.nrs2 <- data2.nrs %>% arrange(study.jags) %>% group_by(study.jags) %>% dplyr::mutate(arm = row_number()) %>%
-    #     ungroup()%>% select(-c(trt,design,study))  %>% gather("variable", "value", -study.jags, -arm) %>% spread(arm, value)
-    #
-    #   for (v in unique(jagstemp.nrs2$variable)){
-    #     jagsdata2.nrs[[v]] <- as.matrix(jagstemp.nrs2 %>% filter(variable == v) %>% select(-study.jags, -variable))
-    #   }
-    #   names(jagsdata2.nrs)[names(jagsdata2.nrs) == "trt.jags"] <- "t.ad"
-    #
-    #   #add number of treatments, studies, and arms to JAGS data object
-    #   jagsdata2.nrs$ns.ad <- ifelse(!is.null(std.data),data2.nrs$study %>% unique()%>%length(),0)
-    #   jagsdata2.nrs$na.ad <- data2.nrs %>% arrange(study.jags)%>% group_by(study.jags) %>%dplyr::summarize(n.arms = n()) %>%
-    #     ungroup() %>% select(n.arms) %>% t() %>% as.vector
-    #   jagsdata2.nrs$ns.ad <- 0
-    #
-    # }else{
-    #   jagsdata2.nrs <- list(ns.ad=0)
-    # }
-    # # combine jagsdata of IPD and AD
-    # jagsdata.nrs <- c(jagsdata1.nrs,jagsdata2.nrs)
-    #
-    # # jags code NRS
-    # model.nrs <- crossnma.code(ipd = ifelse(nrow(data1.nrs)==0,F,T),
-    #                            ad = ifelse(nrow(data2.nrs)==0,F,T),
-    #                            trt.effect='common',
-    #                            covariate=NULL,
-    #                            split.regcoef=F,
-    #                            reg0.effect=NULL,
-    #                            regb.effect=NULL,
-    #                            regw.effect=NULL,
-    #                            bias.effect=NULL,
-    #                            bias.type=NULL,
-    #                            prior.tau.trt=NULL,
-    #                            prior.tau.reg0=NULL,
-    #                            prior.tau.regb=NULL,
-    #                            prior.tau.regw=NULL,
-    #                            prior.tau.gamma=NULL,
-    #                            prior.pi.high.rct=NULL,
-    #                            prior.pi.low.rct=NULL,
-    #                            prior.pi.high.nrs=NULL,
-    #                            prior.pi.low.nrs=NULL,
-    #                            method.bias = NULL,
-    #                            d.prior.nrs=NULL)
-    #
-    # # jags run NRS
-    #
-    # seeds <- sample(.Machine$integer.max, run.nrs[['n.chains']], replace = FALSE)
-    # inits <- list()
-    # for (i in 1:run.nrs[['n.chains']])
-    #   inits[[i]] <- list(.RNG.seed = seeds[i], .RNG.name = "base::Mersenne-Twister")
-    #
-    # jagsmodel.nrs <- jags.model(textConnection(model.nrs),        #Create a connection so JAGS can access the variables
-    #                             jagsdata.nrs,
-    #                             n.chains=run.nrs[['n.chains']],
-    #                             n.adapt=run.nrs[['n.adapt']],
-    #                             inits = inits)
-    # jagssamples.nrs <- coda.samples(jagsmodel.nrs,
-    #                                 variable.names="d",
-    #                                 n.iter=run.nrs[['n.iter']],
-    #                                 thin=run.nrs[['thin']]
-    # )
-    #
-    # # # # # # # # # # # # #
-    # # Output: prior for d's
-    # trt.df <- data.frame(trt=unique(c(as.character(mydata$treat),as.character(mystd.data$treat))))
-    #
-    # trt.key <- trt.df$trt %>% unique %>% sort %>% tibble(trt.ini=.) %>%
-    #   filter(trt.ini!=reference) %>% add_row(trt.ini=reference, .before=1) %>%
-    #   dplyr::mutate(trt.jags = 1:dim(.)[1])
-    # # map NRS trt to RCT trt
-    # trt.key2 <- trt.key %>% dplyr::mutate(trt.jags.nrs=mapvalues(trt.ini,
-    #                                                              from=trt.key.nrs$trt.ini,
-    #                                                              to=trt.key.nrs$trt.jags,
-    #                                                              warn_missing = FALSE)%>%as.integer)
-    # d.nrs <- summary(jagssamples.nrs)[[1]][,'Mean']+ifelse(is.null(run.nrs$mean.shift),0,run.nrs$mean.shift)
-    # prec.nrs <- ifelse(is.null(run.nrs$var.infl),1,run.nrs$var.infl)/(summary(jagssamples.nrs)[[1]][,'SD']^2)
-    #
-    # d.prior.nrs <- ""
-    # for (i in 2:nrow(trt.key2)) {
-    #   d.prior0 <- paste0("d[",trt.key2$trt.jags[i],
-    #                      "]~dnorm(",
-    #                      ifelse(is.na(d.nrs[trt.key2$trt.jags.nrs[i]])|d.nrs[trt.key2$trt.jags.nrs[i]]==0,0,d.nrs[trt.key2$trt.jags.nrs[i]]),",",
-    #                      ifelse(is.na(prec.nrs[trt.key2$trt.jags.nrs[i]])|prec.nrs[trt.key2$trt.jags.nrs[i]]==Inf,10^-4,prec.nrs[trt.key2$trt.jags.nrs[i]]),
-    #                      ")
-    #                 ")
-    #   d.prior.nrs <- paste0(d.prior.nrs,d.prior0)
-    # }
-
 
   }else {d.prior.nrs <- NULL}
+
+  #===================================================
+  # data to be used in netplot() to plot the network
+
+  # aggregate IPD dataset
+  prt.data.ad0 <- sapply(1:length(unique(data1$study)),
+                         function(i){
+                           with(data1,
+                                data.frame(
+                                  study=unique(data1$study)[i],
+                                  trt=unique(data1[data1$study==unique(data1$study)[i],]$trt),
+                                  r=sum(data1[data1$study==unique(data1$study)[i],]$r),
+                                  n =nrow(data1[data1$study==unique(data1$study)[i],]),
+                                  design=unique(data1[data1$study==unique(data1$study)[i],]$design)
+                                )
+                           )
+                         }, simplify = F)
+  prt.data.ad <- do.call(rbind,prt.data.ad0)
+
+  # combine IPD and AD in a single dataset
+  all.data.ad <- rbind(data2[c('study','trt','r','n','design')],prt.data.ad)
 
   #=======================
   # jags code
@@ -1214,7 +988,6 @@ if(!is.null(data2.nrs)){
                      reg0.effect=reg0.effect,
                      regb.effect=regb.effect,
                      regw.effect=regw.effect,
-                     # reg.effect=reg.effect,
                      bias.effect=bias.effect,
                      bias.type=bias.type,
                      bias.covariate=bias.covariate,
@@ -1231,7 +1004,8 @@ if(!is.null(data2.nrs)){
                      prior.pi.high.nrs=prior[['pi.high.nrs']],
                      prior.pi.low.nrs=prior[['pi.low.nrs']],
                      method.bias = method.bias,
-                     d.prior.nrs=d.prior.nrs)
+                     d.prior.nrs=d.prior.nrs
+                     )
 
   crossmodel <- structure(list(jagsmodel=model,
                            data=jagsdata,
@@ -1244,9 +1018,10 @@ if(!is.null(data2.nrs)){
                            regb.effect=regb.effect,
                            regw.effect=regw.effect,
                            bias.effect=bias.effect,
-                           bias.type=bias.type
-  ),
-  class = "crossnmaModel")
+                           bias.type=bias.type,
+                           all.data.ad=all.data.ad
+                           ),
+                          class = "crossnmaModel")
   return(crossmodel)
 }
 

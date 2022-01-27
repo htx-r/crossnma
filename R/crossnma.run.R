@@ -65,7 +65,6 @@ crossnma.run <- function(model,
                      n.chains=2,
                      quiet=TRUE,
                      monitor=NULL
-                     # inits = "DEFAULT"
 ){
 
 
