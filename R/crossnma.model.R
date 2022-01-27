@@ -961,6 +961,7 @@ if(!is.null(data2.nrs)){
   # data to be used in netplot() to plot the network
 
   # aggregate IPD dataset
+  if(!is.null(data1)&!is.null(data2)){
   prt.data.ad0 <- sapply(1:length(unique(data1$study)),
                          function(i){
                            with(data1,
@@ -977,7 +978,24 @@ if(!is.null(data2.nrs)){
 
   # combine IPD and AD in a single dataset
   all.data.ad <- rbind(data2[c('study','trt','r','n','design')],prt.data.ad)
-
+  } else if(!is.null(data1)){
+    prt.data.ad0 <- sapply(1:length(unique(data1$study)),
+                           function(i){
+                             with(data1,
+                                  data.frame(
+                                    study=unique(data1$study)[i],
+                                    trt=unique(data1[data1$study==unique(data1$study)[i],]$trt),
+                                    r=sum(data1[data1$study==unique(data1$study)[i],]$r),
+                                    n =nrow(data1[data1$study==unique(data1$study)[i],]),
+                                    design=unique(data1[data1$study==unique(data1$study)[i],]$design)
+                                  )
+                             )
+                           }, simplify = F)
+    prt.data.ad <- do.call(rbind,prt.data.ad0)
+    all.data.ad <- prt.data.ad
+  } else if(!is.null(data2)){
+    all.data.ad <- data2[c('study','trt','r','n','design')]
+}
   #=======================
   # jags code
   model <- crossnma.code(ipd = !is.null(prt.data),
