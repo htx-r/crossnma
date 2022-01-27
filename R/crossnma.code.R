@@ -1,3 +1,14 @@
+# to combine meta reg coeff: regb.effect and regw.effect referes to the relation between treatments coef not between studies coef!
+# Add to metareg.str.ipd0; ifelse(regb.effect.std=="common"), paste0("betab_",i,"[j,t.ipd[j,k]] <- betab.m_",i,"[t.ipd[j,k]]"),
+# paste0("betab_",i,"[j,t.ipd[j,k]] ~dnorm(betab.m_",i,"[t.ipd[j,k]])"))
+# Then change betab_ in betab.consis.ipd0 to betab.m_
+# do the same for betaw_
+# add the option independent to regb.effect.trt and regw.effect.trt: betab.t_ <- bb_[k], ...
+# change the bb, bw and b priors
+# explain the difference between regb.effect.trt and regb.effect.std in Details (below the arguments). Also the different options for each
+# change all regb.effect to regb.effect.trt, in all functions: crossnma.model and .code, .run && description of crossnma.model
+# in crossnma.run, I need to monitor bb but now it could be a vector: bb for each treatment (the same for bw and b)
+
 crossnma.code <- function(ipd = T,
                           ad = T,
                           trt.effect='random',
@@ -140,7 +151,7 @@ crossnma.code <- function(ipd = T,
             beta.prior.ipd <- paste0(beta.prior.ipd,beta.prior.ipd0)
           }
         }else{
-          stop("The covariate effect need to be assumed 'random' or 'common' across studies")
+          stop("The regb.effect and regw.effect need to both be assumed 'random' or 'common' across studies")
 
         }
       } else{ # splitted within and between- study covariate
