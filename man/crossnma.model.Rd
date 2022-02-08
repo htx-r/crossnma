@@ -26,11 +26,12 @@ crossnma.model(
   bias.type = NULL,
   bias.covariate = NULL,
   bias.effect = "common",
+  down.wgt = NULL,
   prior = list(tau.trt = NULL, tau.reg0 = NULL, tau.regb = NULL, tau.regw = NULL,
     tau.gamma = NULL, pi.high.rct = NULL, pi.low.rct = NULL, pi.high.nrs = NULL,
     pi.low.nrs = NULL),
-  run.nrs = list(var.infl = 1, mean.shift = 0, n.adapt = 500, n.iter = 10000, n.burnin
-    = 4000, thin = 1, n.chains = 2)
+  run.nrs = list(var.infl = 1, mean.shift = 0, trt.effect = "common", n.adapt = 2000,
+    n.iter = 10000, n.burnin = 4000, thin = 1, n.chains = 2)
 )
 }
 \arguments{
@@ -93,6 +94,8 @@ Three options are possible: 'add' to add the additive bias effect,'mult' for mul
 \item{bias.effect}{An optional character indicating the relationship for the bias coefficients across studies.
 Options are 'random' or 'common' (default). It is required when method.bias='adjust1' or 'adjust2'.}
 
+\item{down.wgt}{An optional numeric indicating the percent to which studies at high risk of bias will be down-weighted on average. The value ranges between 0 and 1. It can be provided when method.bias='adjust1' or 'adjust2'.}
+
 \item{prior}{An optional list to control the prior for various parameters in JAGS model. When effects are set as 'random', we can set the heterogeneity parameters for: tau.trt for the treatment effects,
 tau.reg0 for the effect of prognostic covariates, tau.regb and tau.regw for within- and between-study covariate effect, respectively.
 and tau.gamma for bias effect. The default of all heterogeneity parameters is 'dunif(0,2)'. Currently only the uniform distribution is supported.
@@ -102,6 +105,7 @@ For the bias probabilities, beta distributions are assumed with the following de
 \item{run.nrs}{An optional list is needed when the NRS used as a prior (method.bias='prior').
 The list consists of the following: (\code{var.infl}) controls the common inflation of the varaince of NRS estimates (\eqn{w}) and its values range between 0 (NRS do not contribute at all and the prior is vague) and 1 (the NRS evidence is used at face value, default approach).
 The parameter (\code{mean.shift}) is the bias shift (\eqn{\zeta}) to be added/subtracted from the estimated mean treatment effects (on the log-scale) from NRS network (0 is the default). Either (\code{var.infl}) or (\code{mean.shift}) should be provided but not both.
+\code{trt.effect} A character indicates how to combine treatment effects across studies .Options are 'random' or 'common' (default).
 Here you can also specify the arguments to control the MCMC chains with default value is in the parentheses: the number of adaptions n.adapt (500), number of iterations n.iter(10000), number of burn in n.burnin (4000),
 number of thinning thin (1) and number of chains n.chains (2), see \code{\link{jags.model}} arguments from rjags package.}
 }
