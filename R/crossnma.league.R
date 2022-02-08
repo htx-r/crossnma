@@ -361,7 +361,7 @@ league.heat.plot <- function(leaguetable,
                     ifelse(((midpoint<lci & midpoint< uci) | (midpoint>lci & midpoint> uci)),
                            ifelse(Treatment!=Comparator, paste0("**", sprintf(fmt, ct.stat), "**", "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")"), " "),
                            ifelse(Treatment!=Comparator, paste0(sprintf(fmt, ct.stat), "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")"), " "))),
-              size=3)
+              size=6)
 
   heatplot <- heatplot +
     scale_fill_gradient2(low = low.colour, high = high.colour, mid = mid.colour, midpoint = midpoint)+
