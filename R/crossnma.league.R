@@ -116,14 +116,14 @@
 # digits = 2
 # library(dplyr)
 crossnma.league <- function(x,
-                       central.tdcy = "median",
-                       log.scale = FALSE,
-                       order = NULL,
-                       low.colour = "darkgoldenrod1",
-                       mid.colour = "white",
-                       high.colour = "cornflowerblue",
-                       cov.value=NULL,
-                       digits = 2) {
+                            central.tdcy = "median",
+                            log.scale = FALSE,
+                            order = NULL,
+                            low.colour = "darkgoldenrod1",
+                            mid.colour = "white",
+                            high.colour = "cornflowerblue",
+                            cov.value=NULL,
+                            digits = 2) {
 
   # Bind variables to function
   trt <- NULL
@@ -141,18 +141,18 @@ crossnma.league <- function(x,
   colnames(dmat) <- trt.names
 
   if(!is.null(cov.value)){ # meta-regression
-if (x$model$split.regcoef){
-    bbmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("bb_"))
-    #colnames(bbmat) <- trt.names
+    if (x$model$split.regcoef){
+      bbmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("bb_"))
+      #colnames(bbmat) <- trt.names
 
-    bwmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("bb_"))
-    #colnames(bwmat) <- trt.names
+      bwmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("bb_"))
+      #colnames(bwmat) <- trt.names
 
-    dmat <- dmat+bbmat*(cov.value-nma$model$mean.cov)
-} else{
-  bmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("b_"))
-  dmat <- dmat+matrix(unlist(rep(bmat*(cov.value), each = ncol(dmat))), nrow(dmat),ncol(dmat))
-}
+      dmat <- dmat+bbmat*(cov.value-x$model$mean.cov)
+    } else{
+      bmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("b_"))
+      dmat <- dmat+matrix(unlist(rep(bmat*(cov.value), each = ncol(dmat))), nrow(dmat),ncol(dmat))
+    }
   }
 
   if(is.null(order)){
@@ -309,7 +309,7 @@ if (x$model$split.regcoef){
            Comparator = rep(trt.names, each=length(trt.names))) %>%
     select(Treatment, Comparator, everything(), -trt)
 
-  if(log.scale==FALSE & nma$link!="identity"){
+  if(log.scale==FALSE ){ # & x$link!="identity"
     null.value <- 1
   } else{
     null.value <- 0
@@ -375,3 +375,5 @@ league.heat.plot <- function(leaguetable,
 
   return(heatplot)
 }
+
+
