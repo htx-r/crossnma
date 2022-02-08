@@ -1,3 +1,5 @@
+# allow the user to fix the size of axis titles and entries in the boxes
+# check why we need to call the libraries: tidyr, magrittr, ... and others
 # put my example
 # cov.value is a vector, test and add to the description below
 # discuss with G how to compute the adjusted relative effects at give cov.value (bw*(x-x.bar)+bb*x.bar)
@@ -369,11 +371,15 @@ league.heat.plot <- function(leaguetable,
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           legend.position="none", panel.border=element_blank(),
           axis.ticks.x=element_blank(),
-          axis.ticks.y=element_blank())+
+          axis.ticks.y=element_blank(),
+          axis.text = element_text(size=12))+
     scale_x_discrete(limits = order, expand = c(0, 0), position="top") +
     scale_y_discrete(limits = rev(order), expand = c(0, 0))
 
   return(heatplot)
 }
+
+
+
 
 
