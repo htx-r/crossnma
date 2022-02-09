@@ -209,17 +209,17 @@ crossnma.league <- function(x,
         summarise_all(list(estimate = exp.mean)) %>% gather() %>%
         rename(trt = key, estimate = value) %>%
         mutate(trt = sub("_estimate", "", trt))
-    } else if(central.tdcy=="mean"){
+    } else if(central.tdcy=="mean"& log.scale==TRUE){
       tmp.estimate <- dmat2 %>%
         summarise_all(list(estimate = id.mean)) %>% gather() %>%
         rename(trt = key, estimate = value) %>%
         mutate(trt = sub("_estimate", "", trt))}
     if(central.tdcy=="median" & log.scale==FALSE){
       tmp.estimate <- dmat2 %>%
-        summarise_all(list(estimate = exp.median))%>% summarise_all( exp) %>% gather() %>%
+        summarise_all(list(estimate = exp.median))%>% gather() %>%
         rename(trt = key, estimate = value) %>%
         mutate(trt = sub("_estimate", "", trt))
-    } else if(central.tdcy=="median"){
+    } else if(central.tdcy=="median"& log.scale==TRUE){
       tmp.estimate <- dmat2 %>%
         summarise_all(list(estimate = id.median)) %>% gather() %>%
         rename(trt = key, estimate = value) %>%
