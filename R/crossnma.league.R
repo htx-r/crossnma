@@ -389,7 +389,7 @@ league.heat.plot <- function(leaguetable,
 
   heatplot <- ggplot(data = league.tmp, aes(x=Treatment, y=Comparator, fill=ct.stat)) +
     geom_tile()+
-    geom_text(aes(label = paste0(sprintf(fmt, ct.stat), "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")"),
+    geom_text(aes(label = paste0(sprintf(fmt, ct.stat), "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")")),
                     # ifelse(((midpoint<lci & midpoint< uci) | (midpoint>lci & midpoint> uci)),
                     #        ifelse(Treatment!=Comparator, paste0("**", sprintf(fmt, ct.stat), "**", "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")"), " "),
                     #        ifelse(Treatment!=Comparator, paste0(sprintf(fmt, ct.stat), "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")"), " "))),
