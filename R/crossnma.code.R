@@ -1,14 +1,3 @@
-# to combine meta reg coeff: regb.effect and regw.effect referes to the relation between treatments coef not between studies coef!
-# Add to metareg.str.ipd0; ifelse(regb.effect.std=="common"), paste0("betab_",i,"[j,t.ipd[j,k]] <- betab.m_",i,"[t.ipd[j,k]]"),
-# paste0("betab_",i,"[j,t.ipd[j,k]] ~dnorm(betab.m_",i,"[t.ipd[j,k]])"))
-# Then change betab_ in betab.consis.ipd0 to betab.m_
-# do the same for betaw_
-# add the option independent to regb.effect.trt and regw.effect.trt: betab.t_ <- bb_[k], ...
-# change the bb, bw and b priors
-# explain the difference between regb.effect.trt and regb.effect.std in Details (below the arguments). Also the different options for each
-# change all regb.effect to regb.effect.trt, in all functions: crossnma.model and .code, .run && description of crossnma.model
-# in crossnma.run, I need to monitor bb but now it could be a vector: bb for each treatment (the same for bw and b)
-
 crossnma.code <- function(ipd = T,
                           ad = T,
                           trt.effect='random',
@@ -118,7 +107,19 @@ crossnma.code <- function(ipd = T,
       # betab and betaw
 
       if(!split.regcoef) { # not splitted within and between- study covariate
-        if(regb.effect=='random'||regw.effect=='random'){
+        if(regb.effect=='independent' ||regw.effect=='independent'){
+          beta.prior.ipd0 <- paste0("
+            # Random effect for beta (within=between)
+            beta.t_",i,"[1] <- 0 \n
+           for(k in 1:nt){
+           betab.t_",i,"[k] <- beta.t_",i,"[k] \n
+           betaw.t_",i,"[k] <- beta.t_",i,"[k]
+           } \n
+                     for (k in 2:nt){
+                     beta.t_",i,"[k]~dnorm(0,1e-2)
+                     }")
+          beta.prior.ipd <- paste0(beta.prior.ipd,beta.prior.ipd0)
+        }else if(regb.effect=='random'||regw.effect=='random'){
           for (i in 1:length(covariate[[1]])) {
             beta.prior.ipd0 <- paste0("
            # Random effects for beta (within=between)
@@ -156,7 +157,15 @@ crossnma.code <- function(ipd = T,
         }
       } else{ # splitted within and between- study covariate
         # between- study covariate
-        if(regb.effect=='random'){
+        if(regb.effect=='independent'){
+          betab.prior0 <- paste0("
+            # Random effect for betab (the between-study covariate effect)
+            betab.t_",i,"[1] <- 0 \n
+                     for (k in 2:nt){
+                     betab.t_",i,"[k]~dnorm(0,1e-2)
+                     }")
+          betab.prior <- paste0(betab.prior,betab.prior0)
+        }else if(regb.effect=='random'){
           for (i in 1:length(covariate[[1]])) {
             betab.prior0 <- paste0("
             # Random effect for betab (the between-study covariate effect)
@@ -183,11 +192,19 @@ crossnma.code <- function(ipd = T,
             betab.prior <- paste0(betab.prior,betab.prior0)
           }
         }else{
-          stop("The between-study covariate effect need to be assumed 'random' or 'common' across studies")
+          stop("The between-study covariate effect need to be assumed 'independent', 'random' or 'common' across studies")
         }
 
         # within- study covariate
-        if(regw.effect=='random'){
+        if(regw.effect=='independent'){
+          betab.prior0 <- paste0("
+            # Random effect for betab (the between-study covariate effect)
+            betaw.t_",i,"[1] <- 0 \n
+                     for (k in 2:nt){
+                     betaw.t_",i,"[k]~dnorm(0,1e-2)
+                     }")
+          betab.prior <- paste0(betab.prior,betab.prior0)
+        }else if(regw.effect=='random'){
           for (i in 1:length(covariate[[1]])) {
             betaw.prior.ipd0 <- paste0("
             # Random effect for betaw (the within-study covariate effect)
@@ -213,7 +230,7 @@ crossnma.code <- function(ipd = T,
             betaw.prior.ipd <- paste0(betaw.prior.ipd,betaw.prior.ipd0)
           }
         }else{
-          stop("The within-study covariate effect can be assumed 'random' or 'common' across studies")
+          stop("The within-study covariate effect can be assumed 'independent', 'random' or 'common' across studies")
 
         }
       }
@@ -230,7 +247,18 @@ crossnma.code <- function(ipd = T,
         betab.consis.ad <- paste0(betab.consis.ad," \n ",betab.consis.ad0)
       }
       if(!split.regcoef) { # not splitted
-        if(regb.effect=='random'||regw.effect=='random'){
+        if(regb.effect=='independent' &&regw.effect=='independent'){
+          beta.prior.ad0 <- paste0("
+            # Random effect for beta (within=between)
+            beta.t_",i,"[1] <- 0 \n
+           for(k in 1:nt){
+           betab.t_",i,"[k] <- beta.t_",i,"[k]
+           } \n
+                     for (k in 2:nt){
+                     beta.t_",i,"[k]~dnorm(0,1e-2)
+                     }")
+          beta.prior.ad <- paste0(beta.prior.ad,beta.prior.ipd0)
+        }else if(regb.effect=='random'&&regw.effect=='random'){
           for (i in 1:length(covariate[[1]])) {
             beta.prior.ad0 <- paste0("
             # Random effects for beta (within=between)
@@ -260,12 +288,20 @@ crossnma.code <- function(ipd = T,
             beta.prior.ad <- paste0(beta.prior.ad,beta.prior.ad0)
           }
         }else{
-          stop("The between-study covariate effect need to be assumed 'random' or 'common' across studies")
+          stop("The between-study covariate effect need to be assumed 'independent', 'random' or 'common' across studies")
 
         }
       } else { # splitted
         betab.prior <- ""
-        if(regb.effect=='random'){
+        if(regb.effect=='independent'){
+          betab.prior0 <- paste0("
+            # Random effect for betab (the between-study covariate effect)
+            betab.t_",i,"[1] <- 0 \n
+                     for (k in 2:nt){
+                     betab.t_",i,"[k]~dnorm(0,1e-2)
+                     }")
+          betab.prior <- paste0(betab.prior,betab.prior0)
+        }else if(regb.effect=='random'){
           for (i in 1:length(covariate[[1]])) {
             betab.prior0 <- paste0("
             # Random effects for betab (the between-study covariate effect)
@@ -293,7 +329,7 @@ crossnma.code <- function(ipd = T,
           }
 
         }else{
-          stop("The between-study covariate effect need to be assumed 'random' or 'common' across studies")
+          stop("The between-study covariate effect need to be assumed 'independent', 'random' or 'common' across studies")
 
         }
       }

@@ -58,15 +58,14 @@
 #' @export
 
 crossnma.run <- function(model,
-                     n.adapt = 1000,
-                     n.burnin = floor(n.iter / 2),
-                     n.iter,
-                     thin=1,
-                     n.chains=2,
-                     quiet=TRUE,
-                     monitor=NULL
-){
-
+                         n.adapt = 1000,
+                         n.burnin = floor(n.iter / 2),
+                         n.iter,
+                         thin=1,
+                         n.chains=2,
+                         quiet=TRUE,
+                         monitor=NULL
+                         ){
 
   if(class(model) != "crossnmaModel")
     stop("\'model\' must be a valid crossnmaModel object created using the crossnma.model function.")
@@ -79,11 +78,11 @@ crossnma.run <- function(model,
 
 
   jagsfit <- jags.model(textConnection(model$jags),        #Create a connection so JAGS can access the variables
-                          model$data,
-                          n.chains=n.chains,
-                          n.adapt=n.adapt,
-                          inits = inits,
-                          quiet=quiet)
+                        model$data,
+                        n.chains=n.chains,
+                        n.adapt=n.adapt,
+                        inits = inits,
+                        quiet=quiet)
 
   # runjags.options(silent.jags=TRUE, silent.runjags=TRUE)
   if(n.burnin!=0) update(jagsfit, n.burnin)
@@ -96,6 +95,18 @@ crossnma.run <- function(model,
   if(!is.null(model$covariate)){
     if(model$split.regcoef){
       make.monitor.reg <- c()
+      if(model$regb.effect=='independent'){
+        for (i in 1:length(model$covariate[[1]])) {
+          make.monitor.reg0 <- paste0("betab.t_",i)
+          make.monitor.reg <- c(make.monitor.reg,make.monitor.reg0)
+        }
+      }
+      if(model$regw.effect=='independent'){
+        for (i in 1:length(model$covariate[[1]])) {
+          make.monitor.reg0 <- paste0("betaw.t_",i)
+          make.monitor.reg <- c(make.monitor.reg,make.monitor.reg0)
+        }
+      }
       for (i in 1:length(model$covariate[[1]])) {
         make.monitor.reg0 <- c(paste0("bb_",i),paste0("bw_",i))
         make.monitor.reg <- c(make.monitor.reg,make.monitor.reg0)
@@ -112,18 +123,26 @@ crossnma.run <- function(model,
           make.monitor.reg <- c(make.monitor.reg,make.monitor.reg2)
         }
       }
+
     }else{
       make.monitor.reg <- c()
+      if(model$regb.effect=='independent' && model$regw.effect=='independent'){
+        for (i in 1:length(model$covariate[[1]])) {
+          make.monitor.reg0 <- paste0("beta.t_",i)
+          make.monitor.reg <- c(make.monitor.reg,make.monitor.reg0)
+        }
+      }
       for (i in 1:length(model$covariate[[1]])) {
         make.monitor.reg0 <- paste0("b_",i)
         make.monitor.reg <- c(make.monitor.reg,make.monitor.reg0)
       }
-      if(model$regb.effect=='random'|model$regw.effect=='random'){
+      if(model$regb.effect=='random'&&model$regw.effect=='random'){
         for (i in 1:length(model$covariate[[1]])) {
           make.monitor.reg1 <- paste0("tau.b_",i)
           make.monitor.reg <- c(make.monitor.reg,make.monitor.reg1)
         }
       }
+
     }
     make.monitor <- c(make.monitor, make.monitor.reg)
   }
@@ -157,9 +176,9 @@ crossnma.run <- function(model,
                               thin=thin)
 
   crossrun <- structure(list(samples=jagssamples,
-                         model=model,
-                         "trt.key"=model$trt.key),
-                    class = "crossnma")
+                             model=model,
+                             "trt.key"=model$trt.key),
+                        class = "crossnma")
   return(crossrun)
 }
 

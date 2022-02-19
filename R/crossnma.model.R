@@ -17,14 +17,17 @@
 #' The covariates can be either numeric or dichotomous variables. The user can provide up to 3 covariates.
 #' For example, we set `covariate=c(‘age’, ‘sex’)` to adjust for 2 covariates.
 #' The default option is `covariate=NULL` where no covariate adjustment is applied (network meta-analysis).
+#' @param cov.ref An optional vector indicating the values to centre the continuous covariates. Dichotomous covariates should be given NA value.
+#' The order of the values should be the same as indicated variable names in \code{covariate} vector. The default is the overall mean covariate across all studies.
 #' @param reg0.effect An optional character (when \code{covariate} is not NULL) indicating the relationship across studies for the prognostic effects expressed by the regression coefficient, (\eqn{\beta_0}), in a study \eqn{j}.
 #' Options are 'independent' or 'random'. We recommend using 'independent' (default).
-#' @param regb.effect An optional character (when \code{covariate} is not NULL) indicating the relationship across studies for the between-study regression coefficient (\eqn{\beta^B}). This parameter quantifies the treatment-mean covariate interaction.
-#'  Options are 'random' or 'common'. Default is 'random'.
-#' @param regw.effect An optional character (when \code{covariate} is not NULL)  indicating the relationship across studies for the within-study regression coefficient (\eqn{\beta^W}). This parameter quantifies the treatment-covariate interaction effect at the individual level.
-#' Options are 'random' and 'common'. Default is 'random'.
+#' @param regb.effect An optional character (when \code{covariate} is not NULL) indicating the relationship across treatments for the between-study regression coefficient (\eqn{\beta^B}). This parameter quantifies the treatment-mean covariate interaction.
+#'  Options are 'independent', 'random' or 'common'. Default is 'random'.
+#' @param regw.effect An optional character (when \code{covariate} is not NULL)  indicating the relationship across treatments for the within-study regression coefficient (\eqn{\beta^W}). This parameter quantifies the treatment-covariate interaction effect at the individual level.
+#' Options are 'independent', 'random' and 'common'. Default is 'random'.
 #' @param split.regcoef A logical value (when \code{covariate} is not NULL). If TRUE the within- and between-study coefficients will be splitted in the analysis of prt.data.
 #' The default is TRUE. When the split.regcoef = FALSE, only a single regression coefficient will be estimated to represent both the between-studies and within-studies covariate effects.
+#' In this case, both arguments \code{regb.effect} and \code{regw.effect} need to be given the same option to model the single regression effect.
 #' @param method.bias A character for defining the method to combine randomised clinical trials (RCT) and non-randomised studies (NRS) (when \code{design} has both designs nrs and rct).
 #' Options are 'naive' for naive synthesize, 'prior' for using NRS to inform priors for the relative treatment effects in RCTs.
 #' or 'adjust1' and 'adjust2' to allow a bias adjustment. When only one design is available (either rct or nrs), this argument needs also to be specified to indicate whether unadjusted (naive) or bias-adjusted analysis (adjust1 or adjust2) should be applied.
@@ -116,51 +119,51 @@
 #' @import netmeta
 #' @seealso \code{\link{crossnma.run}}, \code{\link{jags.model}}
 
-
 crossnma.model <- function(prt.data,
-                       std.data,
-                       trt,
-                       study,
-                       outcome,
-                       n,
-                       design,
-                       reference=NULL,
-                       trt.effect='random',
-                       #---------- meta regression ----------
-                       covariate = NULL,#list(c('age','sex','EDSS'),c('age','sex','EDSS')), #default NULL
-                       reg0.effect='independent',
-                       regb.effect='random',
-                       regw.effect='random',
-                       split.regcoef=T,
-                       #---------- bias adjustment ----------
-                       method.bias = NULL,
-                       bias=NULL, #optional, required for adjust1. It can be either: low, high,
-                       bias.group = NULL,
-                       unfav=NULL,
-                       bias.type=NULL,#c('add','mult','both'),
-                       bias.covariate=NULL,
-                       bias.effect='common',
-                       down.wgt=NULL,
-                       # ---------- prior ----------
-                       prior=list(tau.trt=NULL,
-                                  tau.reg0=NULL,
-                                  tau.regb=NULL,
-                                  tau.regw=NULL,
-                                  tau.gamma=NULL,
-                                  pi.high.rct=NULL,
-                                  pi.low.rct=NULL,
-                                  pi.high.nrs=NULL,
-                                  pi.low.nrs=NULL
-                       ),
-                       # ---------- when method.bias='prior' ----------
-                       run.nrs=list(var.infl=1,
-                                    mean.shift=0,
-                                    trt.effect="common",
-                                    n.adapt = 2000,
-                                    n.iter=10000,
-                                    n.burnin = 4000,
-                                    thin=1,
-                                    n.chains=2)
+                           std.data,
+                           trt,
+                           study,
+                           outcome,
+                           n,
+                           design,
+                           reference=NULL,
+                           trt.effect='random',
+                           #---------- meta regression ----------
+                           covariate = NULL,
+                           cov.ref=NULL,
+                           reg0.effect='independent',
+                           regb.effect='random',
+                           regw.effect='random',
+                           split.regcoef=T,
+                           #---------- bias adjustment ----------
+                           method.bias = NULL,
+                           bias=NULL,
+                           bias.group = NULL,
+                           unfav=NULL,
+                           bias.type=NULL,
+                           bias.covariate=NULL,
+                           bias.effect='common',
+                           down.wgt=NULL,
+                           # ---------- prior ----------
+                           prior=list(tau.trt=NULL,
+                                      tau.reg0=NULL,
+                                      tau.regb=NULL,
+                                      tau.regw=NULL,
+                                      tau.gamma=NULL,
+                                      pi.high.rct=NULL,
+                                      pi.low.rct=NULL,
+                                      pi.high.nrs=NULL,
+                                      pi.low.nrs=NULL
+                           ),
+                           # ---------- when method.bias='prior' ----------
+                           run.nrs=list(var.infl=1,
+                                        mean.shift=0,
+                                        trt.effect="common",
+                                        n.adapt = 2000,
+                                        n.iter=10000,
+                                        n.burnin = 4000,
+                                        thin=1,
+                                        n.chains=2)
 ){
   options(warn=-1)
   # Bind variables to function
@@ -272,11 +275,11 @@ crossnma.model <- function(prt.data,
 
   # 4. dependency
   if(!is.null(prior)){
-  if(trt.effect=='common'&!is.null(prior$tau.trt)) warning(" The prior of the heterogeneity between relative treatments parameters is ignored")
-  if(reg0.effect=='common'&!is.null(prior$tau.reg0)) warning(" The prior of the heterogeneity between progonostic parameters is ignored")
-  if(regw.effect=='common'&!is.null(prior$tau.regw)) warning(" The prior of the heterogeneity between within-study interaction parameters is ignored")
-  if(regb.effect=='common'&!is.null(prior$tau.regb)) warning(" The prior of the heterogeneity between between-study interaction parameters is ignored")
-  if(bias.effect=='common'&!is.null(prior$tau.gamma)) warning(" The prior of the heterogeneity between bias effect parameters is ignored")
+    if(trt.effect=='common'&!is.null(prior$tau.trt)) warning(" The prior of the heterogeneity between relative treatments parameters is ignored")
+    if(reg0.effect=='common'&!is.null(prior$tau.reg0)) warning(" The prior of the heterogeneity between progonostic parameters is ignored")
+    if(regw.effect=='common'&!is.null(prior$tau.regw)) warning(" The prior of the heterogeneity between within-study interaction parameters is ignored")
+    if(regb.effect=='common'&!is.null(prior$tau.regb)) warning(" The prior of the heterogeneity between between-study interaction parameters is ignored")
+    if(bias.effect=='common'&!is.null(prior$tau.gamma)) warning(" The prior of the heterogeneity between bias effect parameters is ignored")
   }
   if(!is.null(data11)&!is.null(unfav)){if(!data11$unfav%in%c(0,1)) stop("The values of 'unfav' should be either 0 or 1")}
   if(!is.null(data22)&!is.null(unfav)){if(!data22$unfav%in%c(0,1)) stop("The values of 'unfav' should be either 0 or 1")}
@@ -424,6 +427,15 @@ crossnma.model <- function(prt.data,
         data1 <- data1%>%
           group_by(study.jags)%>%
           dplyr::mutate(xm1.ipd=mean(x1,na.rm = TRUE))
+        # Center the covariate and the mean covariate around overall mean (default) or cov.ref if specified
+        if(is.null(cov.ref)){ # overall mean
+          cov.ref1 <- mean(c(mean(data1$x1,na.rm = TRUE), mean(data2$x1,na.rm = TRUE)),na.rm = TRUE)
+          data1$x1 <- data1$x1-cov.ref1
+          data1$xm1.ipd <- data1$xm1.ipd-cov.ref1
+        } else{ # cov.ref
+          data1$x1 <- data1$x1-cov.ref[1]
+          data1$xm1.ipd <- data1$xm1.ipd-cov.ref[1]
+        }
         # Factor with 2 levels
       } else if (is.factor(data1$x1) == TRUE || is.character(data1$x1) == TRUE ) {
         #check that covariate has fewer than 3 levels and convert strings and factors to binary covariates
@@ -437,6 +449,7 @@ crossnma.model <- function(prt.data,
         data1 <- data1%>%
           group_by(study.jags)%>%
           dplyr::mutate(xm1.ipd=mean(x1,na.rm = TRUE))
+        cov.ref1 <- NA
       } else {stop("Invalid datatype for covariate.")}
       # covariate2
       if(!is.null(data1$x2)){
@@ -446,6 +459,15 @@ crossnma.model <- function(prt.data,
           data1 <- data1%>%
             group_by(study.jags)%>%
             dplyr::mutate(xm2.ipd=mean(x2,na.rm = TRUE))
+          # Center the covariate and the mean covariate around overall mean (default) or cov.ref if specified
+          if(is.null(cov.ref)){ # overall mean
+            cov.ref2 <- mean(c(mean(data1$x2,na.rm = TRUE), mean(data2$x2,na.rm = TRUE)),na.rm = TRUE)
+            data1$x2 <- data1$x2-cov.ref2
+            data1$xm2.ipd <- data1$xm2.ipd-cov.ref2
+          } else{ # cov.ref
+            data1$x2 <- data1$x2-cov.ref[2]
+            data1$xm2.ipd <- data1$xm2.ipd-cov.ref[2]
+          }
           # Factor with 2 levels
         } else if (is.factor(data1$x2) == TRUE || is.character(data1$x2) == TRUE) {
           #check that covariate has fewer than 3 levels and convert strings and factors to binary covariates
@@ -459,8 +481,10 @@ crossnma.model <- function(prt.data,
           data1 <- data1%>%
             group_by(study.jags)%>%
             dplyr::mutate(xm2.ipd=mean(x2,na.rm = TRUE))
+          cov.ref2 <- NA
         } else {stop("Invalid datatype for covariate.")}
-      }else {xm2.ipd <- NULL}
+      }else {xm2.ipd <- NULL
+      cov.ref2 <- NULL}
       # covariate3
       if(!is.null(data1$x3)){
         # continuous
@@ -469,6 +493,15 @@ crossnma.model <- function(prt.data,
           data1 <- data1%>%
             group_by(study.jags)%>%
             dplyr::mutate(xm3.ipd=mean(x3,na.rm = TRUE))
+          # Center the covariate and the mean covariate around overall mean (default) or cov.ref if specified
+          if(is.null(cov.ref)){ # overall mean
+            cov.ref3 <- mean(c(mean(data1$x3,na.rm = TRUE), mean(data2$x3,na.rm = TRUE)),na.rm = TRUE)
+            data1$x3 <- data1$x3-cov.ref3
+            data1$xm3.ipd <- data1$xm3.ipd-cov.ref3
+          } else{ # cov.ref
+            data1$x3 <- data1$x3-cov.ref[3]
+            data1$xm3.ipd <- data1$xm3.ipd-cov.ref[3]
+          }
           # Factor with 2 levels
         } else if (is.factor(data1$x3) == TRUE || is.character(data1$x3) == TRUE) {
           #check that covariate has fewer than 3 levels and convert strings and factors to binary covariates
@@ -482,8 +515,10 @@ crossnma.model <- function(prt.data,
           data1 <- data1%>%
             group_by(study.jags)%>%
             dplyr::mutate(xm3.ipd=mean(x3,na.rm = TRUE))
+          cov.ref3 <- NA
         } else {stop("Invalid datatype for covariate.")}
-      }else {xm3.ipd <- NULL}
+      }else {xm3.ipd <- NULL
+      cov.ref3 <- NULL}
     } else{
       xm1.ipd <- NULL
       xm2.ipd <- NULL
@@ -494,49 +529,49 @@ crossnma.model <- function(prt.data,
     jagsdata1 <- list()
 
     # create the matrix of trt index following the values of unfav column (adjust 1&2)
-if (method.bias%in%c("adjust1","adjust2")) {
-  if(is.null(bias.group)){data1$bias.group <- 1} # Default, make bias adjustment when bias.group is not provided
+    if (method.bias%in%c("adjust1","adjust2")) {
+      if(is.null(bias.group)){data1$bias.group <- 1} # Default, make bias adjustment when bias.group is not provided
 
-# From the unfav column create new ref treatment per study
-  dd0 <- data1%>%
-    group_by(study.jags)%>%
-    dplyr::mutate(ref.trt.std=.data[["trt"]][unfav==0][1])
-# For each study, arrange treatments by the new ref
-  ns <- length(unique(dd0$study.jags))
-  dd1 <-sapply(1:ns,
-               function(i){
-                 dstd0 <- dd0[dd0$study.jags==unique(dd0$study.jags)[i],]
-                 dstd<- dstd0%>%arrange(match(trt,ref.trt.std))
-                 }
-               ,simplify = FALSE)
-  dd2 <- do.call(rbind,dd1)
-# create a matrix with the treatment index
-  jagsdata1$t.ipd <- dd2 %>%
-    select(trt.jags,study.jags)%>% unique()%>%
-    group_by(study.jags)%>%
-    dplyr::mutate(arm = row_number())%>%ungroup() %>%
-    spread(arm, trt.jags)%>%
-    select(-study.jags)%>%
-    as.matrix()
+      # From the unfav column create new ref treatment per study
+      dd0 <- data1%>%
+        group_by(study.jags)%>%
+        dplyr::mutate(ref.trt.std=.data[["trt"]][unfav==0][1])
+      # For each study, arrange treatments by the new ref
+      ns <- length(unique(dd0$study.jags))
+      dd1 <-sapply(1:ns,
+                   function(i){
+                     dstd0 <- dd0[dd0$study.jags==unique(dd0$study.jags)[i],]
+                     dstd<- dstd0%>%arrange(match(trt,ref.trt.std))
+                   }
+                   ,simplify = FALSE)
+      dd2 <- do.call(rbind,dd1)
+      # create a matrix with the treatment index
+      jagsdata1$t.ipd <- dd2 %>%
+        select(trt.jags,study.jags)%>% unique()%>%
+        group_by(study.jags)%>%
+        dplyr::mutate(arm = row_number())%>%ungroup() %>%
+        spread(arm, trt.jags)%>%
+        select(-study.jags)%>%
+        as.matrix()
 
-    # generate JAGS data object
-    jagstemp <- data1 %>% select(-c(study,trt,design,bias.group,unfav,bias_index,bias))
-    for (v in names(jagstemp)){
-      jagsdata1[[v]] <- jagstemp %>% pull(v)
+      # generate JAGS data object
+      jagstemp <- data1 %>% select(-c(study,trt,design,bias.group,unfav,bias_index,bias))
+      for (v in names(jagstemp)){
+        jagsdata1[[v]] <- jagstemp %>% pull(v)
+      }
+    }else{
+      jagsdata1$t.ipd <- data1 %>% group_by(study.jags,trt.jags)%>% group_keys()%>%
+        group_by(study.jags)%>%
+        dplyr::mutate(arm = row_number())%>%ungroup() %>%
+        spread(arm, trt.jags)%>%
+        select(-study.jags)%>%
+        as.matrix()
+      # generate JAGS data object
+      jagstemp <- data1 %>% select(-c(study,trt,design))
+      for (v in names(jagstemp)){
+        jagsdata1[[v]] <- jagstemp %>% pull(v)
+      }
     }
-}else{
-  jagsdata1$t.ipd <- data1 %>% group_by(study.jags,trt.jags)%>% group_keys()%>%
-    group_by(study.jags)%>%
-    dplyr::mutate(arm = row_number())%>%ungroup() %>%
-    spread(arm, trt.jags)%>%
-    select(-study.jags)%>%
-    as.matrix()
-  # generate JAGS data object
-  jagstemp <- data1 %>% select(-c(study,trt,design))
-  for (v in names(jagstemp)){
-    jagsdata1[[v]] <- jagstemp %>% pull(v)
-  }
-}
     # add number of treatments, studies, and arms to JAGS data object
     jagsdata1$nt <- trt.key %>% nrow()
     jagsdata1$ns.ipd <- ifelse(!is.null(data1),data1$study%>% unique() %>% length(),0)
@@ -608,7 +643,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
         } else {stop("Invalid datatype for bias covariate.")}
 
       }else{
-      xbias.ad <- NULL
+        xbias.ad <- NULL
       }
 
     }else{
@@ -625,6 +660,13 @@ if (method.bias%in%c("adjust1","adjust2")) {
           arrange(study.jags)%>%
           group_by(study.jags)%>%
           dplyr::mutate(xm1.ad=mean(x1,na.rm = TRUE))
+        # Center the mean covariate around overall mean (default) or cov.ref if specified
+        if(is.null(cov.ref)){ # overall mean
+          cov.ref1 <- mean(c(mean(data1$x1,na.rm = TRUE), mean(data2$x1,na.rm = TRUE)),na.rm = TRUE)
+          data2$xm1.ad <- data2$xm1.ad-cov.ref1
+        } else{ # cov.ref
+          data2$xm1.ad <- data2$xm1.ad-cov.ref[1]
+        }
         # Factor with 2 levels
       } else if (is.factor(data2$x1) == TRUE || is.character(data2$x1) == TRUE) {
         #check that covariate has fewer than 3 levels and convert strings and factors to binary covariates
@@ -639,6 +681,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
           arrange(study.jags)%>%
           group_by(study.jags)%>%
           dplyr::mutate(xm1.ad=mean(x1,na.rm = TRUE))
+        cov.ref1 <- NA
       } else {stop("Invalid datatype for covariate.")}
 
       # covariate2
@@ -650,6 +693,13 @@ if (method.bias%in%c("adjust1","adjust2")) {
             arrange(study.jags)%>%
             group_by(study.jags)%>%
             dplyr::mutate(xm2.ad=mean(x2,na.rm = TRUE))
+          # Center the mean covariate around overall mean (default) or cov.ref if specified
+          if(is.null(cov.ref)){ # overall mean
+            cov.ref2 <- mean(c(mean(data1$x2,na.rm = TRUE), mean(data2$x2,na.rm = TRUE)),na.rm = TRUE)
+            data2$xm2.ad <- data2$xm2.ad-cov.ref2
+          } else{ # cov.ref
+            data2$xm2.ad <- data2$xm2.ad-cov.ref[2]
+          }
           # Factor with 2 levels
         } else if (is.factor(data2$x2) == TRUE || is.character(data2$x2) == TRUE) {
           #check that covariate has fewer than 3 levels and convert strings and factors to binary covariates
@@ -664,8 +714,10 @@ if (method.bias%in%c("adjust1","adjust2")) {
             arrange(study.jags)%>%
             group_by(study.jags)%>%
             dplyr::mutate(xm2.ad=mean(x2,na.rm = TRUE))
+          cov.ref2 <- NA
         } else {stop("Invalid datatype for covariate.")}
-      }else {xm2.ad <- NULL}
+      }else {xm2.ad <- NULL
+      cov.ref2 <- NULL}
       # covariate3
       if(!is.null(data2$x3)){
         # continuous
@@ -675,6 +727,13 @@ if (method.bias%in%c("adjust1","adjust2")) {
             arrange(study.jags)%>%
             group_by(study.jags)%>%
             dplyr::mutate(xm3.ad=mean(x3,na.rm = TRUE))
+          # Center the mean covariate around overall mean (default) or cov.ref if specified
+          if(is.null(cov.ref)){ # overall mean
+            cov.ref3 <- mean(c(mean(data1$x3,na.rm = TRUE), mean(data2$x3,na.rm = TRUE)),na.rm = TRUE)
+            data2$xm3.ad <- data2$xm3.ad-cov.ref3
+          } else{ # cov.ref
+            data2$xm3.ad <- data2$xm3.ad-cov.ref[3]
+          }
           # Factor with 2 levels
         } else if (is.factor(data2$x3) == TRUE || is.character(data2$x3) == TRUE) {
           #check that covariate has fewer than 3 levels and convert strings and factors to binary covariates
@@ -689,8 +748,10 @@ if (method.bias%in%c("adjust1","adjust2")) {
             arrange(study.jags)%>%
             group_by(study.jags)%>%
             dplyr::mutate(xm3.ad=mean(x3,na.rm = TRUE))
+          cov.ref3 <- NA
         } else {stop("Invalid datatype for covariate.")}
-      }else {xm3.ad <- NULL}
+      }else {xm3.ad <- NULL
+      cov.ref3 <- NULL}
     } else{
       xm1.ad <- NULL
       xm2.ad <- NULL
@@ -699,7 +760,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
 
     # generate JAGS data object
 
-      # create the matrix of trt index following the values of unfav column (adjust 1&2)
+    # create the matrix of trt index following the values of unfav column (adjust 1&2)
     if (method.bias%in%c("adjust1","adjust2")) {
       if(is.null(bias.group)){data2$bias.group <- 1} # Default, make bias adjustment when bias.group is no provided
 
@@ -772,7 +833,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
                 ifelse(!is.null(data2),list(data2%>%
                                               arrange(study.jags)%>%
                                               group_by(study.jags)%>%select(bias.group)%>%unique()), list(NULL))[[1]]
-                )
+  )
   jagsdata$std.in <-bmat$study.jags[bmat$bias.group==1]
   jagsdata$std.act.no <-bmat$study.jags[bmat$bias.group==0]
   jagsdata$std.act.yes <-bmat$study.jags[bmat$bias.group==2]
@@ -785,7 +846,7 @@ if (method.bias%in%c("adjust1","adjust2")) {
     # data NRS
     if(!(reference %in% data1.nrs$trt)&!(reference %in% data2.nrs$trt)) stop("Reference treatment should be present in the list of treatments in NRS.")
     trt.df.nrs <- data.frame(trt=unique(c(as.character(data1.nrs$trt),as.character(data2.nrs$trt))))
-     # check we might don't need as.characrter if that is chnaged from the begining
+    # check we might don't need as.characrter if that is chnaged from the begining
     trt.key.nrs <- trt.df.nrs$trt %>% unique %>% sort %>% tibble(trt.ini=.) %>%
       filter(trt.ini!=reference) %>% add_row(trt.ini=reference, .before=1) %>%
       dplyr::mutate(trt.jags = 1:dim(.)[1])
@@ -797,84 +858,84 @@ if (method.bias%in%c("adjust1","adjust2")) {
 
     #====================================
     # 1. IPD-NRS
-if(!is.null(data1.nrs)){
-    if(!(reference %in% data1.nrs$trt)) stop("Reference treatment is not present in the list of treatments.")
+    if(!is.null(data1.nrs)){
+      if(!(reference %in% data1.nrs$trt)) stop("Reference treatment is not present in the list of treatments.")
 
-    #Trt mapping
-    data1.nrs %<>% mutate(trt.jags=mapvalues(trt,
-                                             from=trt.key.nrs$trt.ini,
-                                             to=trt.key.nrs$trt.jags,
-                                             warn_missing = FALSE)%>%as.integer) # check as.character
+      #Trt mapping
+      data1.nrs %<>% mutate(trt.jags=mapvalues(trt,
+                                               from=trt.key.nrs$trt.ini,
+                                               to=trt.key.nrs$trt.jags,
+                                               warn_missing = FALSE)%>%as.integer) # check as.character
 
-    #add study mapping to data
-    data1.nrs %<>% mutate(study.jags=mapvalues(study,
-                                           from=study.key.nrs$std.id,
-                                           to=study.key.nrs$study.jags,
-                                           warn_missing = FALSE)%>% as.integer) # check as.character
+      #add study mapping to data
+      data1.nrs %<>% mutate(study.jags=mapvalues(study,
+                                                 from=study.key.nrs$std.id,
+                                                 to=study.key.nrs$study.jags,
+                                                 warn_missing = FALSE)%>% as.integer) # check as.character
 
-    # add a matrix of treatment per study row
-    jagsdata1.nrs <- list()
+      # add a matrix of treatment per study row
+      jagsdata1.nrs <- list()
 
-    jagsdata1.nrs$t.ipd <- data1.nrs %>%
-      arrange(study.jags)%>%
-      group_by(study.jags,trt.jags)%>% group_keys()%>%
-      group_by(study.jags)%>%
-      dplyr::mutate(arm = row_number())%>%ungroup() %>%
-      spread(arm, trt.jags)%>%
-      select(-study.jags)%>%
-      as.matrix()
+      jagsdata1.nrs$t.ipd <- data1.nrs %>%
+        arrange(study.jags)%>%
+        group_by(study.jags,trt.jags)%>% group_keys()%>%
+        group_by(study.jags)%>%
+        dplyr::mutate(arm = row_number())%>%ungroup() %>%
+        spread(arm, trt.jags)%>%
+        select(-study.jags)%>%
+        as.matrix()
 
-    #generate JAGS data object
+      #generate JAGS data object
 
-    jagstemp.nrs1 <- data1.nrs %>% select(-c(study,trt,design))
-    for (v in names(jagstemp.nrs1)){
-      jagsdata1.nrs[[v]] <- jagstemp.nrs1 %>% pull(v) #%>% as.vector() #%>% select(-trial, -variable)
+      jagstemp.nrs1 <- data1.nrs %>% select(-c(study,trt,design))
+      for (v in names(jagstemp.nrs1)){
+        jagsdata1.nrs[[v]] <- jagstemp.nrs1 %>% pull(v) #%>% as.vector() #%>% select(-trial, -variable)
+      }
+      #modify BUGS object for the various family/link combinations
+      names(jagsdata1.nrs)[names(jagsdata1.nrs) == "r"]  <- "y"
+      names(jagsdata1.nrs)[names(jagsdata1.nrs) == "trt.jags"] <- "trt"
+      names(jagsdata1.nrs)[names(jagsdata1.nrs) == "study.jags"] <- "study"
+
+      #add number of treatments, studies, and arms to BUGS data object
+      jagsdata1.nrs$nt <- trt.key.nrs %>% nrow()
+      jagsdata1.nrs$ns.ipd <- data1.nrs$study%>% unique() %>% length()
+      jagsdata1.nrs$na.ipd <- data1.nrs%>% arrange(study.jags)%>% group_by(study.jags)%>% group_map(~length(unique(.x$trt)))%>%
+        unlist()
+      jagsdata1.nrs$np <- data1.nrs %>% nrow()
+    } else {
+      jagsdata1.nrs <- list(ns.ipd=0, nt = trt.key.nrs %>% nrow())
     }
-    #modify BUGS object for the various family/link combinations
-    names(jagsdata1.nrs)[names(jagsdata1.nrs) == "r"]  <- "y"
-    names(jagsdata1.nrs)[names(jagsdata1.nrs) == "trt.jags"] <- "trt"
-    names(jagsdata1.nrs)[names(jagsdata1.nrs) == "study.jags"] <- "study"
-
-    #add number of treatments, studies, and arms to BUGS data object
-    jagsdata1.nrs$nt <- trt.key.nrs %>% nrow()
-    jagsdata1.nrs$ns.ipd <- data1.nrs$study%>% unique() %>% length()
-    jagsdata1.nrs$na.ipd <- data1.nrs%>% arrange(study.jags)%>% group_by(study.jags)%>% group_map(~length(unique(.x$trt)))%>%
-      unlist()
-    jagsdata1.nrs$np <- data1.nrs %>% nrow()
-} else {
-  jagsdata1.nrs <- list(ns.ipd=0, nt = trt.key.nrs %>% nrow())
-}
     #====================================
     # AD - NRS
-if(!is.null(data2.nrs)){
-  jagsdata2.nrs <- list()
-    #add treatment mapping to data
-    data2.nrs %<>% mutate(trt.jags=mapvalues(trt,
-                                             from=trt.key.nrs$trt.ini,
-                                             to=trt.key.nrs$trt.jags,
-                                             warn_missing = FALSE) %>% as.integer)
-    #add study mapping to data
-    data2.nrs %<>% mutate(study.jags=mapvalues(study,
-                                           from=study.key.nrs$std.id,
-                                           to=study.key.nrs$study.jags,
-                                           warn_missing = FALSE) %>% as.integer)
+    if(!is.null(data2.nrs)){
+      jagsdata2.nrs <- list()
+      #add treatment mapping to data
+      data2.nrs %<>% mutate(trt.jags=mapvalues(trt,
+                                               from=trt.key.nrs$trt.ini,
+                                               to=trt.key.nrs$trt.jags,
+                                               warn_missing = FALSE) %>% as.integer)
+      #add study mapping to data
+      data2.nrs %<>% mutate(study.jags=mapvalues(study,
+                                                 from=study.key.nrs$std.id,
+                                                 to=study.key.nrs$study.jags,
+                                                 warn_missing = FALSE) %>% as.integer)
 
 
-    jagstemp.nrs2 <- data2.nrs %>% arrange(study.jags) %>% group_by(study.jags) %>% dplyr::mutate(arm = row_number()) %>%
-      ungroup()%>% select(-c(trt,design,study))  %>% gather("variable", "value", -study.jags, -arm) %>% spread(arm, value)
+      jagstemp.nrs2 <- data2.nrs %>% arrange(study.jags) %>% group_by(study.jags) %>% dplyr::mutate(arm = row_number()) %>%
+        ungroup()%>% select(-c(trt,design,study))  %>% gather("variable", "value", -study.jags, -arm) %>% spread(arm, value)
 
-    for (v in unique(jagstemp.nrs2$variable)){
-      jagsdata2.nrs[[v]] <- as.matrix(jagstemp.nrs2 %>% filter(variable == v) %>% select(-study.jags, -variable))
+      for (v in unique(jagstemp.nrs2$variable)){
+        jagsdata2.nrs[[v]] <- as.matrix(jagstemp.nrs2 %>% filter(variable == v) %>% select(-study.jags, -variable))
+      }
+      names(jagsdata2.nrs)[names(jagsdata2.nrs) == "trt.jags"] <- "t.ad"
+
+      #add number of treatments, studies, and arms to JAGS data object
+      jagsdata2.nrs$ns.ad <- data2.nrs$study %>% unique()%>%length()
+      jagsdata2.nrs$na.ad <- data2.nrs %>% arrange(study.jags)%>% group_by(study.jags) %>%dplyr::summarize(n.arms = n()) %>%
+        ungroup() %>% select(n.arms) %>% t() %>% as.vector
+    } else{
+      jagsdata2.nrs <- list(ns.ad=0)
     }
-    names(jagsdata2.nrs)[names(jagsdata2.nrs) == "trt.jags"] <- "t.ad"
-
-    #add number of treatments, studies, and arms to JAGS data object
-    jagsdata2.nrs$ns.ad <- data2.nrs$study %>% unique()%>%length()
-    jagsdata2.nrs$na.ad <- data2.nrs %>% arrange(study.jags)%>% group_by(study.jags) %>%dplyr::summarize(n.arms = n()) %>%
-      ungroup() %>% select(n.arms) %>% t() %>% as.vector
-} else{
-  jagsdata2.nrs <- list(ns.ad=0)
-}
 
     # combine jagsdata of IPD and AD
     jagsdata.nrs <- c(jagsdata1.nrs,jagsdata2.nrs)
@@ -889,26 +950,26 @@ if(!is.null(data2.nrs)){
     n.burnin.nrs <-ifelse(is.null(run.nrs[["n.burnin"]]),4000,run.nrs[["n.burnin"]])
     # jags code NRS
     model.nrs <- crossnma.code(ipd = ifelse(nrow(data1.nrs)==0,F,T),
-                           ad = ifelse(nrow(data2.nrs)==0,F,T),
-                           trt.effect=trt.effect.nrs,
-                           covariate=NULL,
-                           split.regcoef=F,
-                           reg0.effect=NULL,
-                           regb.effect=NULL,
-                           regw.effect=NULL,
-                           bias.effect=NULL,
-                           bias.type=NULL,
-                           prior.tau.trt=NULL,
-                           prior.tau.reg0=NULL,
-                           prior.tau.regb=NULL,
-                           prior.tau.regw=NULL,
-                           prior.tau.gamma=NULL,
-                           prior.pi.high.rct=NULL,
-                           prior.pi.low.rct=NULL,
-                           prior.pi.high.nrs=NULL,
-                           prior.pi.low.nrs=NULL,
-                           method.bias = NULL,
-                           d.prior.nrs=NULL)
+                               ad = ifelse(nrow(data2.nrs)==0,F,T),
+                               trt.effect=trt.effect.nrs,
+                               covariate=NULL,
+                               split.regcoef=F,
+                               reg0.effect=NULL,
+                               regb.effect=NULL,
+                               regw.effect=NULL,
+                               bias.effect=NULL,
+                               bias.type=NULL,
+                               prior.tau.trt=NULL,
+                               prior.tau.reg0=NULL,
+                               prior.tau.regb=NULL,
+                               prior.tau.regw=NULL,
+                               prior.tau.gamma=NULL,
+                               prior.pi.high.rct=NULL,
+                               prior.pi.low.rct=NULL,
+                               prior.pi.high.nrs=NULL,
+                               prior.pi.low.nrs=NULL,
+                               method.bias = NULL,
+                               d.prior.nrs=NULL)
     # jags run NRS
 
     seeds <- sample(.Machine$integer.max, n.chains.nrs , replace = FALSE)
@@ -934,9 +995,9 @@ if(!is.null(data2.nrs)){
 
     # map NRS trt to RCT trt
     trt.key2 <- trt.key %>% dplyr::mutate(trt.jags.nrs=mapvalues(trt.ini,
-                                                          from=trt.key.nrs$trt.ini,
-                                                          to=trt.key.nrs$trt.jags,
-                                                          warn_missing = FALSE)%>%as.integer)
+                                                                 from=trt.key.nrs$trt.ini,
+                                                                 to=trt.key.nrs$trt.jags,
+                                                                 warn_missing = FALSE)%>%as.integer)
     d.nrs <- summary(jagssamples.nrs)[[1]][,'Mean']+mean.shift.nrs
     prec.nrs <- ifelse(is.null(var.infl.nrs),1,var.infl.nrs)/(summary(jagssamples.nrs)[[1]][,'SD']^2)
 
@@ -959,22 +1020,22 @@ if(!is.null(data2.nrs)){
 
   # aggregate IPD dataset
   if(!is.null(data1)&!is.null(data2)){
-  prt.data.ad0 <- sapply(1:length(unique(data1$study)),
-                         function(i){
-                           with(data1,
-                                data.frame(
-                                  study=unique(data1$study)[i],
-                                  trt=unique(data1[data1$study==unique(data1$study)[i],]$trt),
-                                  r=sum(data1[data1$study==unique(data1$study)[i],]$r),
-                                  n =nrow(data1[data1$study==unique(data1$study)[i],]),
-                                  design=unique(data1[data1$study==unique(data1$study)[i],]$design)
-                                )
-                           )
-                         }, simplify = F)
-  prt.data.ad <- do.call(rbind,prt.data.ad0)
+    prt.data.ad0 <- sapply(1:length(unique(data1$study)),
+                           function(i){
+                             with(data1,
+                                  data.frame(
+                                    study=unique(data1$study)[i],
+                                    trt=unique(data1[data1$study==unique(data1$study)[i],]$trt),
+                                    r=sum(data1[data1$study==unique(data1$study)[i],]$r),
+                                    n =nrow(data1[data1$study==unique(data1$study)[i],]),
+                                    design=unique(data1[data1$study==unique(data1$study)[i],]$design)
+                                  )
+                             )
+                           }, simplify = F)
+    prt.data.ad <- do.call(rbind,prt.data.ad0)
 
-  # combine IPD and AD in a single dataset
-  all.data.ad <- rbind(data2[c('study','trt','r','n','design')],prt.data.ad)
+    # combine IPD and AD in a single dataset
+    all.data.ad <- rbind(data2[c('study','trt','r','n','design')],prt.data.ad)
   } else if(!is.null(data1)){
     prt.data.ad0 <- sapply(1:length(unique(data1$study)),
                            function(i){
@@ -992,54 +1053,54 @@ if(!is.null(data2.nrs)){
     all.data.ad <- prt.data.ad
   } else if(!is.null(data2)){
     all.data.ad <- data2[c('study','trt','r','n','design')]
-}
+  }
   #=======================
   # jags code
   model <- crossnma.code(ipd = !is.null(prt.data),
-                     ad = !is.null(std.data),
-                     trt.effect=trt.effect,
-                     covariate=covariate,
-                     split.regcoef=split.regcoef,
-                     reg0.effect=reg0.effect,
-                     regb.effect=regb.effect,
-                     regw.effect=regw.effect,
-                     bias.effect=bias.effect,
-                     bias.type=bias.type,
-                     bias.covariate=bias.covariate,
-                     add.std.in=ifelse(length(jagsdata$std.in)==0,FALSE, TRUE),
-                     add.std.act.no=ifelse(length(jagsdata$std.act.no)==0,FALSE, TRUE),
-                     add.std.act.yes=ifelse(length(jagsdata$std.act.yes)==0,FALSE, TRUE),
-                     prior.tau.trt=prior[['tau.trt']],
-                     prior.tau.reg0=prior[['tau.reg0']],
-                     prior.tau.regb=prior[['tau.regb']],
-                     prior.tau.regw=prior[['tau.regw']],
-                     prior.tau.gamma=prior[['tau.gamma']],
-                     v=ifelse(is.null(down.wgt),
-                              list(NULL),
-                              list(down.wgt/(1-down.wgt)))[[1]],
-                     prior.pi.high.rct=prior[['pi.high.rct']],
-                     prior.pi.low.rct=prior[['pi.low.rct']],
-                     prior.pi.high.nrs=prior[['pi.high.nrs']],
-                     prior.pi.low.nrs=prior[['pi.low.nrs']],
-                     method.bias = method.bias,
-                     d.prior.nrs=d.prior.nrs
-                     )
+                         ad = !is.null(std.data),
+                         trt.effect=trt.effect,
+                         covariate=covariate,
+                         split.regcoef=split.regcoef,
+                         reg0.effect=reg0.effect,
+                         regb.effect=regb.effect,
+                         regw.effect=regw.effect,
+                         bias.effect=bias.effect,
+                         bias.type=bias.type,
+                         bias.covariate=bias.covariate,
+                         add.std.in=ifelse(length(jagsdata$std.in)==0,FALSE, TRUE),
+                         add.std.act.no=ifelse(length(jagsdata$std.act.no)==0,FALSE, TRUE),
+                         add.std.act.yes=ifelse(length(jagsdata$std.act.yes)==0,FALSE, TRUE),
+                         prior.tau.trt=prior[['tau.trt']],
+                         prior.tau.reg0=prior[['tau.reg0']],
+                         prior.tau.regb=prior[['tau.regb']],
+                         prior.tau.regw=prior[['tau.regw']],
+                         prior.tau.gamma=prior[['tau.gamma']],
+                         v=ifelse(is.null(down.wgt),
+                                  list(NULL),
+                                  list(down.wgt/(1-down.wgt)))[[1]],
+                         prior.pi.high.rct=prior[['pi.high.rct']],
+                         prior.pi.low.rct=prior[['pi.low.rct']],
+                         prior.pi.high.nrs=prior[['pi.high.nrs']],
+                         prior.pi.low.nrs=prior[['pi.low.nrs']],
+                         method.bias = method.bias,
+                         d.prior.nrs=d.prior.nrs
+  )
 
   crossmodel <- structure(list(jagsmodel=model,
-                           data=jagsdata,
-                           trt.key=trt.key,
-                           study.key=study.key,
-                           trt.effect=trt.effect,
-                           method.bias=method.bias,
-                           covariate=covariate,
-                           split.regcoef=split.regcoef,
-                           regb.effect=regb.effect,
-                           regw.effect=regw.effect,
-                           bias.effect=bias.effect,
-                           bias.type=bias.type,
-                           all.data.ad=all.data.ad
-                           ),
-                          class = "crossnmaModel")
+                               data=jagsdata,
+                               trt.key=trt.key,
+                               study.key=study.key,
+                               trt.effect=trt.effect,
+                               method.bias=method.bias,
+                               covariate=covariate,
+                               cov.ref=if(is.null(cov.ref)) c(cov.ref1,cov.ref2,cov.ref3) else cov.ref,
+                               split.regcoef=split.regcoef,
+                               regb.effect=regb.effect,
+                               regw.effect=regw.effect,
+                               bias.effect=bias.effect,
+                               bias.type=bias.type,
+                               all.data.ad=all.data.ad
+  ),
+  class = "crossnmaModel")
   return(crossmodel)
 }
-

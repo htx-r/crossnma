@@ -11,14 +11,15 @@
 #' @description Produces a league table and a league heat plot that contain point estimates of relative effects
 #' for all possible pairs of treatments along with 95% credible intervals obtained with the quantile method.
 #' @param x A \code{crossrun} object produced by running \code{crossnma.run()}.
-#' @param central.tdcy The statistic that you want to use in order to measure relative effectiveness. The options are "mean" and "median".
-#' @param log.scale If TRUE, odds ratios, relative risk or hazard ratios are reported on the log scale. Default is FALSE.
-#' @param order A vector of strings representing the order in which to display the treatments.
-#' @param low.colour A string indicating the colour of low relative treatment effects for the heat plot (e.g relative risk of 0.5).
-#' @param mid.colour A string indicating the colour of null relative treatment effects for the heat plot (e.g relative risk of ~1.0).
-#' @param high.colour A string indicating the colour of high relative treatment effects for the heat plot (e.g relative risk of ~2.0).
-#' @param cov.value  Must be specified for meta-regression. This is the value of the covariate for which to report the results.
-#' @param digits Number of digits to display after the decimal point
+#' @param central.tdcy The statistic to be used to measure the relative treatment effects. The options are "mean" and "median".
+#' @param exp If TRUE (default), odds ratios are reported. If FALSE, log odds ratios will be presented.
+#' @param order A vector of treatment names (character) representing the order in which to display these treatments.
+#' @param low.colour A string indicating the colour of low relative treatment effects for the heat plot (e.g odds ratio of ~0.5)
+#' @param mid.colour A string indicating the colour of null relative treatment effects for the heat plot (e.g odds ratio of ~1.0).
+#' @param high.colour A string indicating the colour of high relative treatment effects for the heat plot (e.g odds ratio of ~2.0).
+#' @param prt.cov.value  Must be specified for meta-regression. This is a vector of values of participant covariate for which to report the results.
+#' The order of these values should match the order in \code{covariate} vector in crossnma.model().
+#' @param digits The number of digits to use when displaying
 #'
 #' @return \code{table} - A league table. Row names indicate comparator treatments.
 #' @return \code{longtable} - League table in the long format.
@@ -57,9 +58,9 @@
 #'                 n.chains=3)
 #'
 #'  #=========================#
-#'    # Creat a league table   #
+#'    # Create the league table   #
 #'  #=========================#
-#' league_table <- crossnma.league(x=diabetes.re.c.res, central.tdcy="median")
+#' league_table <- crossnma.league(fit,exp = T)
 #' league_table$heatplot
 #' league_table$table
 #' league_table$longtable
@@ -104,27 +105,26 @@
 #                          n.iter=n.iter,
 #                          n.burnin = n.burnin,
 #                          thin=thin,
-#                          n.chains=n.chains,
-#                          monitor=c('LOR'))
+#                          n.chains=n.chains)
 # summary(jagsfit3)
-# x <- jagsfit3
-# central.tdcy = "median"
-# log.scale = FALSE
-# order = NULL
-# low.colour = "darkgoldenrod1"
-# mid.colour = "white"
-# high.colour = "cornflowerblue"
-# cov.value=38
-# digits = 2
-# library(dplyr)
+x <- jagsfit_rrms_adjust1_NMR_age
+central.tdcy = "median"
+exp = FALSE
+order = NULL
+low.colour = "darkgoldenrod1"
+mid.colour = "white"
+high.colour = "cornflowerblue"
+prt.cov.value=38
+digits = 2
+library(dplyr)
 crossnma.league <- function(x,
                             central.tdcy = "median",
-                            log.scale = FALSE,
+                            exp = FALSE,
                             order = NULL,
                             low.colour = "darkgoldenrod1",
                             mid.colour = "white",
                             high.colour = "cornflowerblue",
-                            cov.value=NULL,
+                            prt.cov.value=NULL,
                             digits = 2) {
 
   # Bind variables to function
@@ -136,24 +136,55 @@ crossnma.league <- function(x,
   if (class(x) != "crossnma")
     stop("\'x \' must be a valid crossnma object created using the crossnma.run function.")
 
-  if(!is.null(x$model$covariate) & is.null(cov.value)) stop("cov.value must be specified for meta-regression")
+  if(!is.null(x$model$covariate) & is.null(prt.cov.value)) stop("prt.cov.value must be specified for meta-regression")
 
   dmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("d."))
   trt.names <- x$trt.key$trt.ini
   colnames(dmat) <- trt.names
 
-  if(!is.null(cov.value)){ # meta-regression
+  if(!is.null(prt.cov.value)){ # meta-regression
+    nc <- length(x$model$covariate)
+    nt <- length(trt.names)
     if (x$model$split.regcoef){
-      bbmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("bb_"))
+      # if(x$model$regb.effect=="independent"){
+      #   bbmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("betab.t_"))
+      # } else{
+      #   bbmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("bb_"))
+      # }
       #colnames(bbmat) <- trt.names
 
-      bwmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("bb_"))
-      #colnames(bwmat) <- trt.names
+      if(x$model$regw.effect=="independent"){
 
-      dmat <- dmat+bbmat*(cov.value-x$model$mean.cov)
+        bwmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("betaw.t_"))
+
+        # split bwmat by nt_column to generate bwmat.cov for each covariate
+        bwmat.cov1 <- bwmat[,1:nt]*(prt.cov.value[1]-x$model$cov.ref[1])
+        if(nc==2){
+          bwmat.cov2 <- bwmat[,(nt+1):(nt*2)]*(prt.cov.value[2]-x$model$cov.ref[2])
+        } else{
+          bwmat.cov2 <- NULL
+        }
+        if(nc==3){
+          bwmat.cov3 <- bwmat[,(nt*2+1):(nt*3)]*(prt.cov.value[3]-x$model$cov.ref[3])
+        } else{
+          bwmat.cov3 <- NULL
+        }
+        dmat <- dmat+bwmat.cov1+bwmat.cov2+bwmat.cov3
+      } else{
+        bwmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("bw_"))
+        bwmat.cov <- sweep(bwmat,MARGIN = 2,prt.cov.value-cov.ref,'*')
+        dmat <- dmat+bwmat.cov
+        }
     } else{
-      bmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("b_"))
-      dmat <- dmat+matrix(unlist(rep(bmat*(cov.value), each = ncol(dmat))), nrow(dmat),ncol(dmat))
+      if(x$model$regb.effect=="independent"&&x$model$regw.effect=="independent"){
+        bmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("beta.t_"))
+        bmat.cov <- bmat*(prt.cov.value-x$model$cov.ref)
+      } else{
+        bmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("b_"))
+        bwmat.cov <- sweep(bwmat,MARGIN = 2,prt.cov.value-cov.ref,'*')
+        dmat <- dmat+matrix(unlist(rep(bmat*(prt.cov.value), each = ncol(dmat))), nrow(dmat),ncol(dmat))
+      }
+      dmat <- dmat+matrix(unlist(rep(bmat*(prt.cov.value), each = ncol(dmat))), nrow(dmat),ncol(dmat))
     }
   }
 
@@ -204,29 +235,29 @@ crossnma.league <- function(x,
     dmat2 %<>% select(new.vars)
     colnames(dmat2) <- trt.names
 
-    if(central.tdcy=="mean" & log.scale==FALSE){
+    if(central.tdcy=="mean" & exp==TRUE){
       tmp.estimate <- dmat2 %>%
         summarise_all(list(estimate = exp.mean)) %>% gather() %>%
         rename(trt = key, estimate = value) %>%
         mutate(trt = sub("_estimate", "", trt))
-    } else if(central.tdcy=="mean"& log.scale==TRUE){
+    } else if(central.tdcy=="mean"& exp==FALSE){
       tmp.estimate <- dmat2 %>%
         summarise_all(list(estimate = id.mean)) %>% gather() %>%
         rename(trt = key, estimate = value) %>%
         mutate(trt = sub("_estimate", "", trt))}
-    if(central.tdcy=="median" & log.scale==FALSE){
+    if(central.tdcy=="median" & exp==TRUE){
       tmp.estimate <- dmat2 %>%
         summarise_all(list(estimate = exp.median))%>% gather() %>%
         rename(trt = key, estimate = value) %>%
         mutate(trt = sub("_estimate", "", trt))
-    } else if(central.tdcy=="median"& log.scale==TRUE){
+    } else if(central.tdcy=="median"& exp==FALSE){
       tmp.estimate <- dmat2 %>%
         summarise_all(list(estimate = id.median)) %>% gather() %>%
         rename(trt = key, estimate = value) %>%
         mutate(trt = sub("_estimate", "", trt))
     }
 
-    if(log.scale==FALSE ){
+    if(exp==TRUE ){
       tmp.lci <- dmat2 %>%
         summarise_all(list(lci = exp.lci)) %>% gather() %>%
         rename(trt = key, lci = value) %>%
@@ -311,7 +342,7 @@ crossnma.league <- function(x,
            Comparator = rep(trt.names, each=length(trt.names))) %>%
     select(Treatment, Comparator, everything(), -trt)
 
-  if(log.scale==FALSE ){ # & x$link!="identity"
+  if(exp==TRUE ){ # & x$link!="identity"
     null.value <- 1
   } else{
     null.value <- 0
@@ -358,11 +389,10 @@ league.heat.plot <- function(leaguetable,
 
   heatplot <- ggplot(data = league.tmp, aes(x=Treatment, y=Comparator, fill=ct.stat)) +
     geom_tile()+
-    #coord_flip()+
-    geom_text(aes(label =
-                    ifelse(((midpoint<lci & midpoint< uci) | (midpoint>lci & midpoint> uci)),
-                           ifelse(Treatment!=Comparator, paste0("**", sprintf(fmt, ct.stat), "**", "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")"), " "),
-                           ifelse(Treatment!=Comparator, paste0(sprintf(fmt, ct.stat), "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")"), " "))),
+    geom_text(aes(label = paste0(sprintf(fmt, ct.stat), "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")"),
+                    # ifelse(((midpoint<lci & midpoint< uci) | (midpoint>lci & midpoint> uci)),
+                    #        ifelse(Treatment!=Comparator, paste0("**", sprintf(fmt, ct.stat), "**", "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")"), " "),
+                    #        ifelse(Treatment!=Comparator, paste0(sprintf(fmt, ct.stat), "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")"), " "))),
               size=6)
 
   heatplot <- heatplot +
