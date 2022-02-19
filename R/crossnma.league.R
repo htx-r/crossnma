@@ -107,16 +107,16 @@
 #                          thin=thin,
 #                          n.chains=n.chains)
 # summary(jagsfit3)
-x <- jagsfit_rrms_adjust1_NMR_age
-central.tdcy = "median"
-exp = FALSE
-order = NULL
-low.colour = "darkgoldenrod1"
-mid.colour = "white"
-high.colour = "cornflowerblue"
-prt.cov.value=38
-digits = 2
-library(dplyr)
+# x <- jagsfit_rrms_adjust1_NMR_age
+# central.tdcy = "median"
+# exp = FALSE
+# order = NULL
+# low.colour = "darkgoldenrod1"
+# mid.colour = "white"
+# high.colour = "cornflowerblue"
+# prt.cov.value=38
+# digits = 2
+# library(dplyr)
 crossnma.league <- function(x,
                             central.tdcy = "median",
                             exp = FALSE,
