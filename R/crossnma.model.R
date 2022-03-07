@@ -429,7 +429,7 @@ crossnma.model <- function(prt.data,
           dplyr::mutate(xm1.ipd=mean(x1,na.rm = TRUE))
         # Center the covariate and the min covariate around overall min (default) or cov.ref if specified
         if(is.null(cov.ref)){ # overall min
-          cov.ref1 <- min(c(min(min$x1,na.rm = TRUE), min(data2$x1,na.rm = TRUE)),na.rm = TRUE)
+          cov.ref1 <- min(c(min(data1$x1,na.rm = TRUE), min(data2$x1,na.rm = TRUE)),na.rm = TRUE)
           data1$x1 <- data1$x1-cov.ref1
           data1$xm1.ipd <- data1$xm1.ipd-cov.ref1
         } else{ # cov.ref
