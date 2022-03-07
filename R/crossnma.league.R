@@ -1,4 +1,5 @@
-# allow the user to fix the size of axis titles and entries in the boxes
+# allow the user to change the size of axis titles and entries in the boxes and axis text
+# print that the  mean covariate = and the prt.value=
 # check why we need to call the libraries: tidyr, magrittr, ... and others
 # put my example
 # cov.value is a vector, test and add to the description below
@@ -67,56 +68,56 @@
 #' @export
 #' @seealso \code{\link{crossnma.run}}
 
-# devtools::install_github("htx-r/crossnma",force = TRUE)
-# library(crossnma)
-# library(magrittr)
-# library(tidyr)
-# library(ggplot2)
-# #-------- MCMC settings --------#
-# n.adapt = 20
-# n.iter=100
-# n.burnin = 40
-# thin=1
-# n.chains=2
-#
-# # prior method
-# mod3 <- crossnma.model(prt.data=prt.data,
-#                        std.data=std.data,
-#                        trt='trt',
-#                        study='study',
-#                        outcome='outcome',
-#                        n='n',
-#                        design='design',
-#                        reference='D',
-#                        trt.effect='random',
-#                        #---------- bias adjustment ----------
-#                        method.bias='naive',
-#                        covariate = 'age',
-#                        reg0.effect = "independent",
-#                        regb.effect = "random",
-#                        regw.effect = "random",
-#                        split.regcoef = F
-# )
-#
-#
-# # run jags
-# jagsfit3 <- crossnma.run(model=mod3,
-#                          n.adapt = n.adapt,
-#                          n.iter=n.iter,
-#                          n.burnin = n.burnin,
-#                          thin=thin,
-#                          n.chains=n.chains)
-# summary(jagsfit3)
-# x <- jagsfit_rrms_adjust1_NMR_age
-# central.tdcy = "median"
-# exp = FALSE
-# order = NULL
-# low.colour = "darkgoldenrod1"
-# mid.colour = "white"
-# high.colour = "cornflowerblue"
-# prt.cov.value=38
-# digits = 2
-# library(dplyr)
+devtools::install_github("htx-r/crossnma",force = TRUE)
+library(crossnma)
+library(magrittr)
+library(tidyr)
+library(ggplot2)
+#-------- MCMC settings --------#
+n.adapt = 20
+n.iter=100
+n.burnin = 40
+thin=1
+n.chains=2
+
+# prior method
+mod3 <- crossnma.model(prt.data=prt.data,
+                       std.data=std.data,
+                       trt='trt',
+                       study='study',
+                       outcome='outcome',
+                       n='n',
+                       design='design',
+                       reference='D',
+                       trt.effect='random',
+                       #---------- bias adjustment ----------
+                       method.bias='naive',
+                       covariate = 'age',
+                       reg0.effect = "independent",
+                       regb.effect = "independent",
+                       regw.effect = "independent",
+                       split.regcoef = T
+)
+
+cat(mod3$jagsmodel)
+# run jags
+jagsfit3 <- crossnma.run(model=mod3,
+                         n.adapt = n.adapt,
+                         n.iter=n.iter,
+                         n.burnin = n.burnin,
+                         thin=thin,
+                         n.chains=n.chains)
+summary(jagsfit3)
+x <- jagsfit3
+central.tdcy = "median"
+exp = FALSE
+order = NULL
+low.colour = "darkgoldenrod1"
+mid.colour = "white"
+high.colour = "cornflowerblue"
+prt.cov.value=38
+digits = 2
+library(dplyr)
 crossnma.league <- function(x,
                             central.tdcy = "median",
                             exp = FALSE,
@@ -402,7 +403,8 @@ league.heat.plot <- function(leaguetable,
           legend.position="none", panel.border=element_blank(),
           axis.ticks.x=element_blank(),
           axis.ticks.y=element_blank(),
-          axis.text = element_text(size=12))+
+          axis.text = element_text(size=16),
+          axis.title = element_text(size = 20))+
     scale_x_discrete(limits = order, expand = c(0, 0), position="top") +
     scale_y_discrete(limits = rev(order), expand = c(0, 0))
 

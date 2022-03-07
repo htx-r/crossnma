@@ -18,7 +18,7 @@
 #' For example, we set `covariate=c(‘age’, ‘sex’)` to adjust for 2 covariates.
 #' The default option is `covariate=NULL` where no covariate adjustment is applied (network meta-analysis).
 #' @param cov.ref An optional vector indicating the values to centre the continuous covariates. Dichotomous covariates should be given NA value.
-#' The order of the values should be the same as indicated variable names in \code{covariate} vector. The default is the overall mean covariate across all studies.
+#' The order of the values should be the same as indicated variable names in \code{covariate} vector. The default is the overall minimum covariate across all studies.
 #' @param reg0.effect An optional character (when \code{covariate} is not NULL) indicating the relationship across studies for the prognostic effects expressed by the regression coefficient, (\eqn{\beta_0}), in a study \eqn{j}.
 #' Options are 'independent' or 'random'. We recommend using 'independent' (default).
 #' @param regb.effect An optional character (when \code{covariate} is not NULL) indicating the relationship across treatments for the between-study regression coefficient (\eqn{\beta^B}). This parameter quantifies the treatment-mean covariate interaction.
@@ -427,9 +427,9 @@ crossnma.model <- function(prt.data,
         data1 <- data1%>%
           group_by(study.jags)%>%
           dplyr::mutate(xm1.ipd=mean(x1,na.rm = TRUE))
-        # Center the covariate and the mean covariate around overall mean (default) or cov.ref if specified
-        if(is.null(cov.ref)){ # overall mean
-          cov.ref1 <- mean(c(mean(data1$x1,na.rm = TRUE), mean(data2$x1,na.rm = TRUE)),na.rm = TRUE)
+        # Center the covariate and the min covariate around overall min (default) or cov.ref if specified
+        if(is.null(cov.ref)){ # overall min
+          cov.ref1 <- min(c(min(min$x1,na.rm = TRUE), min(data2$x1,na.rm = TRUE)),na.rm = TRUE)
           data1$x1 <- data1$x1-cov.ref1
           data1$xm1.ipd <- data1$xm1.ipd-cov.ref1
         } else{ # cov.ref
@@ -459,9 +459,9 @@ crossnma.model <- function(prt.data,
           data1 <- data1%>%
             group_by(study.jags)%>%
             dplyr::mutate(xm2.ipd=mean(x2,na.rm = TRUE))
-          # Center the covariate and the mean covariate around overall mean (default) or cov.ref if specified
-          if(is.null(cov.ref)){ # overall mean
-            cov.ref2 <- mean(c(mean(data1$x2,na.rm = TRUE), mean(data2$x2,na.rm = TRUE)),na.rm = TRUE)
+          # Center the covariate and the min covariate around overall min (default) or cov.ref if specified
+          if(is.null(cov.ref)){ # overall min
+            cov.ref2 <- min(c(min(data1$x2,na.rm = TRUE), min(data2$x2,na.rm = TRUE)),na.rm = TRUE)
             data1$x2 <- data1$x2-cov.ref2
             data1$xm2.ipd <- data1$xm2.ipd-cov.ref2
           } else{ # cov.ref
@@ -493,9 +493,9 @@ crossnma.model <- function(prt.data,
           data1 <- data1%>%
             group_by(study.jags)%>%
             dplyr::mutate(xm3.ipd=mean(x3,na.rm = TRUE))
-          # Center the covariate and the mean covariate around overall mean (default) or cov.ref if specified
-          if(is.null(cov.ref)){ # overall mean
-            cov.ref3 <- mean(c(mean(data1$x3,na.rm = TRUE), mean(data2$x3,na.rm = TRUE)),na.rm = TRUE)
+          # Center the covariate and the min covariate around overall min (default) or cov.ref if specified
+          if(is.null(cov.ref)){ # overall min
+            cov.ref3 <- min(c(min(data1$x3,na.rm = TRUE), min(data2$x3,na.rm = TRUE)),na.rm = TRUE)
             data1$x3 <- data1$x3-cov.ref3
             data1$xm3.ipd <- data1$xm3.ipd-cov.ref3
           } else{ # cov.ref
@@ -660,9 +660,9 @@ crossnma.model <- function(prt.data,
           arrange(study.jags)%>%
           group_by(study.jags)%>%
           dplyr::mutate(xm1.ad=mean(x1,na.rm = TRUE))
-        # Center the mean covariate around overall mean (default) or cov.ref if specified
-        if(is.null(cov.ref)){ # overall mean
-          cov.ref1 <- mean(c(mean(data1$x1,na.rm = TRUE), mean(data2$x1,na.rm = TRUE)),na.rm = TRUE)
+        # Center the min covariate around overall min (default) or cov.ref if specified
+        if(is.null(cov.ref)){ # overall min
+          cov.ref1 <- min(c(min(data1$x1,na.rm = TRUE), min(data2$x1,na.rm = TRUE)),na.rm = TRUE)
           data2$xm1.ad <- data2$xm1.ad-cov.ref1
         } else{ # cov.ref
           data2$xm1.ad <- data2$xm1.ad-cov.ref[1]
@@ -693,9 +693,9 @@ crossnma.model <- function(prt.data,
             arrange(study.jags)%>%
             group_by(study.jags)%>%
             dplyr::mutate(xm2.ad=mean(x2,na.rm = TRUE))
-          # Center the mean covariate around overall mean (default) or cov.ref if specified
-          if(is.null(cov.ref)){ # overall mean
-            cov.ref2 <- mean(c(mean(data1$x2,na.rm = TRUE), mean(data2$x2,na.rm = TRUE)),na.rm = TRUE)
+          # Center the min covariate around overall min (default) or cov.ref if specified
+          if(is.null(cov.ref)){ # overall min
+            cov.ref2 <- min(c(min(data1$x2,na.rm = TRUE), min(data2$x2,na.rm = TRUE)),na.rm = TRUE)
             data2$xm2.ad <- data2$xm2.ad-cov.ref2
           } else{ # cov.ref
             data2$xm2.ad <- data2$xm2.ad-cov.ref[2]
@@ -727,9 +727,9 @@ crossnma.model <- function(prt.data,
             arrange(study.jags)%>%
             group_by(study.jags)%>%
             dplyr::mutate(xm3.ad=mean(x3,na.rm = TRUE))
-          # Center the mean covariate around overall mean (default) or cov.ref if specified
-          if(is.null(cov.ref)){ # overall mean
-            cov.ref3 <- mean(c(mean(data1$x3,na.rm = TRUE), mean(data2$x3,na.rm = TRUE)),na.rm = TRUE)
+          # Center the min covariate around overall min (default) or cov.ref if specified
+          if(is.null(cov.ref)){ # overall min
+            cov.ref3 <- min(c(min(data1$x3,na.rm = TRUE), min(data2$x3,na.rm = TRUE)),na.rm = TRUE)
             data2$xm3.ad <- data2$xm3.ad-cov.ref3
           } else{ # cov.ref
             data2$xm3.ad <- data2$xm3.ad-cov.ref[3]

@@ -197,13 +197,13 @@ crossnma.code <- function(ipd = T,
 
         # within- study covariate
         if(regw.effect=='independent'){
-          betab.prior0 <- paste0("
+          betaw.prior.ipd0 <- paste0("
             # Random effect for betab (the between-study covariate effect)
             betaw.t_",i,"[1] <- 0 \n
                      for (k in 2:nt){
                      betaw.t_",i,"[k]~dnorm(0,1e-2)
                      }")
-          betab.prior <- paste0(betab.prior,betab.prior0)
+          betaw.prior.ipd <- paste0(betaw.prior.ipd,betaw.prior.ipd0)
         }else if(regw.effect=='random'){
           for (i in 1:length(covariate[[1]])) {
             betaw.prior.ipd0 <- paste0("
