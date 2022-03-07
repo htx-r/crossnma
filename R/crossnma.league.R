@@ -68,56 +68,56 @@
 #' @export
 #' @seealso \code{\link{crossnma.run}}
 
-devtools::install_github("htx-r/crossnma",force = TRUE)
-library(crossnma)
-library(magrittr)
-library(tidyr)
-library(ggplot2)
-#-------- MCMC settings --------#
-n.adapt = 20
-n.iter=100
-n.burnin = 40
-thin=1
-n.chains=2
-
-# prior method
-mod3 <- crossnma.model(prt.data=prt.data,
-                       std.data=std.data,
-                       trt='trt',
-                       study='study',
-                       outcome='outcome',
-                       n='n',
-                       design='design',
-                       reference='D',
-                       trt.effect='random',
-                       #---------- bias adjustment ----------
-                       method.bias='naive',
-                       covariate = 'age',
-                       reg0.effect = "independent",
-                       regb.effect = "independent",
-                       regw.effect = "independent",
-                       split.regcoef = T
-)
-
-cat(mod3$jagsmodel)
-# run jags
-jagsfit3 <- crossnma.run(model=mod3,
-                         n.adapt = n.adapt,
-                         n.iter=n.iter,
-                         n.burnin = n.burnin,
-                         thin=thin,
-                         n.chains=n.chains)
-summary(jagsfit3)
-x <- jagsfit3
-central.tdcy = "median"
-exp = FALSE
-order = NULL
-low.colour = "darkgoldenrod1"
-mid.colour = "white"
-high.colour = "cornflowerblue"
-prt.cov.value=38
-digits = 2
-library(dplyr)
+# devtools::install_github("htx-r/crossnma",force = TRUE)
+# library(crossnma)
+# library(magrittr)
+# library(tidyr)
+# library(ggplot2)
+# #-------- MCMC settings --------#
+# n.adapt = 20
+# n.iter=100
+# n.burnin = 40
+# thin=1
+# n.chains=2
+#
+# # prior method
+# mod3 <- crossnma.model(prt.data=prt.data,
+#                        std.data=std.data,
+#                        trt='trt',
+#                        study='study',
+#                        outcome='outcome',
+#                        n='n',
+#                        design='design',
+#                        reference='D',
+#                        trt.effect='random',
+#                        #---------- bias adjustment ----------
+#                        method.bias='naive',
+#                        covariate = 'age',
+#                        reg0.effect = "independent",
+#                        regb.effect = "independent",
+#                        regw.effect = "independent",
+#                        split.regcoef = T
+# )
+#
+# cat(mod3$jagsmodel)
+# # run jags
+# jagsfit3 <- crossnma.run(model=mod3,
+#                          n.adapt = n.adapt,
+#                          n.iter=n.iter,
+#                          n.burnin = n.burnin,
+#                          thin=thin,
+#                          n.chains=n.chains)
+# summary(jagsfit3)
+# x <- jagsfit3
+# central.tdcy = "median"
+# exp = FALSE
+# order = NULL
+# low.colour = "darkgoldenrod1"
+# mid.colour = "white"
+# high.colour = "cornflowerblue"
+# prt.cov.value=38
+# digits = 2
+# library(dplyr)
 crossnma.league <- function(x,
                             central.tdcy = "median",
                             exp = FALSE,
