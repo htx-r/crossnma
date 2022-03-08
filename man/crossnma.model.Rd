@@ -15,6 +15,7 @@ crossnma.model(
   reference = NULL,
   trt.effect = "random",
   covariate = NULL,
+  cov.ref = NULL,
   reg0.effect = "independent",
   regb.effect = "random",
   regw.effect = "random",
@@ -56,21 +57,25 @@ The data frame needs to have the following columns: treatment, study identificat
 \item{trt.effect}{A character defining the model for the study-specific treatment effects. Options are 'random' (default) or 'common'.}
 
 \item{covariate}{An optional vector indicating the name of the covariates in prt.data and std.data (to conduct a network meta-regression)
-The covariates can be either numeric or dichotomous variables. The user can provide up to 3 covariates.
+The covariates can be either numeric or dichotomous (should be provided as factor or charachter) variables. The user can provide up to 3 covariates.
 For example, we set `covariate=c(‘age’, ‘sex’)` to adjust for 2 covariates.
 The default option is `covariate=NULL` where no covariate adjustment is applied (network meta-analysis).}
+
+\item{cov.ref}{An optional vector indicating the values to centre the continuous covariates. Dichotomous covariates should be given NA value.
+The order of the values should be the same as indicated variable names in \code{covariate} vector. The default is the overall minimum covariate across all studies.}
 
 \item{reg0.effect}{An optional character (when \code{covariate} is not NULL) indicating the relationship across studies for the prognostic effects expressed by the regression coefficient, (\eqn{\beta_0}), in a study \eqn{j}.
 Options are 'independent' or 'random'. We recommend using 'independent' (default).}
 
-\item{regb.effect}{An optional character (when \code{covariate} is not NULL) indicating the relationship across studies for the between-study regression coefficient (\eqn{\beta^B}). This parameter quantifies the treatment-mean covariate interaction.
-Options are 'random' or 'common'. Default is 'random'.}
+\item{regb.effect}{An optional character (when \code{covariate} is not NULL) indicating the relationship across treatments for the between-study regression coefficient (\eqn{\beta^B}). This parameter quantifies the treatment-mean covariate interaction.
+Options are 'independent', 'random' or 'common'. Default is 'random'.}
 
-\item{regw.effect}{An optional character (when \code{covariate} is not NULL)  indicating the relationship across studies for the within-study regression coefficient (\eqn{\beta^W}). This parameter quantifies the treatment-covariate interaction effect at the individual level.
-Options are 'random' and 'common'. Default is 'random'.}
+\item{regw.effect}{An optional character (when \code{covariate} is not NULL)  indicating the relationship across treatments for the within-study regression coefficient (\eqn{\beta^W}). This parameter quantifies the treatment-covariate interaction effect at the individual level.
+Options are 'independent', 'random' and 'common'. Default is 'random'.}
 
 \item{split.regcoef}{A logical value (when \code{covariate} is not NULL). If TRUE the within- and between-study coefficients will be splitted in the analysis of prt.data.
-The default is TRUE. When the split.regcoef = FALSE, only a single regression coefficient will be estimated to represent both the between-studies and within-studies covariate effects.}
+The default is TRUE. When the split.regcoef = FALSE, only a single regression coefficient will be estimated to represent both the between-studies and within-studies covariate effects.
+In this case, both arguments \code{regb.effect} and \code{regw.effect} need to be given the same option to model the single regression effect.}
 
 \item{method.bias}{A character for defining the method to combine randomised clinical trials (RCT) and non-randomised studies (NRS) (when \code{design} has both designs nrs and rct).
 Options are 'naive' for naive synthesize, 'prior' for using NRS to inform priors for the relative treatment effects in RCTs.
@@ -126,6 +131,10 @@ number of thinning thin (1) and number of chains n.chains (2), see \code{\link{j
 
 \code{covariate}  A list of the the names of the covariates in prt.data and std.data used in network meta-regression.
 
+\code{cov.ref} A vector indicating the values to centre the continuous covariates. Dichotomous covariates take NA.
+
+\code{dich.cov.labels} A matrix represents the value (0/1) provided for each level of dichotomous covariates.
+
 \code{split.regcoef} A logical value. If FALSE the within- and between-study regression coefficients will be considered equal.
 
 \code{regb.effect} An optional character  indicating the model for the between-study regression coefficients across studies.
@@ -138,6 +147,45 @@ number of thinning thin (1) and number of chains n.chains (2), see \code{\link{j
 }
 \description{
 This function creates a JAGS model and the needed data. The JAGS code is created from the internal function \code{crossnma.code}.
+}
+\examples{
+# An example from participant-level data and study-level data.
+# data
+prt.data
+std.data
+ #=========================#
+  # Create a jags model  #
+ #=========================#
+ # We conduct a network meta-analysis assuming a random effect model.
+ # The data comes from randomised-controlled trials and non-randomised studies. They will be combined naively.
+ # The data has 2 different formats: individual participant data (prt.data) and study-level data (std.data).
+mod <- crossnma.model(prt.data=prt.data,
+                  std.data=std.data,
+                  trt="trt",
+                  study="study",
+                  outcome="outcome",
+                  n="n",
+                  design="design",
+                  reference="A",
+                  trt.effect="random",
+                  covariate = NULL,
+                  method.bias="naive"
+                   )
+ #=========================#
+    # Fit jags model  #
+ #=========================#
+fit <- crossnma.run(model=mod,
+                n.adapt = 20,
+                n.iter=50,
+                thin=1,
+                n.chains=3)
+
+ #=========================#
+   # Display the output   #
+ #=========================#
+summary(fit)
+plot(fit)
+
 }
 \seealso{
 \code{\link{crossnma.run}}, \code{\link{jags.model}}

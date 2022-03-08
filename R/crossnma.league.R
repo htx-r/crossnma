@@ -1,13 +1,7 @@
 # allow the user to change the size of axis titles and entries in the boxes and axis text
 # print that the  mean covariate = and the prt.value=
-# check why we need to call the libraries: tidyr, magrittr, ... and others
 # put my example
-# cov.value is a vector, test and add to the description below
-# discuss with G how to compute the adjusted relative effects at give cov.value (bw*(x-x.bar)+bb*x.bar)
-# I don't centre the model by default (should I do it or just add that to the description of covaraite)
-# current implementation: I assumed common regression effect across studies (random is not implemented) and across treatments it can be assumed common or random (no independent)
-# when I change assumptions about the reg coefficient, I should make the changes to the bit that add the reg coef
-# check if the output is correct
+# check if crossnma.league work and whether it provides the true answer under several options: 2 covariates, dich and cont covariates
 #' League Table and Heat Plot
 #' @description Produces a league table and a league heat plot that contain point estimates of relative effects
 #' for all possible pairs of treatments along with 95% credible intervals obtained with the quantile method.
@@ -18,14 +12,12 @@
 #' @param low.colour A string indicating the colour of low relative treatment effects for the heat plot (e.g odds ratio of ~0.5)
 #' @param mid.colour A string indicating the colour of null relative treatment effects for the heat plot (e.g odds ratio of ~1.0).
 #' @param high.colour A string indicating the colour of high relative treatment effects for the heat plot (e.g odds ratio of ~2.0).
-#' @param prt.cov.value  Must be specified for meta-regression. This is a vector of values of participant covariate for which to report the results.
-#' The order of these values should match the order in \code{covariate} vector in crossnma.model().
+#' @param prt.cov.value  Must be specified for meta-regression when individual participant dataset is provided. This is a vector of values of participant covariate for which to report the results.
+#' The order of these values should match the order in \code{covariate} vector in crossnma.model(). For dichotomous covariates, the name used in the data should be indicated as a character.
 #' @param digits The number of digits to use when displaying
-#'
 #' @return \code{table} - A league table. Row names indicate comparator treatments.
 #' @return \code{longtable} - League table in the long format.
 #' @return \code{heatplot} - League heat plot, where a color scale is used to represent relative treatment effects and ** are used to highlight statistically significant differences.
-#'
 #' @examples
 #' # An example from participant-level data and study-level data.
 #' # data
@@ -39,15 +31,15 @@
 #'  # The data has 2 different formats: individual participant data (prt.data) and study-level data (std.data).
 #' mod <- crossnma.model(prt.data=prt.data,
 #'                   std.data=std.data,
-#'                   trt='trt',
-#'                   study='study',
-#'                   outcome=outcome',
-#'                   n='n',
-#'                   design='design',
-#'                   reference='A',
-#'                   trt.effect='random',
+#'                   trt="trt",
+#'                   study="study",
+#'                   outcome="outcome",
+#'                   n="n",
+#'                   design="design",
+#'                   reference="A",
+#'                   trt.effect="random",
 #'                   covariate = NULL,
-#'                   method.bias='naive'
+#'                   method.bias="naive"
 #'                    )
 #'  #=========================#
 #'     # Fit jags model  #
@@ -67,56 +59,6 @@
 #' league_table$longtable
 #' @export
 #' @seealso \code{\link{crossnma.run}}
-
-# devtools::install_github("htx-r/crossnma",force = TRUE)
-# library(crossnma)
-# library(magrittr)
-# library(tidyr)
-# library(ggplot2)
-# #-------- MCMC settings --------#
-# n.adapt = 20
-# n.iter=100
-# n.burnin = 40
-# thin=1
-# n.chains=2
-# # prior method
-# mod3 <- crossnma.model(prt.data=prt.data,
-#                        std.data=std.data,
-#                        trt='trt',
-#                        study='study',
-#                        outcome='outcome',
-#                        n='n',
-#                        design='design',
-#                        reference='D',
-#                        trt.effect='random',
-#                        #---------- bias adjustment ----------
-#                        method.bias='naive',
-#                        covariate = 'age',
-#                        reg0.effect = "independent",
-#                        regb.effect = "independent",
-#                        regw.effect = "independent",
-#                        split.regcoef = T
-# )
-#
-# cat(mod3$jagsmodel)
-# # run jags
-# jagsfit3 <- crossnma.run(model=mod3,
-#                          n.adapt = n.adapt,
-#                          n.iter=n.iter,
-#                          n.burnin = n.burnin,
-#                          thin=thin,
-#                          n.chains=n.chains)
-# summary(jagsfit3)
-# x <- jagsfit3
-# central.tdcy = "median"
-# exp = FALSE
-# order = NULL
-# low.colour = "darkgoldenrod1"
-# mid.colour = "white"
-# high.colour = "cornflowerblue"
-# prt.cov.value=38
-# digits = 2
-# library(dplyr)
 crossnma.league <- function(x,
                             central.tdcy = "median",
                             exp = FALSE,
@@ -142,51 +84,218 @@ crossnma.league <- function(x,
   trt.names <- x$trt.key$trt.ini
   colnames(dmat) <- trt.names
 
-  if(!is.null(prt.cov.value)){ # meta-regression
+if(!is.null(x$model$covariate)){
+  if(x$model$data$ns.ipd!=0){ # if we provide IPD with or without AD
     nc <- length(x$model$covariate)
     nt <- length(trt.names)
     if (x$model$split.regcoef){
-      # if(x$model$regb.effect=="independent"){
-      #   bbmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("betab.t_"))
-      # } else{
-      #   bbmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("bb_"))
-      # }
-      #colnames(bbmat) <- trt.names
-
+      #** betaw
       if(x$model$regw.effect=="independent"){
-
         bwmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("betaw.t_"))
-
         # split bwmat by nt_column to generate bwmat.cov for each covariate
-        bwmat.cov1 <- bwmat[,1:nt]*(prt.cov.value[1]-x$model$cov.ref[1])
+        bwmat.cov1 <- bwmat[,1:nt]*ifelse(is.numeric(prt.cov.value[1]),
+                                          prt.cov.value[1]-x$model$cov.ref[1], # for numeric covariate
+                                          as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[1],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+        )
         if(nc==2){
-          bwmat.cov2 <- bwmat[,(nt+1):(nt*2)]*(prt.cov.value[2]-x$model$cov.ref[2])
+          bwmat.cov2 <- bwmat[,(nt+1):(nt*2)]*ifelse(is.numeric(prt.cov.value[2]),
+                                                     prt.cov.value[2]-x$model$cov.ref[2], # for numeric covariate
+                                                     as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[2],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+          )
         } else{
-          bwmat.cov2 <- NULL
+          bwmat.cov2 <- 0
         }
         if(nc==3){
-          bwmat.cov3 <- bwmat[,(nt*2+1):(nt*3)]*(prt.cov.value[3]-x$model$cov.ref[3])
+          bwmat.cov3 <- bwmat[,(nt*2+1):(nt*3)]*ifelse(is.numeric(prt.cov.value[3]),
+                                                       prt.cov.value[3]-x$model$cov.ref[3], # for numeric covariate
+                                                       as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[3],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+          )
         } else{
-          bwmat.cov3 <- NULL
+          bwmat.cov3 <- 0
         }
         dmat <- dmat+bwmat.cov1+bwmat.cov2+bwmat.cov3
       } else{
         bwmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("bw_"))
-        bwmat.cov <- sweep(bwmat,MARGIN = 2,prt.cov.value-cov.ref,'*')
-        dmat <- dmat+bwmat.cov
+        bwmat.cov1 <- sweep(cbind(bwmat[,1]),MARGIN = 2,ifelse(is.numeric(prt.cov.value[1]),
+                                                               prt.cov.value[1]-x$model$cov.ref[1], # for numeric covariate
+                                                               as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[1],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+        ),'*') # multiply each column values by prt.cov-cov.ref
+        bwmat.cov1 <-matrix(unlist(rep(bwmat.cov1,each=nt)), ncol=nt,byrow = TRUE)       # repeat the column for each trt to add it to dmat
+        if(nc==2){
+          bwmat.cov2 <- sweep(cbind(bwmat[,2]),MARGIN = 2,ifelse(is.numeric(prt.cov.value[2]),
+                                                                 prt.cov.value[2]-x$model$cov.ref[2], # for numeric covariate
+                                                                 as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[2],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+          ),'*')
+          bwmat.cov2 <- matrix(unlist(rep(bwmat.cov2,each=nt)), ncol=nt,byrow = TRUE)
+        } else{
+          bwmat.cov2 <- 0
         }
+        if(nc==3){
+          bwmat.cov3 <- sweep(cbind(bwmat[,3]),MARGIN = 2,ifelse(is.numeric(prt.cov.value[3]),
+                                                                 prt.cov.value[3]-x$model$cov.ref[3], # for numeric covariate
+                                                                 as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[3],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+          ),'*')
+          bwmat.cov3 <- matrix(unlist(rep(bwmat.cov3,each=nt)), ncol=nt,byrow = TRUE)
+        } else{
+          bwmat.cov3 <- 0
+        }
+        dmat <- dmat+ bwmat.cov1+bwmat.cov2+bwmat.cov3
+      }
+      # betab
+      if(x$model$regb.effect=="independent"){
+        bbmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("betab.t_"))
+        # split bbmat by nt_column to generate bbmat.cov for each covariate
+        stds.mean1 <- mean(c(x$model$data$xm1.ad, x$model$data$xm1.ipd),na.rm = TRUE)
+        bbmat.cov1 <- bbmat[,1:nt]*ifelse(is.numeric(prt.cov.value[1]),stds.mean1-x$model$cov.ref[1],stds.mean1)
+        if(nc==2){
+          stds.mean2 <- mean(c(x$model$data$xm2.ad, x$model$data$xm2.ipd),na.rm = TRUE)
+          bbmat.cov2 <- bbmat[,(nt+1):(nt*2)]*ifelse(is.numeric(prt.cov.value[2]),stds.mean2-x$model$cov.ref[2],stds.mean2)
+        } else{
+          bbmat.cov2 <- 0
+        }
+        if(nc==3){
+          stds.mean3 <- mean(c(x$model$data$xm3.ad, x$model$data$xm3.ipd),na.rm = TRUE)
+          bbmat.cov3 <- bbmat[,(nt*2+1):(nt*3)]*ifelse(is.numeric(prt.cov.value[3]),stds.mean3-x$model$cov.ref[3],stds.mean3)
+        } else{
+          bbmat.cov3 <- 0
+        }
+        dmat <- dmat+bbmat.cov1+bbmat.cov2+bbmat.cov3
+      } else{
+        stds.mean <- c(mean(c(x$model$data$xm1.ad, x$model$data$xm1.ipd),na.rm = TRUE),
+                       mean(c(x$model$data$xm2.ad, x$model$data$xm2.ipd),na.rm = TRUE),
+                       mean(c(x$model$data$xm3.ad, x$model$data$xm3.ipd),na.rm = TRUE))
+
+        bbmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("bb_"))
+        bbmat.cov1 <- sweep(cbind(bbmat[,1]),MARGIN = 2,ifelse(is.numeric(prt.cov.value[1]),stds.mean[1]-x$model$cov.ref[1],stds.mean[1]),'*')
+        bbmat.cov1 <-matrix(unlist(rep(bbmat.cov1,each=nt)), ncol=nt,byrow = TRUE)
+        if(nc==2){
+          bbmat.cov2 <- sweep(cbind(bbmat[,2]),MARGIN = 2,ifelse(is.numeric(prt.cov.value[2]),stds.mean[2]-x$model$cov.ref[2],stds.mean[2]),'*')
+          bbmat.cov2 <- matrix(unlist(rep(bbmat.cov2,each=nt)), ncol=nt,byrow = TRUE)
+        } else{
+          bbmat.cov2 <- 0
+        }
+        if(nc==3){
+          bbmat.cov3 <- sweep(cbind(bbmat[,3]),MARGIN = 2,ifelse(is.numeric(prt.cov.value[3]),stds.mean[3]-x$model$cov.ref[3],stds.mean[3]),'*')
+          bbmat.cov3 <- matrix(unlist(rep(bbmat.cov3,each=nt)), ncol=nt,byrow = TRUE)
+        } else{
+          bbmat.cov3 <- 0
+        }
+        dmat <- dmat+ bbmat.cov1+bbmat.cov2+bbmat.cov3
+      }
+
     } else{
       if(x$model$regb.effect=="independent"&&x$model$regw.effect=="independent"){
         bmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("beta.t_"))
-        bmat.cov <- bmat*(prt.cov.value-x$model$cov.ref)
+        bmat.cov1 <- bmat[,1:nt]*(ifelse(is.numeric(prt.cov.value[1]),
+                                         prt.cov.value[1]-x$model$cov.ref[1], # for numeric covariate
+                                         as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[1],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+        ))
+        if(nc==2){
+          bmat.cov2 <- bmat[,(nt+1):(nt*2)]*(ifelse(is.numeric(prt.cov.value[2]),
+                                                    prt.cov.value[2]-x$model$cov.ref[2], # for numeric covariate
+                                                    as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[2],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+          ))
+
+        } else{
+          bmat.cov2 <- 0
+        }
+        if(nc==3){
+          bmat.cov3 <- bmat[,(nt*2+1):(nt*3)]*(ifelse(is.numeric(prt.cov.value[3]),
+                                                      prt.cov.value[3]-x$model$cov.ref[3], # for numeric covariate
+                                                      as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[3],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+          ))
+        } else{
+          bmat.cov3 <- 0
+        }
+        dmat <- dmat+bmat.cov1+bmat.cov2+bmat.cov3
       } else{
         bmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("b_"))
-        bwmat.cov <- sweep(bwmat,MARGIN = 2,prt.cov.value-cov.ref,'*')
-        dmat <- dmat+matrix(unlist(rep(bmat*(prt.cov.value), each = ncol(dmat))), nrow(dmat),ncol(dmat))
+        bmat.cov1 <- sweep(cbind(bmat[,1]),MARGIN = 2,ifelse(is.numeric(prt.cov.value[1]),
+                                                             prt.cov.value[1]-x$model$cov.ref[1], # for numeric covariate
+                                                             as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[1],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+        ),'*')
+        bmat.cov1 <-matrix(unlist(rep(bmat.cov1,each=nt)), ncol=nt,byrow = TRUE)
+        if(nc==2){
+          bmat.cov2 <- sweep(cbind(bmat[,2]),MARGIN = 2,ifelse(is.numeric(prt.cov.value[2]),
+                                                               prt.cov.value[2]-x$model$cov.ref[2], # for numeric covariate
+                                                               as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[2],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+          ),'*')
+          bmat.cov2 <- matrix(unlist(rep(bmat.cov2,each=nt)), ncol=nt,byrow = TRUE)
+        } else{
+          bmat.cov2 <- 0
+        }
+        if(nc==3){
+          bmat.cov3 <- sweep(cbind(bmat[,3]),MARGIN = 2,ifelse(is.numeric(prt.cov.value[3]),
+                                                               prt.cov.value[3]-x$model$cov.ref[3], # for numeric covariate
+                                                               as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[3],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+          ),'*')
+          bmat.cov3 <- matrix(unlist(rep(bmat.cov3,each=nt)), ncol=nt,byrow = TRUE)
+        } else{
+          bmat.cov3 <- 0
+        }
+        dmat+ bmat.cov1+bmat.cov2+bmat.cov3
       }
-      dmat <- dmat+matrix(unlist(rep(bmat*(prt.cov.value), each = ncol(dmat))), nrow(dmat),ncol(dmat))
+    }
+  } else{ # only AD
+    # betab
+    if(x$model$regb.effect=="independent"){
+      bbmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("beta.t_"))
+      # split bbmat by nt_column to generate bbmat.cov for each covariate
+      stds.mean1 <-x$model$data$xm1.ad
+      bbmat.cov1 <- bbmat[,1:nt]*ifelse(!is.na(cov.ref[1]),stds.mean1-x$model$cov.ref[1],stds.mean1)
+      if(nc==2){
+        stds.mean2 <- mean(c(x$model$data$xm2.ad, x$model$data$xm2.ipd),na.rm = TRUE)
+        bbmat.cov2 <- bbmat[,(nt+1):(nt*2)]*ifelse(!is.na(cov.ref[2]),stds.mean2-x$model$cov.ref[2],stds.mean2)
+      } else{
+        bbmat.cov2 <- 0
+      }
+      if(nc==3){
+        stds.mean3 <- mean(c(x$model$data$xm3.ad, x$model$data$xm3.ipd),na.rm = TRUE)
+        bbmat.cov3 <- bbmat[,(nt*2+1):(nt*3)]*ifelse(!is.na(cov.ref[3]),stds.mean3-x$model$cov.ref[3],stds.mean3)
+      } else{
+        bbmat.cov3 <- 0
+      }
+      dmat <- dmat+bbmat.cov1+bbmat.cov2+bbmat.cov3
+    } else{
+      stds.mean <- c(x$model$data$xm1.ad,
+                     x$model$data$xm2.ad,
+                     x$model$data$xm3.ad
+                     )
+
+      bbmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("b_"))
+      bbmat.cov1 <- sweep(cbind(bbmat[,1]),MARGIN = 2,ifelse(!is.na(cov.ref[1]),stds.mean[1]-x$model$cov.ref[1],stds.mean[1]),'*')
+      bbmat.cov1 <-matrix(unlist(rep(bbmat.cov1,each=nt)), ncol=nt,byrow = TRUE)
+      if(nc==2){
+        bbmat.cov2 <- sweep(cbind(bbmat[,2]),MARGIN = 2,ifelse(!is.na(cov.ref[2]),stds.mean[2]-x$model$cov.ref[2],stds.mean[2]),'*')
+        bbmat.cov2 <- matrix(unlist(rep(bbmat.cov2,each=nt)), ncol=nt,byrow = TRUE)
+      } else{
+        bbmat.cov2 <- 0
+      }
+      if(nc==3){
+        bbmat.cov3 <- sweep(cbind(bbmat[,3]),MARGIN = 2,ifelse(!is.na(cov.ref[3]),stds.mean[3]-x$model$cov.ref[3],stds.mean[3]),'*')
+        bbmat.cov3 <- matrix(unlist(rep(bbmat.cov3,each=nt)), ncol=nt,byrow = TRUE)
+      } else{
+        bbmat.cov3 <- 0
+      }
+      dmat <- dmat+ bbmat.cov1+bbmat.cov2+bbmat.cov3
     }
   }
+}
+
+
+  # # when we adjust for covariate, add a message with the values that we adjusted for
+  # if(!is.null(prt.cov.value)){
+  #   msg.adjust <-  paste0("The estimates of treatment effect are adjusted for \n
+  #                               participant ",x$model$covariate[1],"= ",prt.cov.value[1],
+  #                          "and study mean = ",round(mean(c(x$model$data$xm1.ad, x$model$data$xm1.ipd),na.rm = TRUE),2)
+  #   )
+  #   if(nc==2) msg.adjust <- paste0(msg.adjust, paste0("\n participant ",x$model$covariate[2],"= ",prt.cov.value[2],
+  #                                       "and study mean = ",round(mean(c(x$model$data$xm2.ad, x$model$data$xm2.ipd),na.rm = TRUE),2)))
+  #   if(nc==3) msg.adjust <- paste0(msg.adjust, paste0("\n participant ",x$model$covariate[3],"= ",prt.cov.value[3],
+  #                                       "and study mean = ",round(mean(c(x$model$data$xm3.ad, x$model$data$xm3.ipd),na.rm = TRUE),2))
+  #                    )
+  # }
+
 
   if(is.null(order)){
     order <- trt.names

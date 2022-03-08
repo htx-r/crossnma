@@ -28,15 +28,15 @@
 #'  # The data has 2 different formats: individual participant data (prt.data) and study-level data (std.data).
 #' mod <- crossnma.model(prt.data=prt.data,
 #'                   std.data=std.data,
-#'                   trt='trt',
-#'                   study='study',
-#'                   outcome=outcome',
-#'                   n='n',
-#'                   design='design',
-#'                   reference='A',
-#'                   trt.effect='random',
+#'                   trt="trt",
+#'                   study="study",
+#'                   outcome="outcome",
+#'                   n="n",
+#'                   design="design",
+#'                   reference="A",
+#'                   trt.effect="random",
 #'                   covariate = NULL,
-#'                   method.bias='naive'
+#'                   method.bias="naive"
 #'                    )
 #'  #=========================#
 #'     # Fit jags model  #

@@ -7,33 +7,34 @@
 crossnma.league(
   x,
   central.tdcy = "median",
-  log.scale = FALSE,
+  exp = FALSE,
   order = NULL,
   low.colour = "darkgoldenrod1",
   mid.colour = "white",
   high.colour = "cornflowerblue",
-  cov.value = NULL,
+  prt.cov.value = NULL,
   digits = 2
 )
 }
 \arguments{
 \item{x}{A \code{crossrun} object produced by running \code{crossnma.run()}.}
 
-\item{central.tdcy}{The statistic that you want to use in order to measure relative effectiveness. The options are "mean" and "median".}
+\item{central.tdcy}{The statistic to be used to measure the relative treatment effects. The options are "mean" and "median".}
 
-\item{log.scale}{If TRUE, odds ratios, relative risk or hazard ratios are reported on the log scale. Default is FALSE.}
+\item{exp}{If TRUE (default), odds ratios are reported. If FALSE, log odds ratios will be presented.}
 
-\item{order}{A vector of strings representing the order in which to display the treatments.}
+\item{order}{A vector of treatment names (character) representing the order in which to display these treatments.}
 
-\item{low.colour}{A string indicating the colour of low relative treatment effects for the heat plot (e.g relative risk of 0.5).}
+\item{low.colour}{A string indicating the colour of low relative treatment effects for the heat plot (e.g odds ratio of ~0.5)}
 
-\item{mid.colour}{A string indicating the colour of null relative treatment effects for the heat plot (e.g relative risk of ~1.0).}
+\item{mid.colour}{A string indicating the colour of null relative treatment effects for the heat plot (e.g odds ratio of ~1.0).}
 
-\item{high.colour}{A string indicating the colour of high relative treatment effects for the heat plot (e.g relative risk of ~2.0).}
+\item{high.colour}{A string indicating the colour of high relative treatment effects for the heat plot (e.g odds ratio of ~2.0).}
 
-\item{cov.value}{Must be specified for meta-regression. This is the value of the covariate for which to report the results.}
+\item{prt.cov.value}{Must be specified for meta-regression when individual participant dataset is provided. This is a vector of values of participant covariate for which to report the results.
+The order of these values should match the order in \code{covariate} vector in crossnma.model(). For dichotomous covariates, the name used in the data should be indicated as a character.}
 
-\item{digits}{Number of digits to display after the decimal point}
+\item{digits}{The number of digits to use when displaying}
 }
 \value{
 \code{table} - A league table. Row names indicate comparator treatments.
@@ -45,6 +46,46 @@ crossnma.league(
 \description{
 Produces a league table and a league heat plot that contain point estimates of relative effects
 for all possible pairs of treatments along with 95% credible intervals obtained with the quantile method.
+}
+\examples{
+# An example from participant-level data and study-level data.
+# data
+data(prt.data)
+data(std.data)
+ #=========================#
+  # Create a jags model  #
+ #=========================#
+ # We conduct a network meta-analysis assuming a random effect model.
+ # The data comes from randomised-controlled trials and non-randomised studies. They will be combined naively.
+ # The data has 2 different formats: individual participant data (prt.data) and study-level data (std.data).
+mod <- crossnma.model(prt.data=prt.data,
+                  std.data=std.data,
+                  trt="trt",
+                  study="study",
+                  outcome="outcome",
+                  n="n",
+                  design="design",
+                  reference="A",
+                  trt.effect="random",
+                  covariate = NULL,
+                  method.bias="naive"
+                   )
+ #=========================#
+    # Fit jags model  #
+ #=========================#
+fit <- crossnma.run(model=mod,
+                n.adapt = 20,
+                n.iter=50,
+                thin=1,
+                n.chains=3)
+
+ #=========================#
+   # Create the league table   #
+ #=========================#
+league_table <- crossnma.league(fit,exp = T)
+league_table$heatplot
+league_table$table
+league_table$longtable
 }
 \seealso{
 \code{\link{crossnma.run}}

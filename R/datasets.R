@@ -38,6 +38,5 @@
 #'   \item{unfav}{numeric, the indicator of the unfavoured treatment of the study, 0, 1}
 #'   \item{bias.group}{numeric, the bias effect of the study, 1 = study has inactive treatment and adjust for bias effect, 2= study has active treatments and another adjustment for bias effect, 0=no bias adjustment}
 #'   \item{year}{numeric, the year published of the study}
-#'
 #' }
 "std.data"

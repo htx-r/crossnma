@@ -45,6 +45,46 @@ See \code{\link{jags.model}} for more info.}
 \description{
 Takes the JAGS model from an object produced by \code{crossnma.model} and runs it using \code{jags} package.
 }
+\examples{
+# An example from participant-level data and study-level data.
+# data
+data(prt.data)
+data(std.data)
+ #=========================#
+  # Create a jags model  #
+ #=========================#
+ # We conduct a network meta-analysis assuming a random effect model.
+ # The data comes from randomised-controlled trials and non-randomised studies. They will be combined naively.
+ # The data has 2 different formats: individual participant data (prt.data) and study-level data (std.data).
+mod <- crossnma.model(prt.data=prt.data,
+                  std.data=std.data,
+                  trt="trt",
+                  study="study",
+                  outcome="outcome",
+                  n="n",
+                  design="design",
+                  reference="A",
+                  trt.effect="random",
+                  covariate = NULL,
+                  method.bias="naive"
+                   )
+ #=========================#
+    # Fit jags model  #
+ #=========================#
+fit <- crossnma.run(model=mod,
+                n.adapt = 20,
+                n.iter=50,
+                thin=1,
+                n.chains=3)
+
+ #=========================#
+   # Display the output   #
+ #=========================#
+summary(fit)
+plot(fit)
+
+
+}
 \seealso{
 \code{\link{crossnma.model}},\code{\link{jags.model}}
 }

@@ -365,7 +365,7 @@ crossnma.code <- function(ipd = T,
       for (i in 1:length(covariate[[1]])) {
         # meta-regression terms - Up to 3
         ref.trt.effect.ad0 <- paste0(
-          "betab_",i,"[j,t.ipd[j,1]] <- 0 \n"
+          "betab.ad_",i,"[j,t.ad[j,1]] <- 0 \n"
         )
         ref.trt.effect.ad0 <- ifelse(ipd,"", ref.trt.effect.ad0)
         ref.trt.effect.ad <- paste0(ref.trt.effect.ad,ref.trt.effect.ad0)

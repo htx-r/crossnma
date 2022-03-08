@@ -1,3 +1,5 @@
+#!! 07-03-2022, cov.ref doesn't provide the min value as default, it provides ZERO!
+#!! 08-03-2022 check for the added dich.cov.labels
 # delete NA from data is not applied! CHECK
 # add trt.effect to nrs.run in Vignette and the manuscript
 #' Create JAGS model to synthesize cross-design evidence and cross-format data in NMA and NMR for dichotomous outcomes
@@ -14,7 +16,7 @@
 #' @param reference A character indicating the name of the reference treatment. When the reference is not specified, the first alphabetic treatment will be used as a reference in the analysis.
 #' @param trt.effect A character defining the model for the study-specific treatment effects. Options are 'random' (default) or 'common'.
 #' @param covariate An optional vector indicating the name of the covariates in prt.data and std.data (to conduct a network meta-regression)
-#' The covariates can be either numeric or dichotomous variables. The user can provide up to 3 covariates.
+#' The covariates can be either numeric or dichotomous (should be provided as factor or charachter) variables. The user can provide up to 3 covariates.
 #' For example, we set `covariate=c(‘age’, ‘sex’)` to adjust for 2 covariates.
 #' The default option is `covariate=NULL` where no covariate adjustment is applied (network meta-analysis).
 #' @param cov.ref An optional vector indicating the values to centre the continuous covariates. Dichotomous covariates should be given NA value.
@@ -63,6 +65,8 @@
 #' @return \code{trt.effect} A character defining the model for the study-specific treatment effects.
 #' @return \code{method.bias}  A character for defining the method to combine randomised clinical trials (RCT) and non-randomised studies (NRS).
 #' @return \code{covariate}  A list of the the names of the covariates in prt.data and std.data used in network meta-regression.
+#' @return \code{cov.ref} A vector indicating the values to centre the continuous covariates. Dichotomous covariates take NA.
+#' @return \code{dich.cov.labels} A matrix represents the value (0/1) provided for each level of dichotomous covariates.
 #' @return \code{split.regcoef} A logical value. If FALSE the within- and between-study regression coefficients will be considered equal.
 #' @return \code{regb.effect} An optional character  indicating the model for the between-study regression coefficients across studies.
 #' @return \code{regw.effect} An optional character indicating the model for the within-study regression coefficients across studies.
@@ -71,8 +75,8 @@
 #' @examples
 #' # An example from participant-level data and study-level data.
 #' # data
-#' data(prt.data)
-#' data(std.data)
+#' prt.data
+#' std.data
 #'  #=========================#
 #'   # Create a jags model  #
 #'  #=========================#
@@ -81,15 +85,15 @@
 #'  # The data has 2 different formats: individual participant data (prt.data) and study-level data (std.data).
 #' mod <- crossnma.model(prt.data=prt.data,
 #'                   std.data=std.data,
-#'                   trt='trt',
-#'                   study='study',
-#'                   outcome=outcome',
-#'                   n='n',
-#'                   design='design',
-#'                   reference='A',
-#'                   trt.effect='random',
+#'                   trt="trt",
+#'                   study="study",
+#'                   outcome="outcome",
+#'                   n="n",
+#'                   design="design",
+#'                   reference="A",
+#'                   trt.effect="random",
 #'                   covariate = NULL,
-#'                   method.bias='naive'
+#'                   method.bias="naive"
 #'                    )
 #'  #=========================#
 #'     # Fit jags model  #
@@ -427,7 +431,7 @@ crossnma.model <- function(prt.data,
         data1 <- data1%>%
           group_by(study.jags)%>%
           dplyr::mutate(xm1.ipd=mean(x1,na.rm = TRUE))
-        # Center the covariate and the min covariate around overall min (default) or cov.ref if specified
+        # Center the covariate and the mean covariate around overall min (default) or cov.ref if specified
         if(is.null(cov.ref)){ # overall min
           cov.ref1 <- min(c(min(data1$x1,na.rm = TRUE), min(data2$x1,na.rm = TRUE)),na.rm = TRUE)
           data1$x1 <- data1$x1-cov.ref1
@@ -436,6 +440,7 @@ crossnma.model <- function(prt.data,
           data1$x1 <- data1$x1-cov.ref[1]
           data1$xm1.ipd <- data1$xm1.ipd-cov.ref[1]
         }
+        dich.cov.labels1 <- NULL
         # Factor with 2 levels
       } else if (is.factor(data1$x1) == TRUE || is.character(data1$x1) == TRUE ) {
         #check that covariate has fewer than 3 levels and convert strings and factors to binary covariates
@@ -444,11 +449,13 @@ crossnma.model <- function(prt.data,
         if(length(unique(data1$x1)) == 1)
           stop("Covariate should have more than one unique value.")
         if (is.character(data1$x1) == TRUE)
-          data1$x1 <- as.factor(data1$x1)
-        data1$x1 <- as.numeric(data1$x1 != levels(data1$x1)[1])
+        data1$x1f <- as.factor(data1$x1) # represent the covariate as a factor
+        data1$x1 <- as.numeric(data1$x1f != levels(data1$x1f)[1]) # tranfer it to numeric to be used in JAGS
         data1 <- data1%>%
           group_by(study.jags)%>%
           dplyr::mutate(xm1.ipd=mean(x1,na.rm = TRUE))
+        dich.cov.labels1 <- data1%>%group_by(x1f,x1)%>%group_keys()
+        data1$x1f <- NULL # no need for the factor version of x1
         cov.ref1 <- NA
       } else {stop("Invalid datatype for covariate.")}
       # covariate2
@@ -468,6 +475,7 @@ crossnma.model <- function(prt.data,
             data1$x2 <- data1$x2-cov.ref[2]
             data1$xm2.ipd <- data1$xm2.ipd-cov.ref[2]
           }
+          dich.cov.labels2 <- NULL
           # Factor with 2 levels
         } else if (is.factor(data1$x2) == TRUE || is.character(data1$x2) == TRUE) {
           #check that covariate has fewer than 3 levels and convert strings and factors to binary covariates
@@ -476,15 +484,19 @@ crossnma.model <- function(prt.data,
           if(length(unique(data1$x2)) == 1)
             stop("Covariate should have more than one unique value.")
           if (is.character(data1$x2) == TRUE)
-            data1$x2 <- as.factor(data1$x2)
-          data1$x2 <- as.numeric(data1$x2 != levels(data1$x2)[1])
+            data1$x2f <- as.factor(data1$x2) # represent the covariate as a factor
+          data1$x2 <- as.numeric(data1$x2f != levels(data1$x2f)[1]) # tranfer it to numeric to be used in JAGS
           data1 <- data1%>%
             group_by(study.jags)%>%
             dplyr::mutate(xm2.ipd=mean(x2,na.rm = TRUE))
+          dich.cov.labels2 <- data1%>%group_by(x2f,x2)%>%group_keys()
+          data1$x2f <- NULL # no need for the factor version of x2
           cov.ref2 <- NA
         } else {stop("Invalid datatype for covariate.")}
       }else {xm2.ipd <- NULL
-      cov.ref2 <- NULL}
+      cov.ref2 <- NULL
+      dich.cov.labels2 <- NULL
+      }
       # covariate3
       if(!is.null(data1$x3)){
         # continuous
@@ -502,6 +514,7 @@ crossnma.model <- function(prt.data,
             data1$x3 <- data1$x3-cov.ref[3]
             data1$xm3.ipd <- data1$xm3.ipd-cov.ref[3]
           }
+          dich.cov.labels3 <- NULL
           # Factor with 2 levels
         } else if (is.factor(data1$x3) == TRUE || is.character(data1$x3) == TRUE) {
           #check that covariate has fewer than 3 levels and convert strings and factors to binary covariates
@@ -510,15 +523,19 @@ crossnma.model <- function(prt.data,
           if(length(unique(data1$x3)) == 1)
             stop("Covariate should have more than one unique value.")
           if (is.character(data1$x3) == TRUE)
-            data1$x3 <- as.factor(data1$x3)
-          data1$x3 <- as.numeric(data1$x3 != levels(data1$x3)[1])
+            data1$x3f <- as.factor(data1$x3) # represent the covariate as a factor
+          data1$x3 <- as.numeric(data1$x3f != levels(data1$x3f)[1]) # tranfer it to numeric to be used in JAGS
           data1 <- data1%>%
             group_by(study.jags)%>%
             dplyr::mutate(xm3.ipd=mean(x3,na.rm = TRUE))
+          dich.cov.labels3 <- data1%>%group_by(x3f,x3)%>%group_keys()
+          data1$x3f <- NULL # no need for the factor version of x3
           cov.ref3 <- NA
         } else {stop("Invalid datatype for covariate.")}
       }else {xm3.ipd <- NULL
-      cov.ref3 <- NULL}
+      cov.ref3 <- NULL
+      dich.cov.labels3 <- NULL
+      }
     } else{
       xm1.ipd <- NULL
       xm2.ipd <- NULL
@@ -660,7 +677,7 @@ crossnma.model <- function(prt.data,
           arrange(study.jags)%>%
           group_by(study.jags)%>%
           dplyr::mutate(xm1.ad=mean(x1,na.rm = TRUE))
-        # Center the min covariate around overall min (default) or cov.ref if specified
+        # Center the mean covariate around overall min (default) or cov.ref if specified
         if(is.null(cov.ref)){ # overall min
           cov.ref1 <- min(c(min(data1$x1,na.rm = TRUE), min(data2$x1,na.rm = TRUE)),na.rm = TRUE)
           data2$xm1.ad <- data2$xm1.ad-cov.ref1
@@ -1094,6 +1111,9 @@ crossnma.model <- function(prt.data,
                                method.bias=method.bias,
                                covariate=covariate,
                                cov.ref=if(is.null(cov.ref)) c(cov.ref1,cov.ref2,cov.ref3) else cov.ref,
+                               dich.cov.labels = ifelse(!is.null(ipd)&!is.null(covariate),
+                                                         list(rbind(dich.cov.labels1,dich.cov.labels2,dich.cov.labels3)),
+                                                         list(NULL))[[1]],
                                split.regcoef=split.regcoef,
                                regb.effect=regb.effect,
                                regw.effect=regw.effect,
