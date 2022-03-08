@@ -3,7 +3,7 @@
 #' A dataset containing 2950 participants who are treated in 4 different treatments: A, B, C and D.
 #' The dataset includes 4 different studies. The outcome is binary. There are 10 attributes on individual level.
 #'
-#' @format A data frame with 2950 rows and 8 variables:
+#' @format A data frame with 2950 rows and 10 variables:
 #' \describe{
 #'   \item{study}{numeric, study identifier}
 #'   \item{outcome}{binary data, respond indicator, 0=respond and 1=no-respond}
@@ -22,8 +22,8 @@
 
 
 #' A simulated aggregate data.
-#' The dataset includes 2 randomised-controlled trials (RCTs), comparing 2 treatments: A, C.
-#' The outcome is binary that is represented as the number of participants with a respond.
+#' The dataset includes 2 randomised-controlled trials (RCTs), comparing 2 treatments: A and C.
+#' The outcome is binary represented as the number of participants with a respond.
 #'
 #'#' @format A data frame with 4 rows and 11 variables:
 #' \describe{

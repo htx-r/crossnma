@@ -4,8 +4,8 @@
 \name{std.data}
 \alias{std.data}
 \title{A simulated aggregate data.
-The dataset includes 2 randomised-controlled trials (RCTs), comparing 2 treatments: A, C.
-The outcome is binary that is represented as the number of participants with a respond.}
+The dataset includes 2 randomised-controlled trials (RCTs), comparing 2 treatments: A and C.
+The outcome is binary represented as the number of participants with a respond.}
 \format{
 An object of class \code{data.frame} with 4 rows and 11 columns.
 }
@@ -13,9 +13,19 @@ An object of class \code{data.frame} with 4 rows and 11 columns.
 std.data
 }
 \description{
-
+#' @format A data frame with 4 rows and 11 variables:
+\describe{
+  \item{study}{numeric, study identifier}
+  \item{outcome}{numeric, the number of responders}
+  \item{n}{numeric, the sample size}
+  \item{trt}{character, indicating the assigned treatment to participants in each study arm}
+  \item{design}{character, design of the study, either 'rct' or 'nrs'}
+  \item{age}{numeric, the mean age of participants in each study}
+  \item{sex}{numeric, the proportion of males on each study}
+  \item{bias}{character, the risk of bias of the study, 'low', 'high','unclear'}
+  \item{unfav}{numeric, the indicator of the unfavoured treatment of the study, 0, 1}
+  \item{bias.group}{numeric, the bias effect of the study, 1 = study has inactive treatment and adjust for bias effect, 2= study has active treatments and another adjustment for bias effect, 0=no bias adjustment}
+  \item{year}{numeric, the year published of the study}
 }
-\details{
-
 }
 \keyword{datasets}

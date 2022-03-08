@@ -5,10 +5,6 @@
 #'
 #' See \code{\link{netgraph.netmeta}} for more details.
 #'
-#' @return \code{crossnma.run} returns an object of class \code{crossrun} which is a list containing the following components:
-#' @return \code{samples}  The MCMC samples produced by running the JAGS model.
-#' @return \code{model}  The \code{crossnmaModel} object obtained from \code{crossnma.model} which was used to run \code{jags}.
-#' @return \code{trt.key}  A table of the treatment names and their correspondence to integers used in the JAGS model.
 #' @examples
 #' # An example from participant-level data and study-level data.
 #' # data

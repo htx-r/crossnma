@@ -5,7 +5,7 @@
 \alias{prt.data}
 \title{A simulated individual participant data.}
 \format{
-A data frame with 2950 rows and 8 variables:
+A data frame with 2950 rows and 10 variables:
 \describe{
   \item{study}{numeric, study identifier}
   \item{outcome}{binary data, respond indicator, 0=respond and 1=no-respond}
