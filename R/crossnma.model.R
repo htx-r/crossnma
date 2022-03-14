@@ -1,6 +1,4 @@
-#!! 07-03-2022, cov.ref doesn't provide the min value as default, it provides ZERO!
 #!! 08-03-2022 check for the added dich.cov.labels
-# delete NA from data is not applied! CHECK
 # add trt.effect to nrs.run in Vignette and the manuscript
 #' Create JAGS model to synthesize cross-design evidence and cross-format data in NMA and NMR for dichotomous outcomes
 #' @description This function creates a JAGS model and the needed data. The JAGS code is created from the internal function \code{crossnma.code}.
@@ -66,7 +64,7 @@
 #' @return \code{method.bias}  A character for defining the method to combine randomised clinical trials (RCT) and non-randomised studies (NRS).
 #' @return \code{covariate}  A list of the the names of the covariates in prt.data and std.data used in network meta-regression.
 #' @return \code{cov.ref} A vector indicating the values to centre the continuous covariates. Dichotomous covariates take NA.
-#' @return \code{dich.cov.labels} A matrix represents the value (0/1) provided for each level of dichotomous covariates.
+#' @return \code{dich.cov.labels} A matrix with the level of dichotomous covariates and the corresponding assigned 0/1 values.
 #' @return \code{split.regcoef} A logical value. If FALSE the within- and between-study regression coefficients will be considered equal.
 #' @return \code{regb.effect} An optional character  indicating the model for the between-study regression coefficients across studies.
 #' @return \code{regw.effect} An optional character indicating the model for the within-study regression coefficients across studies.
@@ -368,6 +366,11 @@ crossnma.model <- function(prt.data,
   study.df <- data.frame(std.id= c(unique(data1$study),unique(data2$study)))
   study.key <- study.df%>% dplyr::mutate(study.jags = 1:dim(.)[1])
 
+  # the reference covariate value
+  cov.ref1 <- min(c(min(data1$x1,na.rm = TRUE), min(data2$x1,na.rm = TRUE)),na.rm = TRUE)
+  cov.ref2 <- min(c(min(data1$x2,na.rm = TRUE), min(data2$x2,na.rm = TRUE)),na.rm = TRUE)
+  cov.ref3 <- min(c(min(data1$x3,na.rm = TRUE), min(data2$x3,na.rm = TRUE)),na.rm = TRUE)
+
   if(!is.null(prt.data)){
     #Trt mapping
     #add treatment mapping to data
@@ -433,7 +436,6 @@ crossnma.model <- function(prt.data,
           dplyr::mutate(xm1.ipd=mean(x1,na.rm = TRUE))
         # Center the covariate and the mean covariate around overall min (default) or cov.ref if specified
         if(is.null(cov.ref)){ # overall min
-          cov.ref1 <- min(c(min(data1$x1,na.rm = TRUE), min(data2$x1,na.rm = TRUE)),na.rm = TRUE)
           data1$x1 <- data1$x1-cov.ref1
           data1$xm1.ipd <- data1$xm1.ipd-cov.ref1
         } else{ # cov.ref
@@ -468,7 +470,6 @@ crossnma.model <- function(prt.data,
             dplyr::mutate(xm2.ipd=mean(x2,na.rm = TRUE))
           # Center the covariate and the min covariate around overall min (default) or cov.ref if specified
           if(is.null(cov.ref)){ # overall min
-            cov.ref2 <- min(c(min(data1$x2,na.rm = TRUE), min(data2$x2,na.rm = TRUE)),na.rm = TRUE)
             data1$x2 <- data1$x2-cov.ref2
             data1$xm2.ipd <- data1$xm2.ipd-cov.ref2
           } else{ # cov.ref
@@ -507,7 +508,6 @@ crossnma.model <- function(prt.data,
             dplyr::mutate(xm3.ipd=mean(x3,na.rm = TRUE))
           # Center the covariate and the min covariate around overall min (default) or cov.ref if specified
           if(is.null(cov.ref)){ # overall min
-            cov.ref3 <- min(c(min(data1$x3,na.rm = TRUE), min(data2$x3,na.rm = TRUE)),na.rm = TRUE)
             data1$x3 <- data1$x3-cov.ref3
             data1$xm3.ipd <- data1$xm3.ipd-cov.ref3
           } else{ # cov.ref
@@ -679,7 +679,6 @@ crossnma.model <- function(prt.data,
           dplyr::mutate(xm1.ad=mean(x1,na.rm = TRUE))
         # Center the mean covariate around overall min (default) or cov.ref if specified
         if(is.null(cov.ref)){ # overall min
-          cov.ref1 <- min(c(min(data1$x1,na.rm = TRUE), min(data2$x1,na.rm = TRUE)),na.rm = TRUE)
           data2$xm1.ad <- data2$xm1.ad-cov.ref1
         } else{ # cov.ref
           data2$xm1.ad <- data2$xm1.ad-cov.ref[1]
@@ -712,7 +711,6 @@ crossnma.model <- function(prt.data,
             dplyr::mutate(xm2.ad=mean(x2,na.rm = TRUE))
           # Center the min covariate around overall min (default) or cov.ref if specified
           if(is.null(cov.ref)){ # overall min
-            cov.ref2 <- min(c(min(data1$x2,na.rm = TRUE), min(data2$x2,na.rm = TRUE)),na.rm = TRUE)
             data2$xm2.ad <- data2$xm2.ad-cov.ref2
           } else{ # cov.ref
             data2$xm2.ad <- data2$xm2.ad-cov.ref[2]
@@ -746,7 +744,6 @@ crossnma.model <- function(prt.data,
             dplyr::mutate(xm3.ad=mean(x3,na.rm = TRUE))
           # Center the min covariate around overall min (default) or cov.ref if specified
           if(is.null(cov.ref)){ # overall min
-            cov.ref3 <- min(c(min(data1$x3,na.rm = TRUE), min(data2$x3,na.rm = TRUE)),na.rm = TRUE)
             data2$xm3.ad <- data2$xm3.ad-cov.ref3
           } else{ # cov.ref
             data2$xm3.ad <- data2$xm3.ad-cov.ref[3]
