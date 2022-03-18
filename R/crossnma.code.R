@@ -288,7 +288,7 @@ crossnma.code <- function(ipd = T,
             beta.prior.ad <- paste0(beta.prior.ad,beta.prior.ad0)
           }
         }else{
-          stop("The between-study covariate effect need to be assumed 'independent', 'random' or 'common' across studies")
+          stop("The regb.effect and regw.effect need to be assumed both 'independent', 'random' or 'common' across studies")
 
         }
       } else { # splitted

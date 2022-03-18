@@ -1,46 +1,44 @@
-# allow the user to change the size of axis titles and entries in the boxes and axis text
-# print that the  mean covariate = and the prt.value=
-# put my example
-# check if crossnma.league work and whether it provides the true answer under several options: 2 covariates, dich and cont covariates
 #' League Table and Heat Plot
 #' @description Produces a league table and a league heat plot that contain point estimates of relative effects
-#' for all possible pairs of treatments along with 95% credible intervals obtained with the quantile method.
+#' for all possible pairs of treatments along with 95\% credible intervals obtained with the quantile method.
 #' @param x A \code{crossrun} object produced by running \code{crossnma.run()}.
 #' @param central.tdcy The statistic to be used to measure the relative treatment effects. The options are "mean" and "median".
-#' @param exp If TRUE (default), odds ratios are reported. If FALSE, log odds ratios will be presented.
+#' @param exp If TRUE (default), odds ratios are displayed. If FALSE, log odds ratios will be presented.
 #' @param order A vector of treatment names (character) representing the order in which to display these treatments.
 #' @param low.colour A string indicating the colour of low relative treatment effects for the heat plot (e.g odds ratio of ~0.5)
 #' @param mid.colour A string indicating the colour of null relative treatment effects for the heat plot (e.g odds ratio of ~1.0).
 #' @param high.colour A string indicating the colour of high relative treatment effects for the heat plot (e.g odds ratio of ~2.0).
-#' @param prt.cov.value  Must be specified for meta-regression when individual participant dataset is provided. This is a vector of values of participant covariate for which to report the results.
-#' The order of these values should match the order in \code{covariate} vector in crossnma.model(). For dichotomous covariates, the name used in the data should be indicated as a character.
-#' @param digits The number of digits to use when displaying
-#' @return \code{table} - A league table. Row names indicate comparator treatments.
-#' @return \code{longtable} - League table in the long format.
-#' @return \code{heatplot} - League heat plot, where a color scale is used to represent relative treatment effects and ** are used to highlight statistically significant differences.
+#' @param prt.cov.value  A vector of values of participant covariate for which to report the results. Must be specified for meta-regression and when individual participant dataset is used in the analysis.
+#' The order of these values should match the order in \code{covariate} vector in crossnma.model(). For dichotomous covariates, a character of the level (used in the data) should be indicated.
+#' @param digits The number of digits to be used when displaying the results
+#' @param cell.text.size The size of the cell entries; the relative treatment effect and the 95\% credible intervals
+#' @param trt.name.size The size of treatment names placed on the top and left of the plot
+#' @param axis.title.size The size of titles placed on the top and left of the plot
+#'
+#' @return \code{table}  A league table. Row names indicate comparator treatments.
+#' @return \code{longtable}  League table in the long format.
+#' @return \code{heatplot}  League heat plot, where a color scale is used to represent the relative treatment effects.
 #' @examples
-#' # An example from participant-level data and study-level data.
-#' # data
-#' data(prt.data)
-#' data(std.data)
+#' # Two datasets
+#' data(prt.data) #  participant-level data
+#' data(std.data) # study-level data
 #'  #=========================#
 #'   # Create a jags model  #
 #'  #=========================#
-#'  # We conduct a network meta-analysis assuming a random effect model.
-#'  # The data comes from randomised-controlled trials and non-randomised studies. They will be combined naively.
-#'  # The data has 2 different formats: individual participant data (prt.data) and study-level data (std.data).
+#'  # We conduct a network meta-analysis assuming a random-effects model.
+#'  # The data comes from randomized-controlled trials and non-randomized studies (combined naively)
 #' mod <- crossnma.model(prt.data=prt.data,
-#'                   std.data=std.data,
-#'                   trt="trt",
-#'                   study="study",
-#'                   outcome="outcome",
-#'                   n="n",
-#'                   design="design",
-#'                   reference="A",
-#'                   trt.effect="random",
-#'                   covariate = NULL,
-#'                   method.bias="naive"
-#'                    )
+#'                       std.data=std.data,
+#'                       trt="trt",
+#'                       study="study",
+#'                       outcome="outcome",
+#'                       n="n",
+#'                       design="design",
+#'                       reference="A",
+#'                       trt.effect="random",
+#'                       covariate = NULL,
+#'                       method.bias="naive"
+#'                       )
 #'  #=========================#
 #'     # Fit jags model  #
 #'  #=========================#
@@ -53,12 +51,12 @@
 #'  #=========================#
 #'    # Create the league table   #
 #'  #=========================#
-#' league_table <- crossnma.league(fit,exp = T)
+#' league_table <- crossnma.league(fit,exp = TRUE)
 #' league_table$heatplot
 #' league_table$table
 #' league_table$longtable
-#' @export
 #' @seealso \code{\link{crossnma.run}}
+#' @export
 crossnma.league <- function(x,
                             central.tdcy = "median",
                             exp = FALSE,
@@ -67,13 +65,16 @@ crossnma.league <- function(x,
                             mid.colour = "white",
                             high.colour = "cornflowerblue",
                             prt.cov.value=NULL,
-                            digits = 2) {
+                            digits = 2,
+                            cell.text.size=6,
+                            trt.name.size=16,
+                            axis.title.size=20) {
 
   # Bind variables to function
   trt <- NULL
   Treatment <- NULL
   Comparator <- NULL
-
+  cov.ref <- NULL
 
   if (class(x) != "crossnma")
     stop("\'x \' must be a valid crossnma object created using the crossnma.run function.")
@@ -466,7 +467,10 @@ if(!is.null(x$model$covariate)){
                                                                                   mid.colour = mid.colour,
                                                                                   high.colour = high.colour,
                                                                                   midpoint = null.value,
-                                                                                  digits = digits)))
+                                                                                  digits = digits,
+                                                                                  cell.text.size=cell.text.size,
+                                                                                  trt.name.size=trt.name.size,
+                                                                                  axis.title.size=axis.title.size)))
 }
 
 
@@ -480,7 +484,10 @@ league.heat.plot <- function(leaguetable,
                              mid.colour = "white",
                              high.colour = "springgreen4",
                              midpoint,
-                             digits){
+                             digits,
+                             cell.text.size=cell.text.size,
+                             trt.name.size=trt.name.size,
+                             axis.title.size=axis.title.size){
 
   #Bind Variables to function
   Treatment <- NULL
@@ -502,8 +509,7 @@ league.heat.plot <- function(leaguetable,
                     # ifelse(((midpoint<lci & midpoint< uci) | (midpoint>lci & midpoint> uci)),
                     #        ifelse(Treatment!=Comparator, paste0("**", sprintf(fmt, ct.stat), "**", "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")"), " "),
                     #        ifelse(Treatment!=Comparator, paste0(sprintf(fmt, ct.stat), "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")"), " "))),
-              size=6)
-
+              size=cell.text.size)
   heatplot <- heatplot +
     scale_fill_gradient2(low = low.colour, high = high.colour, mid = mid.colour, midpoint = midpoint)+
     theme_dark()+
@@ -511,8 +517,8 @@ league.heat.plot <- function(leaguetable,
           legend.position="none", panel.border=element_blank(),
           axis.ticks.x=element_blank(),
           axis.ticks.y=element_blank(),
-          axis.text = element_text(size=16),
-          axis.title = element_text(size = 20))+
+          axis.text = element_text(size=trt.name.size),
+          axis.title = element_text(size = axis.title.size))+
     scale_x_discrete(limits = order, expand = c(0, 0), position="top") +
     scale_y_discrete(limits = rev(order), expand = c(0, 0))
 

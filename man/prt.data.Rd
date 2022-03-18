@@ -8,15 +8,15 @@
 A data frame with 2950 rows and 10 variables:
 \describe{
   \item{study}{numeric, study identifier}
-  \item{outcome}{binary data, respond indicator, 0=respond and 1=no-respond}
+  \item{outcome}{binary data, respond indicator, 0=no relpase and 1=relapse}
   \item{trt}{character, indicating the assigned treatment to each participant}
   \item{design}{character, design of the study, either 'rct' or 'nrs'}
   \item{age}{numeric, age of the participant}
   \item{sex}{binary data, sex of the participant, 0=Female and 1=Male}
   \item{bias}{character, the risk of bias of the study, 'low', 'high','unclear'}
-  \item{unfav}{numeric, the indicator of the unfavoured treatment of the study, 0, 1}
-  \item{bias.group}{numeric, the bias effect of the study, 1 = study has inactive treatment and adjust for bias effect, 2= study has active treatments and another adjustment for bias effect, 0=no bias adjustment}
-  \item{year}{numeric, the year published of the study}
+  \item{unfav}{numeric, the indicator of the unfavored treatment in each study, values are 0 or 1}
+  \item{bias.group}{numeric, the bias effect of the study, 1 = if the study has inactive treatment and adjust for bias effect, 2= if the study has active treatments and it is assumed another bias effect, 0=no bias adjustment}
+  \item{year}{numeric, the year study published}
 
 }
 }

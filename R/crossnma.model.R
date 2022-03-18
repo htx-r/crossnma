@@ -1,98 +1,95 @@
-#!! 08-03-2022 check for the added dich.cov.labels
-# add trt.effect to nrs.run in Vignette and the manuscript
-#' Create JAGS model to synthesize cross-design evidence and cross-format data in NMA and NMR for dichotomous outcomes
+#' Creates a JAGS model and the needed data to perform cross NMA and NMR (dichotomous outcomes)
 #' @description This function creates a JAGS model and the needed data. The JAGS code is created from the internal function \code{crossnma.code}.
 #' @param prt.data An object of class data.frame containing the individual participant dataset. Each row contains the data of a single participant.
-#' The data frame needs to have the following columns: treatment, study identification, outcome (event and non-event), design. Additional columns might be required for certain analyses.
+#' The dataset  needs to have the following columns: treatment, study identification, outcome (event and non-event), design. Additional columns might be required for certain analyses.
 #' @param std.data An object of class data.frame containing the study-level dataset. Each row represents the information of study arm.
-#' The data frame needs to have the following columns: treatment, study identification, outcome (number of events), sample size and design. Additional columns might be required for certain analyses.
-#' @param trt A charachter of the name of the treatment variable in prt.data and std.data.
-#' @param study A charachter of the name of the study variable in prt.data and std.data.
-#' @param outcome A charachter of the name of the outcome variable in prt.data and std.data.
+#' The dataset needs to have the following columns: treatment, study identification, outcome (number of events), sample size and design. Additional columns might be required for certain analyses.
+#' @param trt A character of the name of the treatment variable in prt.data and std.data.
+#' @param study A character of the name of the study variable in prt.data and std.data.
+#' @param outcome A character of the name of the outcome variable in prt.data and std.data.
 #' @param n A character of the name of the number of participants variable in std.data.
-#' @param design A charachter of the name of the design variable in prt.data and std.data.
+#' @param design A character of the name of the design variable in prt.data and std.data.
 #' @param reference A character indicating the name of the reference treatment. When the reference is not specified, the first alphabetic treatment will be used as a reference in the analysis.
 #' @param trt.effect A character defining the model for the study-specific treatment effects. Options are 'random' (default) or 'common'.
-#' @param covariate An optional vector indicating the name of the covariates in prt.data and std.data (to conduct a network meta-regression)
-#' The covariates can be either numeric or dichotomous (should be provided as factor or charachter) variables. The user can provide up to 3 covariates.
+#' @param covariate An optional vector indicating the name of the covariates in prt.data and std.data (to conduct a network meta-regression).
+#' The covariates can be either numeric or dichotomous (should be provided as factor or character) variables. The user can provide up to 3 covariates.
 #' For example, we set `covariate=c(‘age’, ‘sex’)` to adjust for 2 covariates.
 #' The default option is `covariate=NULL` where no covariate adjustment is applied (network meta-analysis).
-#' @param cov.ref An optional vector indicating the values to centre the continuous covariates. Dichotomous covariates should be given NA value.
-#' The order of the values should be the same as indicated variable names in \code{covariate} vector. The default is the overall minimum covariate across all studies.
-#' @param reg0.effect An optional character (when \code{covariate} is not NULL) indicating the relationship across studies for the prognostic effects expressed by the regression coefficient, (\eqn{\beta_0}), in a study \eqn{j}.
+#' @param cov.ref An optional vector indicating the values to which to center the continuous covariates. Dichotomous covariates should be given NA value.
+#' The order of the values should be the same as indicated variable names in \code{covariate} vector. The default is the overall minimum covariate from all studies.
+#' @param reg0.effect An optional character (needed when \code{covariate} is not NULL) indicating the relationship across studies for the prognostic effects expressed by the regression coefficient, (\eqn{\beta_0}), in a study \eqn{j}.
 #' Options are 'independent' or 'random'. We recommend using 'independent' (default).
-#' @param regb.effect An optional character (when \code{covariate} is not NULL) indicating the relationship across treatments for the between-study regression coefficient (\eqn{\beta^B}). This parameter quantifies the treatment-mean covariate interaction.
+#' @param regb.effect An optional character (needed when \code{covariate} is not NULL) indicating the relationship across treatments for the between-study regression coefficient (\eqn{\beta^B}). This parameter quantifies the treatment-mean covariate interaction.
 #'  Options are 'independent', 'random' or 'common'. Default is 'random'.
-#' @param regw.effect An optional character (when \code{covariate} is not NULL)  indicating the relationship across treatments for the within-study regression coefficient (\eqn{\beta^W}). This parameter quantifies the treatment-covariate interaction effect at the individual level.
+#' @param regw.effect An optional character (needed when \code{covariate} is not NULL)  indicating the relationship across treatments for the within-study regression coefficient (\eqn{\beta^W}). This parameter quantifies the treatment-covariate interaction effect at the individual level.
 #' Options are 'independent', 'random' and 'common'. Default is 'random'.
-#' @param split.regcoef A logical value (when \code{covariate} is not NULL). If TRUE the within- and between-study coefficients will be splitted in the analysis of prt.data.
-#' The default is TRUE. When the split.regcoef = FALSE, only a single regression coefficient will be estimated to represent both the between-studies and within-studies covariate effects.
+#' @param split.regcoef A logical value (needed when \code{covariate} is not NULL). If TRUE (default) the within- and between-study coefficients will be splitted in the analysis of prt.data.
+#' When the split.regcoef = FALSE, only a single regression coefficient will be estimated to represent both the between-studies and within-studies covariate effects.
 #' In this case, both arguments \code{regb.effect} and \code{regw.effect} need to be given the same option to model the single regression effect.
-#' @param method.bias A character for defining the method to combine randomised clinical trials (RCT) and non-randomised studies (NRS) (when \code{design} has both designs nrs and rct).
-#' Options are 'naive' for naive synthesize, 'prior' for using NRS to inform priors for the relative treatment effects in RCTs.
+#' @param method.bias A character for defining the method to combine randomized clinical trials (RCT) and non-randomized studies (NRS).
+#' Options are 'naive' for naive or unadjusted synthesize, 'prior' for using NRS evidence to construct priors for the relative treatment effects in RCTs analysis,
 #' or 'adjust1' and 'adjust2' to allow a bias adjustment. When only one design is available (either rct or nrs), this argument needs also to be specified to indicate whether unadjusted (naive) or bias-adjusted analysis (adjust1 or adjust2) should be applied.
-#' @param bias A charachter indicating the name of the variable (required when method.bias='adjust1' or 'adjust2') that includes the risk of bias adjustment in prt.data and std.data.
+#' @param bias A character indicating the name of the variable (required when method.bias= 'adjust1' or 'adjust2') that includes the risk of bias of the study in prt.data and std.data.
 #' The values of this variable should be a character with entries that need to be spelled as such 'low', 'high' or 'unclear'. These values need to be repeated for the participants that belong to the same study.
+#' @param bias.group An optional character for defining the name of the variable in prt.data and std.data that indicates the bias effect in each study (can be provided when method.bias= 'adjust1' or 'adjust2').
+#' The entries of these variables should be either 1 (study has inactive treatment and its estimate should be adjusted for bias effect), 2 (study has only active treatments and its estimate should be adjusted for bias effect (different from inactive bias effect)
+#' or 0 (study does not need any bias adjustment). The values need to be repeated for the participants assigned to the same treatment. Default is 1.
+#' @param unfav A character for defining the name of the variable which indicates the unfavored treatment in each study (should be provided when method.bias= 'adjust1' or 'adjust2') in prt.data and std.data.
+#' The entries of this variable are either 0 (unfavored treatment) or 1 (favorable treatment or treatments). Each study should include only one 0 entry. The values need to be repeated for participants who take the same treatment.
 #' @param bias.type An optional character defining of bias on the treatment effect (required when method.bias='adjust1').
 #' Three options are possible: 'add' to add the additive bias effect,'mult' for multiplicative bias effect and 'both' includes both an additive and a multiplicative terms.
-#' @param bias.covariate A charachter of the variable name that will be used in estimating the probability of bias (can be provided when method.bias='adjust1' or 'adjust2')
+#' @param bias.covariate A character of the variable name that will be used in estimating the probability of bias (can be provided when method.bias='adjust1' or 'adjust2')
 #' @param bias.effect An optional character indicating the relationship for the bias coefficients across studies.
 #' Options are 'random' or 'common' (default). It is required when method.bias='adjust1' or 'adjust2'.
-#' @param unfav A charachter which defines the names of the variables in prt.data and std.data that include an indicator of the unfavoured treatment in each study (should be provided when method.bias='adjust1' or 'adjust2')
-#' The entries of these variables should be either 0 (unfavoured treatment) or 1 (favourable treatment or treatments). Each study should include only one 0. The values need to be repeated for the participants that belong to the same study.
-#' @param bias.group An optional charachter which defines the names of the variables in prt.data and std.data that indicates the bias effect in each study (can be provided when method.bias='adjust1' or 'adjust2')
-#' The entries of these variables should be either 1 (study has inactive treatment and its estimate should be adjusted for bias effect), 2 (study has only active treatments and its estimate should be adjusted for bias effect (different from inactive bias effect)
-#' or 0 (study doesn't need bias adjustment). The values need to be repeated for the participants that belong to the same study. Default is 1 which means applying bias adjustment to all study-specific estimates if the study is at high risk of bias.
-#' @param down.wgt An optional numeric indicating the percent to which studies at high risk of bias will be down-weighted on average. The value ranges between 0 and 1. It can be provided when method.bias='adjust1' or 'adjust2'.
+#' @param down.wgt An optional numeric indicating the percent to which studies at high risk of bias will be downweighed on average. The value ranges between 0 and 1. It can be provided when method.bias='adjust1' or 'adjust2'.
 #' @param prior An optional list to control the prior for various parameters in JAGS model. When effects are set as 'random', we can set the heterogeneity parameters for: tau.trt for the treatment effects,
 #' tau.reg0 for the effect of prognostic covariates, tau.regb and tau.regw for within- and between-study covariate effect, respectively.
 #' and tau.gamma for bias effect. The default of all heterogeneity parameters is 'dunif(0,2)'. Currently only the uniform distribution is supported.
-#' When the method.bias='adjust1' or 'adjust2', the user may provide priors to control the bias probability.
-#' For the bias probabilities, beta distributions are assumed with the following default values: RCT with low (pi.low.rct='dbeta(1,10)')/high (pi.high.rct='dbeta(10,1)') bias, NRS with low(pi.low.rct='dbeta(1,30)')/high (pi.high.rct='dbeta(30,1)') bias (pi.low.nrs, pi.high.nrs).
+#' When the method.bias= 'adjust1' or 'adjust2', the user may provide priors to control the bias probability.
+#' For the bias probabilities, beta distributions are assumed with the following default values: RCT with low (pi.low.rct='dbeta(1,10)'), high (pi.high.rct='dbeta(10,1)') bias, NRS with low (pi.low.rct='dbeta(1,30)') / high (pi.high.rct='dbeta(30,1)') bias (pi.low.nrs, pi.high.nrs).
 #' @param run.nrs An optional list is needed when the NRS used as a prior (method.bias='prior').
-#' The list consists of the following: (\code{var.infl}) controls the common inflation of the varaince of NRS estimates (\eqn{w}) and its values range between 0 (NRS do not contribute at all and the prior is vague) and 1 (the NRS evidence is used at face value, default approach).
-#' The parameter (\code{mean.shift}) is the bias shift (\eqn{\zeta}) to be added/subtracted from the estimated mean treatment effects (on the log-scale) from NRS network (0 is the default). Either (\code{var.infl}) or (\code{mean.shift}) should be provided but not both.
-#' \code{trt.effect} A character indicates how to combine treatment effects across studies .Options are 'random' or 'common' (default).
+#' The list consists of the following: (\code{var.infl}) controls the common inflation of the variance of NRS estimates (\eqn{w}) and its values range between 0 (NRS does not contribute at all and the prior is vague) and 1 (the NRS evidence is used at face value, default approach).
+#' The parameter (\code{mean.shift}) is the bias shift (\eqn{\zeta}) to be added/subtracted from the estimated mean treatment effects (on the log-scale) from NRS network (0 is the default).
+#' \code{trt.effect} is a character indicates how to combine treatment effects across NRS studies .Options are 'random' or 'common' (default).
 #' Here you can also specify the arguments to control the MCMC chains with default value is in the parentheses: the number of adaptions n.adapt (500), number of iterations n.iter(10000), number of burn in n.burnin (4000),
-#' number of thinning thin (1) and number of chains n.chains (2), see \code{\link{jags.model}} arguments from rjags package.
-#' @return \code{crossnma.model} returns an object of class \code{crossnmaModel} which is a list containing the following components:
-#' @return \code{jagsmodel}  A long character string containing JAGS code that will be run in \code{\link{jags}}.
-#' @return \code{data}  The data used in the JAGS code.
-#' @return \code{trt.key}  A table of the treatments and its mapped integer number (used in JAGS model).
-#' @return \code{study.key}  A table of the studies and its mapped integer number (used in JAGS model).
+#' number of thinning thin (1) and number of chains n.chains (2). \code{\link{jags.model}} from rjags package describes these arguments.
+#' @return \code{crossnma.model} returns an object of class \code{crossnmaModel} which is a list containing the following components (the JAGS model to be ran under these settings):
+#' @return \code{jagsmodel}  A long character string containing JAGS code that will be run in \code{\link{jags.model}}.
+#' @return \code{data}  The data to be used to run JAGS model.
+#' @return \code{trt.key}  A table of the treatments and its mapped integer number (as used in JAGS model).
+#' @return \code{study.key}  A table of the studies and its mapped integer number (as used in JAGS model).
 #' @return \code{trt.effect} A character defining the model for the study-specific treatment effects.
-#' @return \code{method.bias}  A character for defining the method to combine randomised clinical trials (RCT) and non-randomised studies (NRS).
+#' @return \code{method.bias}  A character for defining the method to combine randomized clinical trials (RCT) and non-randomized studies (NRS).
 #' @return \code{covariate}  A list of the the names of the covariates in prt.data and std.data used in network meta-regression.
-#' @return \code{cov.ref} A vector indicating the values to centre the continuous covariates. Dichotomous covariates take NA.
-#' @return \code{dich.cov.labels} A matrix with the level of dichotomous covariates and the corresponding assigned 0/1 values.
+#' @return \code{cov.ref} A vector indicating the values to which to center the continuous covariates. Dichotomous covariates take NA.
+#' @return \code{dich.cov.labels} A matrix with the levels of each dichotomous covariate and the corresponding assigned 0/1 values.
 #' @return \code{split.regcoef} A logical value. If FALSE the within- and between-study regression coefficients will be considered equal.
-#' @return \code{regb.effect} An optional character  indicating the model for the between-study regression coefficients across studies.
-#' @return \code{regw.effect} An optional character indicating the model for the within-study regression coefficients across studies.
-#' @return \code{bias.effect} An optional character indicating the model for the bias coefficients across studies.
+#' @return \code{regb.effect} A character  indicating the model for the between-study regression coefficients across studies.
+#' @return \code{regw.effect} A character indicating the model for the within-study regression coefficients across studies.
+#' @return \code{bias.effect} A character indicating the model for the bias coefficients across studies.
 #' @return \code{bias.type} A character indicating the effect of bias on the treatment effect; additive ('add') or multiplicative ('mult') or both ('both').
+#' @return \code{all.data.ad} A data.frame object with the prt.data (after it is aggregated) and std.data in a single dataset.
 #' @examples
-#' # An example from participant-level data and study-level data.
-#' # data
-#' prt.data
-#' std.data
+#' # Two datasets
+#' data(prt.data) #  participant-level data
+#' data(std.data) # study-level data
 #'  #=========================#
 #'   # Create a jags model  #
 #'  #=========================#
-#'  # We conduct a network meta-analysis assuming a random effect model.
-#'  # The data comes from randomised-controlled trials and non-randomised studies. They will be combined naively.
-#'  # The data has 2 different formats: individual participant data (prt.data) and study-level data (std.data).
+#'  # We conduct a network meta-analysis assuming a random-effects model.
+#'  # The data comes from randomized-controlled trials and non-randomized studies (combined naively)
 #' mod <- crossnma.model(prt.data=prt.data,
-#'                   std.data=std.data,
-#'                   trt="trt",
-#'                   study="study",
-#'                   outcome="outcome",
-#'                   n="n",
-#'                   design="design",
-#'                   reference="A",
-#'                   trt.effect="random",
-#'                   covariate = NULL,
-#'                   method.bias="naive"
-#'                    )
+#'                       std.data=std.data,
+#'                       trt="trt",
+#'                       study="study",
+#'                       outcome="outcome",
+#'                       n="n",
+#'                       design="design",
+#'                       reference="A",
+#'                       trt.effect="random",
+#'                       covariate = NULL,
+#'                       method.bias="naive"
+#'                       )
 #'  #=========================#
 #'     # Fit jags model  #
 #'  #=========================#
@@ -108,18 +105,8 @@
 #' summary(fit)
 #' plot(fit)
 #'
-#' @export crossnma.model
-#' @importFrom magrittr %>%
-#' @importFrom magrittr "%<>%"
-#' @importFrom plyr mapvalues
-#' @importFrom rlang quo
-#' @import dplyr
-#' @import ggplot2
-#' @import rjags
-#' @import tidyr
-#' @import coda
-#' @import netmeta
 #' @seealso \code{\link{crossnma.run}}, \code{\link{jags.model}}
+#' @export
 
 crossnma.model <- function(prt.data,
                            std.data,
@@ -176,6 +163,16 @@ crossnma.model <- function(prt.data,
   arm <- NULL
   value <- NULL
   variable <- NULL
+  bias_index <- NULL
+  x.bias <- NULL
+  x1 <- NULL
+  x1f <- NULL
+  x2 <- NULL
+  x2f <- NULL
+  x3 <- NULL
+  x3f <- NULL
+  ref.trt.std <- NULL
+  n.arms <- NULL
 
   #============================================
   # prepare IPD and AD

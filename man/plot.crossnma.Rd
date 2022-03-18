@@ -2,7 +2,7 @@
 % Please edit documentation in R/crossnma.plot.R
 \name{plot.crossnma}
 \alias{plot.crossnma}
-\title{Generic plot function for crossnma.model object.}
+\title{Trace plot of MCMC outputs.}
 \usage{
 \method{plot}{crossnma}(x, ...)
 }
@@ -12,5 +12,5 @@
 \item{...}{\dots}
 }
 \description{
-Generic plot function for crossnma.model object.
+Produces a separate plot for each parameter in the model. Each plot shows iterations vs sampled values. It takes crossnma.run object.
 }

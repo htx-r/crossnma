@@ -4,11 +4,12 @@ rhat <- function(x,
                            autoburnin = FALSE,
                            multivariate = TRUE
 ){
+  # Bind variables to function
   x <- as.mcmc.list(x)
   if (nchain(x) < 2)
     stop("You need at least two chains")
-  if (autoburnin && start(x) < end(x)/2)
-    x <- window(x, start = end(x)/2 + 1)
+  if (autoburnin && stats::start(x) < stats::end(x)/2)
+    x <- stats::window(x, start = stats::end(x)/2 + 1)
   Niter <- niter(x)
   Nchain <- nchain(x)
   Nvar <- nvar(x)
@@ -22,7 +23,7 @@ rhat <- function(x,
   W <- apply(S2, c(1, 2), mean)
   xbar <- matrix(sapply(x, apply, 2, mean, simplify = TRUE),
                  nrow = Nvar, ncol = Nchain)
-  B <- Niter * var(t(xbar))
+  B <- Niter * stats::var(t(xbar))
   if (Nvar > 1 && multivariate) {  #ph-edits
     # CW <- chol(W)
     #    #This is W^-1*B.
@@ -41,8 +42,8 @@ rhat <- function(x,
   muhat <- apply(xbar, 1, mean)
   var.w <- apply(s2, 1, var)/Nchain
   var.b <- (2 * b^2)/(Nchain - 1)
-  cov.wb <- (Niter/Nchain) * diag(var(t(s2), t(xbar^2)) - 2 *
-                                    muhat * var(t(s2), t(xbar)))
+  cov.wb <- (Niter/Nchain) * diag(stats::var(t(s2), t(xbar^2)) - 2 *
+                                    muhat * stats::var(t(s2), t(xbar)))
   V <- (Niter - 1) * w/Niter + (1 + 1/Nchain) * b/Niter
   var.V <- ((Niter - 1)^2 * var.w + (1 + 1/Nchain)^2 * var.b +
               2 * (Niter - 1) * (1 + 1/Nchain) * cov.wb)/Niter^2
@@ -53,7 +54,7 @@ rhat <- function(x,
   R2.fixed <- (Niter - 1)/Niter
   R2.random <- (1 + 1/Nchain) * (1/Niter) * (b/w)
   R2.estimate <- R2.fixed + R2.random
-  R2.upper <- R2.fixed + qf((1 + confidence)/2, B.df, W.df) *
+  R2.upper <- R2.fixed + stats::qf((1 + confidence)/2, B.df, W.df) *
     R2.random
   psrf <- cbind(sqrt(df.adj * R2.estimate), sqrt(df.adj * R2.upper))
   dimnames(psrf) <- list(xnames, c("Point est.", "Upper C.I."))

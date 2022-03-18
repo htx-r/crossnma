@@ -2,7 +2,7 @@
 % Please edit documentation in R/crossnma.run.R
 \name{crossnma.run}
 \alias{crossnma.run}
-\title{Run JAGS to synthesize cross-design evidence and cross-format data in NMA and NMR for dichotomous outcomes}
+\title{Run JAGS to fit cross NMA and NMR}
 \usage{
 crossnma.run(
   model,
@@ -16,9 +16,9 @@ crossnma.run(
 )
 }
 \arguments{
-\item{model}{A \code{crossnmaModel} object produced by \code{crossnma.model}.}
+\item{model}{A \code{crossnmaModel} object produced by \code{\link{crossnma.model}}.}
 
-\item{n.adapt}{Number of adaptations for the MCMC chains.}
+\item{n.adapt}{Number of adaptations for the MCMC chains. Default is 1000.}
 
 \item{n.burnin}{Number of burnin iterations for the MCMC chains.}
 
@@ -28,46 +28,43 @@ crossnma.run(
 
 \item{n.chains}{Number of MCMC chains. Default is 2.}
 
-\item{quiet}{A logical. If TRUE, the warning message will not be displayed}
+\item{quiet}{A logical. If TRUE (default), the warning message will not be displayed.}
 
-\item{monitor}{A vector of additional parameters to monitor. Default is NULL
-See \code{\link{jags.model}} for more info.}
+\item{monitor}{A vector of additional parameters to monitor. Default is NULL.}
 }
 \value{
 \code{crossnma.run} returns an object of class \code{crossrun} which is a list containing the following components:
 
 \code{samples}  The MCMC samples produced by running the JAGS model.
 
-\code{model}  The \code{crossnmaModel} object obtained from \code{crossnma.model} which was used to run \code{jags}.
+\code{model}  The \code{crossnmaModel} object obtained from \code{\link{crossnma.model}} which was used to run \code{jags}.
 
 \code{trt.key}  A table of the treatment names and their correspondence to integers used in the JAGS model.
 }
 \description{
-Takes the JAGS model from an object produced by \code{crossnma.model} and runs it using \code{jags} package.
+This function takes the JAGS model from an object produced by \code{\link{crossnma.model}} and runs it using \code{jags.model} in rjags package.
 }
 \examples{
-# An example from participant-level data and study-level data.
-# data
-data(prt.data)
-data(std.data)
+# Two datasets
+data(prt.data) #  participant-level data
+data(std.data) # study-level data
  #=========================#
   # Create a jags model  #
  #=========================#
- # We conduct a network meta-analysis assuming a random effect model.
- # The data comes from randomised-controlled trials and non-randomised studies. They will be combined naively.
- # The data has 2 different formats: individual participant data (prt.data) and study-level data (std.data).
+ # We conduct a network meta-analysis assuming a random-effects model.
+ # The data comes from randomized-controlled trials and non-randomized studies (combined naively)
 mod <- crossnma.model(prt.data=prt.data,
-                  std.data=std.data,
-                  trt="trt",
-                  study="study",
-                  outcome="outcome",
-                  n="n",
-                  design="design",
-                  reference="A",
-                  trt.effect="random",
-                  covariate = NULL,
-                  method.bias="naive"
-                   )
+                      std.data=std.data,
+                      trt="trt",
+                      study="study",
+                      outcome="outcome",
+                      n="n",
+                      design="design",
+                      reference="A",
+                      trt.effect="random",
+                      covariate = NULL,
+                      method.bias="naive"
+                      )
  #=========================#
     # Fit jags model  #
  #=========================#
@@ -86,5 +83,5 @@ plot(fit)
 
 }
 \seealso{
-\code{\link{crossnma.model}},\code{\link{jags.model}}
+\code{\link{crossnma.model}}, \code{\link{jags.model}}
 }

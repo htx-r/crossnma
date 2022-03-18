@@ -13,7 +13,10 @@ crossnma.league(
   mid.colour = "white",
   high.colour = "cornflowerblue",
   prt.cov.value = NULL,
-  digits = 2
+  digits = 2,
+  cell.text.size = 6,
+  trt.name.size = 16,
+  axis.title.size = 20
 )
 }
 \arguments{
@@ -21,7 +24,7 @@ crossnma.league(
 
 \item{central.tdcy}{The statistic to be used to measure the relative treatment effects. The options are "mean" and "median".}
 
-\item{exp}{If TRUE (default), odds ratios are reported. If FALSE, log odds ratios will be presented.}
+\item{exp}{If TRUE (default), odds ratios are displayed. If FALSE, log odds ratios will be presented.}
 
 \item{order}{A vector of treatment names (character) representing the order in which to display these treatments.}
 
@@ -31,45 +34,49 @@ crossnma.league(
 
 \item{high.colour}{A string indicating the colour of high relative treatment effects for the heat plot (e.g odds ratio of ~2.0).}
 
-\item{prt.cov.value}{Must be specified for meta-regression when individual participant dataset is provided. This is a vector of values of participant covariate for which to report the results.
-The order of these values should match the order in \code{covariate} vector in crossnma.model(). For dichotomous covariates, the name used in the data should be indicated as a character.}
+\item{prt.cov.value}{A vector of values of participant covariate for which to report the results. Must be specified for meta-regression and when individual participant dataset is used in the analysis.
+The order of these values should match the order in \code{covariate} vector in crossnma.model(). For dichotomous covariates, a character of the level (used in the data) should be indicated.}
 
-\item{digits}{The number of digits to use when displaying}
+\item{digits}{The number of digits to be used when displaying the results}
+
+\item{cell.text.size}{The size of the cell entries; the relative treatment effect and the 95\% credible intervals}
+
+\item{trt.name.size}{The size of treatment names placed on the top and left of the plot}
+
+\item{axis.title.size}{The size of titles placed on the top and left of the plot}
 }
 \value{
-\code{table} - A league table. Row names indicate comparator treatments.
+\code{table}  A league table. Row names indicate comparator treatments.
 
-\code{longtable} - League table in the long format.
+\code{longtable}  League table in the long format.
 
-\code{heatplot} - League heat plot, where a color scale is used to represent relative treatment effects and ** are used to highlight statistically significant differences.
+\code{heatplot}  League heat plot, where a color scale is used to represent the relative treatment effects.
 }
 \description{
 Produces a league table and a league heat plot that contain point estimates of relative effects
-for all possible pairs of treatments along with 95% credible intervals obtained with the quantile method.
+for all possible pairs of treatments along with 95\% credible intervals obtained with the quantile method.
 }
 \examples{
-# An example from participant-level data and study-level data.
-# data
-data(prt.data)
-data(std.data)
+# Two datasets
+data(prt.data) #  participant-level data
+data(std.data) # study-level data
  #=========================#
   # Create a jags model  #
  #=========================#
- # We conduct a network meta-analysis assuming a random effect model.
- # The data comes from randomised-controlled trials and non-randomised studies. They will be combined naively.
- # The data has 2 different formats: individual participant data (prt.data) and study-level data (std.data).
+ # We conduct a network meta-analysis assuming a random-effects model.
+ # The data comes from randomized-controlled trials and non-randomized studies (combined naively)
 mod <- crossnma.model(prt.data=prt.data,
-                  std.data=std.data,
-                  trt="trt",
-                  study="study",
-                  outcome="outcome",
-                  n="n",
-                  design="design",
-                  reference="A",
-                  trt.effect="random",
-                  covariate = NULL,
-                  method.bias="naive"
-                   )
+                      std.data=std.data,
+                      trt="trt",
+                      study="study",
+                      outcome="outcome",
+                      n="n",
+                      design="design",
+                      reference="A",
+                      trt.effect="random",
+                      covariate = NULL,
+                      method.bias="naive"
+                      )
  #=========================#
     # Fit jags model  #
  #=========================#
@@ -82,7 +89,7 @@ fit <- crossnma.run(model=mod,
  #=========================#
    # Create the league table   #
  #=========================#
-league_table <- crossnma.league(fit,exp = T)
+league_table <- crossnma.league(fit,exp = TRUE)
 league_table$heatplot
 league_table$table
 league_table$longtable

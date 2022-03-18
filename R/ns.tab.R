@@ -1,4 +1,3 @@
-#'@export
 ns.tab <- function(prt.data=prt.data,
                    std.data=std.data){
   m <- matrix(c(ns.ipd.rct=length(unique(prt.data[prt.data$design=='rct',]$study)),
