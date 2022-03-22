@@ -1,2 +1,5 @@
-^.*\.Rproj$
-^\.Rproj\.user$
+README.md
+.travis.yml
+.*[.]Rproj
+.Rproj.user
+roxygen2.*[.]R

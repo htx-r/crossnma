@@ -13,39 +13,32 @@
 #' @return \code{samples}  The MCMC samples produced by running the JAGS model.
 #' @return \code{model}  The \code{crossnmaModel} object obtained from \code{\link{crossnma.model}} which was used to run \code{jags}.
 #' @return \code{trt.key}  A table of the treatment names and their correspondence to integers used in the JAGS model.
+#' 
 #' @examples
-#' # Two datasets
-#' data(prt.data) #  participant-level data
-#' data(std.data) # study-level data
-#'  #=========================#
-#'   # Create a jags model  #
-#'  #=========================#
-#'  # We conduct a network meta-analysis assuming a random-effects model.
-#'  # The data comes from randomized-controlled trials and non-randomized studies (combined naively)
-#' mod <- crossnma.model(prt.data=prt.data,
-#'                       std.data=std.data,
-#'                       trt="trt",
-#'                       study="study",
-#'                       outcome="outcome",
-#'                       n="n",
-#'                       design="design",
-#'                       reference="A",
-#'                       trt.effect="random",
-#'                       covariate = NULL,
-#'                       method.bias="naive"
-#'                       )
-#'  #=========================#
-#'     # Fit jags model  #
-#'  #=========================#
-#' fit <- crossnma.run(model=mod,
-#'                 n.adapt = 20,
-#'                 n.iter=50,
-#'                 thin=1,
-#'                 n.chains=3)
+#' # We conduct a network meta-analysis assuming a random-effects
+#' # model.
+#' # The data comes from randomized-controlled trials and
+#' # non-randomized studies (combined naively)
+#' head(ipddata) # participant-level data
+#' head(stddata) # study-level data
+#' 
+#' #=========================#
+#' # Create a jags model     #
+#' #=========================#
+#' mod <- crossnma.model(treat, id, relapse, n, design,
+#'   prt.data = ipddata, std.data = stddata,
+#'   reference = "A", trt.effect = "random", method.bias = "naive")
+#' 
+#' #=========================#
+#' # Fit jags model          #
+#' #=========================#
+#' fit <-
+#'   crossnma.run(model = mod, n.adapt = 20,
+#'     n.iter = 50, thin = 1, n.chains = 3)
 #'
-#'  #=========================#
-#'    # Display the output   #
-#'  #=========================#
+#' #=========================#
+#' # Display the output      #
+#' #=========================#
 #' summary(fit)
 #' plot(fit)
 #'

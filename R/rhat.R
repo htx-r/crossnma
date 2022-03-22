@@ -1,9 +1,8 @@
 rhat <- function(x,
-                           confidence = 0.95,
-                           transform = FALSE,
-                           autoburnin = FALSE,
-                           multivariate = TRUE
-){
+                 confidence = 0.95,
+                 transform = FALSE,
+                 autoburnin = FALSE,
+                 multivariate = TRUE) {
   # Bind variables to function
   x <- as.mcmc.list(x)
   if (nchain(x) < 2)

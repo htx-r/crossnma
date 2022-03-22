@@ -57,42 +57,35 @@ Produces a league table and a league heat plot that contain point estimates of r
 for all possible pairs of treatments along with 95\% credible intervals obtained with the quantile method.
 }
 \examples{
-# Two datasets
-data(prt.data) #  participant-level data
-data(std.data) # study-level data
- #=========================#
-  # Create a jags model  #
- #=========================#
- # We conduct a network meta-analysis assuming a random-effects model.
- # The data comes from randomized-controlled trials and non-randomized studies (combined naively)
-mod <- crossnma.model(prt.data=prt.data,
-                      std.data=std.data,
-                      trt="trt",
-                      study="study",
-                      outcome="outcome",
-                      n="n",
-                      design="design",
-                      reference="A",
-                      trt.effect="random",
-                      covariate = NULL,
-                      method.bias="naive"
-                      )
- #=========================#
-    # Fit jags model  #
- #=========================#
-fit <- crossnma.run(model=mod,
-                n.adapt = 20,
-                n.iter=50,
-                thin=1,
-                n.chains=3)
+# We conduct a network meta-analysis assuming a random-effects
+# model.
+# The data comes from randomized-controlled trials and
+# non-randomized studies (combined naively)
+head(ipddata) # participant-level data
+head(stddata) # study-level data
 
- #=========================#
-   # Create the league table   #
- #=========================#
+#=========================#
+# Create a jags model     #
+#=========================#
+mod <- crossnma.model(treat, id, relapse, n, design,
+  prt.data = ipddata, std.data = stddata,
+  reference = "A", trt.effect = "random", method.bias = "naive")
+
+#=========================#
+# Fit jags model          #
+#=========================#
+fit <-
+  crossnma.run(model = mod, n.adapt = 20,
+    n.iter = 50, thin = 1, n.chains = 3)
+
+#=========================#
+# Create the league table #
+#=========================#
 league_table <- crossnma.league(fit,exp = TRUE)
 league_table$heatplot
 league_table$table
 league_table$longtable
+
 }
 \seealso{
 \code{\link{crossnma.run}}

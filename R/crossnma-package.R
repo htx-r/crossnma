@@ -1,18 +1,36 @@
-#' crossnma: An R package for synthesizing cross-design evidence and cross-format data using Bayesian methods in network meta-analysis and meta-regression
+#' crossnma: An R package for synthesizing cross-design evidence and
+#' cross-format data using Bayesian methods in network meta-analysis
+#' and meta-regression
 #'
 #' @description
-#' An R package \bold{crossnma} for performing (network) meta-analysis and (network) meta-regression (allows including up to 3 covariates) of individual participant data and aggregate data or combination of both. Each format can come from randomized controlled trials or non-randomized studies. Estimates are generated in a Bayesian framework using JAGS. The implemented models are described by Hamza et al. 2022
-#' \url{https://doi.org/10.48550/arXiv.2203.06350}.
+#' An R package \bold{crossnma} for performing (network) meta-analysis
+#' and (network) meta-regression (allows including up to 3 covariates)
+#' of individual participant data and aggregate data or combination of
+#' both. Each format can come from randomized controlled trials or
+#' non-randomized studies. Estimates are generated in a Bayesian
+#' framework using JAGS. The implemented models are described by Hamza
+#' et al. 2022 \url{https://doi.org/10.48550/arXiv.2203.06350}.
 #'
 #' @details
-#' The evidence in network meta-analysis (NMA) typically comes from randomized controlled trials (RCT) where aggregate data (AD) are extracted from published reports.
-#' Retrieving individual participant data (IPD) allows considering participant covariates to explain some of the heterogeneity/inconsistency in the network and identify effect modifiers.
-#' Additionally, evidence from non-randomized studies (NRS) reflects the reality in clinical practice and bridges the efficacy-effectiveness gap.
-#' evidence by (a) ignoring their differences in risk of bias (b) using NRS to construct discounted
-#' The cross-NMA/NMR model is a Bayesian suite for evidence synthesis which extends and integrates four different approaches that
-#' combine RCT and NRS evidence into a three-level hierarchical model for the synthesis of IPD and AD.
-#' The four approaches account for differences in the design and risk of bias in the RCT and NRS evidence.
-#' These four approaches variously ignoring differences in risk of bias, using NRS to construct penalized treatment effect priors and bias-adjustment models that control the contribution of information from high risk of bias studies in two different ways.
+#' The evidence in network meta-analysis (NMA) typically comes from
+#' randomized controlled trials (RCT) where aggregate data (AD) are
+#' extracted from published reports.  Retrieving individual
+#' participant data (IPD) allows considering participant covariates to
+#' explain some of the heterogeneity/inconsistency in the network and
+#' identify effect modifiers.  Additionally, evidence from
+#' non-randomized studies (NRS) reflects the reality in clinical
+#' practice and bridges the efficacy-effectiveness gap.  evidence by
+#' (a) ignoring their differences in risk of bias (b) using NRS to
+#' construct discounted The cross-NMA/NMR model is a Bayesian suite
+#' for evidence synthesis which extends and integrates four different
+#' approaches that combine RCT and NRS evidence into a three-level
+#' hierarchical model for the synthesis of IPD and AD.  The four
+#' approaches account for differences in the design and risk of bias
+#' in the RCT and NRS evidence.  These four approaches variously
+#' ignoring differences in risk of bias, using NRS to construct
+#' penalized treatment effect priors and bias-adjustment models that
+#' control the contribution of information from high risk of bias
+#' studies in two different ways.
 #'
 #' Further details:
 #' To have a list of all R functions available in \bold{crossnma} type \code{help(package = "crossnma")}

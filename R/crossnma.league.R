@@ -18,45 +18,41 @@
 #' @return \code{table}  A league table. Row names indicate comparator treatments.
 #' @return \code{longtable}  League table in the long format.
 #' @return \code{heatplot}  League heat plot, where a color scale is used to represent the relative treatment effects.
+#' 
 #' @examples
-#' # Two datasets
-#' data(prt.data) #  participant-level data
-#' data(std.data) # study-level data
-#'  #=========================#
-#'   # Create a jags model  #
-#'  #=========================#
-#'  # We conduct a network meta-analysis assuming a random-effects model.
-#'  # The data comes from randomized-controlled trials and non-randomized studies (combined naively)
-#' mod <- crossnma.model(prt.data=prt.data,
-#'                       std.data=std.data,
-#'                       trt="trt",
-#'                       study="study",
-#'                       outcome="outcome",
-#'                       n="n",
-#'                       design="design",
-#'                       reference="A",
-#'                       trt.effect="random",
-#'                       covariate = NULL,
-#'                       method.bias="naive"
-#'                       )
-#'  #=========================#
-#'     # Fit jags model  #
-#'  #=========================#
-#' fit <- crossnma.run(model=mod,
-#'                 n.adapt = 20,
-#'                 n.iter=50,
-#'                 thin=1,
-#'                 n.chains=3)
+#' # We conduct a network meta-analysis assuming a random-effects
+#' # model.
+#' # The data comes from randomized-controlled trials and
+#' # non-randomized studies (combined naively)
+#' head(ipddata) # participant-level data
+#' head(stddata) # study-level data
+#' 
+#' #=========================#
+#' # Create a jags model     #
+#' #=========================#
+#' mod <- crossnma.model(treat, id, relapse, n, design,
+#'   prt.data = ipddata, std.data = stddata,
+#'   reference = "A", trt.effect = "random", method.bias = "naive")
+#' 
+#' #=========================#
+#' # Fit jags model          #
+#' #=========================#
+#' fit <-
+#'   crossnma.run(model = mod, n.adapt = 20,
+#'     n.iter = 50, thin = 1, n.chains = 3)
 #'
-#'  #=========================#
-#'    # Create the league table   #
-#'  #=========================#
+#' #=========================#
+#' # Create the league table #
+#' #=========================#
 #' league_table <- crossnma.league(fit,exp = TRUE)
 #' league_table$heatplot
 #' league_table$table
 #' league_table$longtable
+#' 
 #' @seealso \code{\link{crossnma.run}}
 #' @export
+
+
 crossnma.league <- function(x,
                             central.tdcy = "median",
                             exp = FALSE,
@@ -398,7 +394,7 @@ if(!is.null(x$model$covariate)){
 
     if(paste){
       tmp1 <- left_join(tmp.estimate, tmp.lci, by = "trt") %>%
-        left_join(., tmp.uci, by = "trt") %>%
+        left_join(tmp.uci, by = "trt") %>%
         mutate(result = paste(sprintf(fmt, estimate),
                               " (",
                               sprintf(fmt, lci),
@@ -410,7 +406,7 @@ if(!is.null(x$model$covariate)){
       colnames(tmp1)[2] <- as.character(tmp.estimate %>% filter(estimate==null.value) %>% select(trt))
     } else{
       tmp1 <- left_join(tmp.estimate, tmp.lci, by = "trt") %>%
-        left_join(., tmp.uci, by = "trt")
+        left_join(tmp.uci, by = "trt")
 
       colnames(tmp1)[2] <- central.tdcy
     }
