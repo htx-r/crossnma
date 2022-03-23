@@ -2,6 +2,7 @@
 
 S3method(netgraph,crossnmaModel)
 S3method(plot,crossnma)
+S3method(print,summary.crossnma)
 S3method(summary,crossnma)
 export(crossnma.league)
 export(crossnma.model)

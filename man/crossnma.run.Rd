@@ -16,9 +16,11 @@ crossnma.run(
 )
 }
 \arguments{
-\item{model}{A \code{crossnmaModel} object produced by \code{\link{crossnma.model}}.}
+\item{model}{A \code{crossnmaModel} object produced by
+\code{\link{crossnma.model}}.}
 
-\item{n.adapt}{Number of adaptations for the MCMC chains. Default is 1000.}
+\item{n.adapt}{Number of adaptations for the MCMC chains. Default
+is 1000.}
 
 \item{n.burnin}{Number of burnin iterations for the MCMC chains.}
 
@@ -28,21 +30,30 @@ crossnma.run(
 
 \item{n.chains}{Number of MCMC chains. Default is 2.}
 
-\item{quiet}{A logical. If TRUE (default), the warning message will not be displayed.}
+\item{quiet}{A logical. If TRUE (default), the warning message will
+not be displayed.}
 
-\item{monitor}{A vector of additional parameters to monitor. Default is NULL.}
+\item{monitor}{A vector of additional parameters to
+monitor. Default is NULL.}
 }
 \value{
-\code{crossnma.run} returns an object of class \code{crossrun} which is a list containing the following components:
+\code{crossnma.run} returns an object of class
+  \code{crossrun} which is a list containing the following
+  components:
 
-\code{samples}  The MCMC samples produced by running the JAGS model.
+\code{samples} The MCMC samples produced by running the
+  JAGS model.
 
-\code{model}  The \code{crossnmaModel} object obtained from \code{\link{crossnma.model}} which was used to run \code{jags}.
+\code{model} The \code{crossnmaModel} object obtained from
+  \code{\link{crossnma.model}} which was used to run \code{jags}.
 
-\code{trt.key}  A table of the treatment names and their correspondence to integers used in the JAGS model.
+\code{trt.key} A table of the treatment names and their
+  correspondence to integers used in the JAGS model.
 }
 \description{
-This function takes the JAGS model from an object produced by \code{\link{crossnma.model}} and runs it using \code{jags.model} in rjags package.
+This function takes the JAGS model from an object
+  produced by \code{\link{crossnma.model}} and runs it using
+  \code{jags.model} in rjags package.
 }
 \examples{
 # We conduct a network meta-analysis assuming a random-effects

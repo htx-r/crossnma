@@ -225,6 +225,9 @@
 #' #=========================#
 #' summary(fit)
 #' plot(fit)
+#' 
+#' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch}, Guido
+#'   Schwarzer \email{sc@@imbi.uni-freiburg.de}
 #'
 #' @seealso \code{\link{crossnma.run}}, \code{\link{jags.model}}
 #' @export
