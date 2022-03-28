@@ -4,9 +4,8 @@
 #'
 #' @param ... \dots
 #'
+#'@method plot crossnma
 #' @export
-#'
+
 plot.crossnma <- function(x, ...)
-{
   plot(x$samples, ...)
-}

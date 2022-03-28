@@ -1,13 +1,12 @@
 Package: crossnma
-Title: CROSS-design and CROSS-Format synthesis using Network Meta-Analysis and network meta-regression
+Title: CROSS-Design and CROSS-Format Synthesis using Network Meta-Analysis and Network Meta-Regression
 Version: 1.0.0
-Date: 2022-03-21
+Date: 2022-03-22
 Depends: 
-    R (>= 2.10)
+    R (>= 3.5), netmeta
 Imports: 
     rjags (>= 4-10),
     coda (>= 0.19-4),
-    netmeta (>= 1.3-0),
     dplyr (>= 1.0.2),
     plyr (>= 1.8.6),
     rlang (>= 0.4.11),
@@ -19,13 +18,12 @@ Suggests:
     rmarkdown,
     knitr
 URL: https://github.com/htx-r/crossnma 
-Description: (Network) meta-analysis and (network) meta-regression (allows including up to 3 covariates) for individual participant data, aggregate data, and mixtures of both formats using the three-level hierarchical model. Each format can come from randomized controlled trials or non-randomized studies or mixtures of both. Estimates are generated in a Bayesian framework using JAGS. The implemented models are described by Hamza et al. 2022 <
-https: //doi.org/10.48550/arXiv.2203.06350>.
+Description: (Network) meta-analysis and (network) meta-regression (allows including up to 3 covariates) for individual participant data, aggregate data, and mixtures of both formats using the three-level hierarchical model. Each format can come from randomized controlled trials or non-randomized studies or mixtures of both. Estimates are generated in a Bayesian framework using JAGS. The implemented models are described by Hamza et al. 2022 <DOI:10.48550/arXiv.2203.06350>.
 License: GPL (>=2)
 Encoding: UTF-8
 LazyData: true
 VignetteBuilder: knitr
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 NeedsCompilation: no
 Author@R: c( 
 	person("Tasnim", "Hamza", email = "tasnim.hamza@ispm.unibe.ch", role = c("aut", "cre")),

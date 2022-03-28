@@ -23,7 +23,6 @@ knitr::opts_chunk$set(
 ```
 
 ```{r mm, warning=FALSE,message=FALSE,include=FALSE}
-devtools::install_github("htx-r/crossnma",force = TRUE)
 library(crossnma)
 ```
 
@@ -245,71 +244,64 @@ The table below summarizes the different assumptions implemented in the package 
 # Synthesis of studies comparing drugs for relapsing-remitting multiple sclerosis
 
 ## Description of the data
-The data we use are fictitious but have been developed to resample to real RCTs with IPD and aggregate data included in @Tramacere15. The studies provide either aggregate data `std.data` (2 RCTs) or as individual participant data `prt.data` (3 RCTs and 1 cohort study). Both datasets compare in total four drugs which are anonymized.
+The data we use are fictitious but have been developed to resample to real RCTs with IPD and aggregate data included in @Tramacere15. The studies provide either aggregate data `stddata` (2 RCTs) or as individual participant data `ipddata` (3 RCTs and 1 cohort study). Both datasets compare in total four drugs which are anonymized.
 
-The `prt.data` contains 2950 rows, each row refers to a participant in the study. We display the first few rows of the data set:
+The `ipddata` contains 2950 rows, each row refers to a participant in the study. We display the first few rows of the data set:
 
 ```{r}
-head(prt.data)
+head(ipddata)
 ```
 
-For each participant, we have information for the `outcome` relapse (0=no, 1=yes), the treatment label `trt`, the `age` (in years) and  `sex` (0 = Female, 1 = Male) of the participant. The following columns are set on study-level (it is repeated for each participant in each study): the `study` id, the `design` of the study (needs to be either rct or nrs), the risk of `bias` on each study (can be set as low, high or unclear), the `year` of publication, the `bias.group` for the study comparison and the study unfavoured treatment `unfav`.
+For each participant, we have information for the `outcome` relapse (0=no, 1=yes), the treatment label `treat`, the `age` (in years) and  `sex` (0 = Female, 1 = Male) of the participant. The following columns are set on study-level (it is repeated for each participant in each study): the `id`, the `design` of the study (needs to be either rct or nrs), the risk of bias `rob` on each study (can be set as low, high or unclear), the `year` of publication, the `bias.group` for the study comparison and the study unfavoured treatment `unfavored`.
 
-The aggregate data has the standard format for meta-analysis
+The aggregate data has the standard format for meta-analysis with the exact same variable names
 
 ```{r}
-head(std.data)
+head(stddata)
 ```
 
 ## Analysis
 There are two steps to run the NMA/NMR model. The first step is to create a JAGS model using `crossnma.model()` which produces the JAGS code and the data. In the second step, the output of that function will be used in `crossnma.run()` to run the analysis through JAGS. 
 
-### Unadjusted network meta-analysis 
-We start by indicating the names of the datasets on participant-level (`prt.data`) and aggregate data (`std.data`). Then, the name of the variables on both datasets should be the same.  Next, the `reference` treatment needs to be assigned (we set it to drug A). By choosing `trt.effect='random'`, we are assigning a normal distribution to each relative treatment effect to allow the synthesis across studies, see the table in Section 2.1. Finally, the different designs; RCT and NRS are combined with the information taken at face-value; `method.bias = 'naive'`.
+### Unadjusted network meta-analysis
+
+We start by providing the essential variables which - as stated earlier - must have equal names in both data sets. Next, we give the names of the datasets on participant-level (argument `prt.data`) and aggregate data (argumnet `std.data`). The `reference` treatment needs to be assigned (we set it to drug A). By choosing `trt.effect='random'`, we are assigning a normal distribution to each relative treatment effect to allow the synthesis across studies, see the table in Section 2.1. Finally, the different designs; RCT and NRS are combined with the information taken at face-value as `method.bias = 'naive'`.
 
 Optionally, we can specify a prior to the common heterogeneity of the treatment effect across studies. We indicate that distribution in the argument `prior` as `tau.trt='dunif(0,3)'`, see below.
 
 
 ```{r}
 # jags model: code+data
- mod1 <- crossnma.model(prt.data=prt.data,
-                   std.data=std.data,
-                   trt='trt',
-                   study='study',
-                   outcome='outcome',
-                   n='n',
-                   design='design',
-                   trt.effect='random',
-                   reference='A',
-                   method.bias = 'naive',
-                   #---------- assign a prior ----------
-                   prior=list(tau.trt='dunif(0,3)')
-                    )
+mod1 <- crossnma.model(treat, id, relapse, n, design,
+  prt.data = ipddata, std.data = stddata,
+  reference = "A", trt.effect = "random",
+  #---------- bias adjustment ----------
+  method.bias = "naive",
+  #---------- assign a prior ----------
+  prior = list(tau.trt='dunif(0,3)')
+  )
 ```
 
 The network should be checked for its connectivity before running the analysis. This is a vital step as the model will run even if the network is not connected.
 
 
 ```{r, fig.width=4.5, fig.height=5,fig.show='hold',fig.align='center'}
-netplot(mod1)
+netgraph(mod1)
 ```
 
 Next, we fit the NMA model using `crossnma.run()` which requires us to set the number of adaptations, iterations, thinning and chains.
 
 ```{r}
 # run jags
-jagsfit1 <- crossnma.run(model=mod1,
-                        n.adapt = 50,
-                        n.iter=500,
-                        n.burnin = 200,
-                        thin=1,
-                        n.chains=2)
+jagsfit1 <- crossnma.run(mod1,
+  n.adapt = 50, n.iter = 500, n.burnin = 200,
+  thin = 1, n.chains = 2)
 ```
 
 We summarize the estimated parameters in the following table. 
 
 ```{r}
-knitr::kable(summary(jagsfit1,exp=F))
+knitr::kable(summary(jagsfit1, exp = FALSE))
 ```
 
 The estimated OR of B vs A can be obtained as exp(d.B) and similarly for exp(d.C) and exp(d.D) are the ORs of C and D relative to A, respectively. The value of tau refers to the estimates of the heterogeneity standard deviation in the relative treatment effects across studies.
@@ -322,50 +314,44 @@ coda::traceplot(jagsfit1$samples)
 ```
 
 ### Unadjusted network meta-regression 
-In this part, we run NMR model by adding age as a covariate from both datasets. We set `covariate='age'` representing the name of the covariate column in `prt.data` and `std.data`.
+
+In this part, we set argument `cov1 = age` to run a NMR model with one covariate. Again, datasets `ipddata` and `stddata` must use the same variable name.
 
 ```{r}
 # jags model: code+data
-mod2 <- crossnma.model(prt.data=prt.data,
-                   std.data=std.data,
-                   trt='trt',
-                   study='study',
-                   outcome='outcome',
-                   n='n',
-                   design='design',
-                   reference='A',
-                   trt.effect='random',
-                   #----------  meta-regression ----------
-                   covariate = 'age',
-                   split.regcoef = F,
-                   #---------- bias adjustment ----------
-                   method.bias='naive'
-                   )
+mod2 <- crossnma.model(treat, id, relapse, n, design,
+  prt.data = ipddata, std.data = stddata,
+  reference = "A", trt.effect = "random",
+  #---------- bias adjustment ----------
+  method.bias = "naive",
+  #----------  meta-regression ----------
+  cov1 = age,
+  split.regcoef = FALSE
+  )
 ```
+
+We could add two more covariates to the NMR model using  arguments `cov2` and `cov3`.
 
 The MCMC is run under the same set up as in the network meta-analysis.
 
 ```{r}
 # run jags
-jagsfit2 <- crossnma.run(model=mod2,
-                        n.adapt = 50,
-                        n.iter=500,
-                        n.burnin = 200,
-                        thin=1,
-                        n.chains=2)
+jagsfit2 <- crossnma.run(mod2,
+  n.adapt = 50, n.iter = 500, n.burnin = 200,
+  thin = 1, n.chains = 2)
 ```
 
 and the output table is presented below
 
 ```{r}
-knitr::kable(summary(jagsfit2,exp=FALSE))
+knitr::kable(summary(jagsfit2, exp = FALSE))
 ```
 
 Now, we additionally estimate b_1 which indicates the mean effect of age and tau.b_1 which refers to the heterogeneity standard deviation in the effect of age across studies. Here, we obtain a single estimate  because we choose to not split the within- and between-study age coefficients $(\beta^w_{1,jbk} = \beta^B_{1,jbk}=\beta_{1,jbk})$ to improve the convergence of MCMC.
 
 The league table summarizes the relative effect with the 95% credible interval of each treatment on the top compared to the treatment on the left. All estimates are computed for participant age 38.
 ```{r, fig.width=6, fig.height=5,fig.show='hold',fig.align='center'}
-league_table <- crossnma.league(jagsfit2,exp = T, prt.cov.value = 38,cell.text.size = 4.5)
+league_table <- crossnma.league(jagsfit2, exp = TRUE, prt.cov.value = 38, cell.text.size = 4.5)
 league_table$heatplot
 league_table$table
 league_table$longtable
@@ -379,91 +365,71 @@ In this method, the prior for the basic parameters is set to a normal distributi
 
 ```{r}
 # jags model: code+data
-mod3 <- crossnma.model(prt.data=prt.data,
-                   std.data=std.data,
-                   trt='trt',
-                   study='study',
-                   outcome='outcome',
-                   n='n',
-                   design='design',
-                   reference='D',
-                   trt.effect='random',
-                   #----------  meta-regression ----------
-                   covariate = 'age',
-                   split.regcoef = F,
-                   #---------- bias adjustment ----------
-                   method.bias='prior',
-                   run.nrs=list(var.infl=0.6,
-                                mean.shift=0,
-                                trt.effect="common",
-                                n.adapt = 500,
-                                n.iter=10000,
-                                n.burnin = 4000,
-                                thin=1,
-                                n.chains=2))
+mod3 <- crossnma.model(treat, id, relapse, n, design,
+  prt.data = ipddata, std.data = stddata,
+  reference = "D", trt.effect = "random",
+  #----------  meta-regression ----------
+  cov1 = age,
+  split.regcoef = FALSE,
+  #---------- bias adjustment ----------
+  method.bias = "prior",
+  run.nrs =
+    list(trt.effect = "common",
+         var.infl = 0.6, mean.shift = 0,
+         n.adapt = 500, n.iter = 10000, n.burnin = 4000,
+         thin = 1, n.chains = 2)
+  )
 ```
 
 
 ```{r}
 # run jags
-jagsfit3 <- crossnma.run(model=mod3,
-                        n.adapt = 50,
-                        n.iter=500,
-                        n.burnin = 200,
-                        thin=1,
-                        n.chains=2)
+jagsfit3 <- crossnma.run(mod3,
+  n.adapt = 50, n.iter = 500, n.burnin = 200,
+  thin = 1, n.chains = 2)
 ```
 
 
 ```{r}
-knitr::kable(summary(jagsfit3,exp=F))
+knitr::kable(summary(jagsfit3, exp = FALSE))
 ```
 
 
 ###   Bias-adjusted model 1
 In this part, the overall relative treatment effects are estimated from both NRS and RCT with adjustment to study-specific bias.
 
-To fit the model, we set `method.bias='adjust1'` and we need to provide the name of the bias variable `bias='bias'` in the datasets. The direction of bias is determined by the column `unfav='unfav'` which indicates the unfavoured treatment. The mean bias effect can be indicated by `bias.group`,  $0$ (`bias.group=0`), $g$ (`bias.group=1`) or $g^{act}$ (`bias.group=2`). By default, the effect of bias is assumed to be additive `bias.type='add'` and equal across studies `bias.effect='common'`. We also use  the `year` of study publication to estimate the study-probability of bias, `bias.covariate = 'year'`. 
+To fit the model, we set `method.bias='adjust1'` and we need to provide the bias variable `bias=rob` in the datasets. The direction of bias is determined by the column `unfav=unfavored` which indicates the unfavoured treatment. The mean bias effect can be indicated by `bias.group`,  $0$ (`bias.group=0`), $g$ (`bias.group=1`) or $g^{act}$ (`bias.group=2`). By default, the effect of bias is assumed to be additive `bias.type='add'` and equal across studies `bias.effect='common'`. We also use  the `year` of study publication to estimate the study-probability of bias, `bias.covariate = year`. 
 
 
 ```{r}
 # jags model: code+data
-mod4 <- crossnma.model(prt.data=prt.data,
-                   std.data=std.data,
-                   trt='trt',
-                   study='study',
-                   outcome='outcome',
-                   n='n',
-                   design='design',
-                   reference='A',
-                   trt.effect='random',
-                   #---------- bias adjustment ----------
-                   method.bias='adjust1',
-                   bias='bias',
-                   bias.type='add',
-                   unfav='unfav',
-                   bias.group="bias.group",
-                   bias.effect='common',
-                   bias.covariate = 'year'
-                  )
+mod4 <- crossnma.model(treat, id, relapse, n, design,
+  prt.data = ipddata, std.data = stddata,
+  reference = "A", trt.effect = "random",
+  #---------- bias adjustment ----------
+  method.bias = 'adjust1',
+  bias.type = 'add',
+  bias.effect = 'common',
+  bias = rob,
+  unfav = unfavored,
+  bias.group = bias.group,
+  bias.covariate = year
+)
 ```
 
 
 
 ```{r}
 # run jags
-jagsfit4 <- crossnma.run(model=mod4,
-                       n.adapt = 50,
-                        n.iter=500,
-                        n.burnin = 200,
-                        thin=1,
-                        n.chains=2)
+jagsfit4 <- crossnma.run(mod4,
+  n.adapt = 50, n.iter = 500, n.burnin = 200,
+  thin = 1, n.chains = 2)
 ```
 
 The results are presented below
 
 ```{r}
-knitr::kable(summary(jagsfit4,exp=F))
+knitr::kable(summary(jagsfit4, exp = FALSE))
 ```
 
 The parameter `g` refers to the mean bias effect, common for all studies.
@@ -475,43 +441,31 @@ The arguments for `method.bias='adjust2'` are similar to the ones used before in
 
 ```{r}
 # jags model: code+data
-mod5 <- crossnma.model(prt.data=prt.data,
-                   std.data=std.data,
-                   trt='trt',
-                   study='study',
-                   outcome='outcome',
-                   n='n',
-                   design='design',
-                   reference='A',
-                   trt.effect='random',
-                   #---------- bias adjustment ----------
-                   method.bias='adjust2',
-                   bias='bias',
-                   bias.type='add',
-                   unfav='unfav',
-                   bias.group="bias.group",
-                   bias.effect='common'
-                   )
+mod5 <- crossnma.model(treat, id, relapse, n, design,
+  prt.data = ipddata, std.data = stddata,
+  reference = "A", trt.effect = "random",
+  #---------- bias adjustment ----------
+  method.bias = 'adjust2',
+  bias.type = 'add',
+  bias = rob,
+  unfav = unfavored,
+  bias.group = bias.group,
+)
 ```
 
 
 ```{r}
 # run jags
-jagsfit5 <- crossnma.run(model=mod5,
-                       n.adapt = 50,
-                        n.iter=500,
-                        n.burnin = 200,
-                        thin=1,
-                        n.chains=2)
+jagsfit5 <- crossnma.run(mod5,
+  n.adapt = 50, n.iter = 500, n.burnin = 200,
+  thin = 1, n.chains = 2)
 ```
 
 
 ```{r}
-knitr::kable(summary(jagsfit5,exp=F))
+knitr::kable(summary(jagsfit5, exp = FALSE))
 ```
 
 
-
 # References
-
 

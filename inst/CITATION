@@ -3,17 +3,17 @@ citHeader("To cite package ‘crossnma’ in publications use:")
 year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date, perl = TRUE)
 vers <- paste("R package version", meta$Version)
 
-citEntry(entry="Manual",
-         title = "bnma: Bayesian Network Meta-Analysis using 'JAGS'",
-         author = c(person("Michael", "Seo"),
-                    person("Christopher", "Schmid")),
+citEntry(entry = "Manual",
+         title = "crossnma: CROSS-Design and CROSS-Format Synthesis using Network Meta-Analysis and Network Meta-Regression",
+         author = c(person("Tasnim", "Hamza"),
+                    person("Georgia", "Salanti")),
          year = year,
          note = vers,
-		 url = "https://CRAN.R-project.org/package=bnma",
+         url = "https://github.com/htx-r/crossnma",
 
          textVersion =
-         paste("Michael Seo and Christopher Schmid (",
-               year,
-               "). bnma: Bayesian Network Meta-Analysis using 'JAGS'. ",
-               vers, ". ", 
-			   "https://CRAN.R-project.org/package=bnma.", sep=""))
+           paste0("Tasnim Hamza and Georgia Salanti (",
+                  year,
+                  "). crossnma: CROSS-Design and CROSS-Format Synthesis using Network Meta-Analysis and Network Meta-Regression. ",
+                  vers, ". ", 
+                  "https://github.com/htx-r/crossnma."))
