@@ -23,8 +23,8 @@ knitr::opts_chunk$set(
 ```
 
 ```{r mm, warning=FALSE,message=FALSE,include=FALSE}
-devtools::load_all()
-#library(crossnma)
+#devtools::load_all()
+library(crossnma)
 ```
 
 # Introduction 
@@ -275,7 +275,7 @@ Optionally, we can specify a prior to the common heterogeneity of the treatment 
 # jags model: code+data
 mod1 <- crossnma.model(treat, id, relapse, n, design,
   prt.data = ipddata, std.data = stddata,
-  reference = "A", trt.effect = "random",
+  reference = NULL, trt.effect = "random",
   #---------- bias adjustment ----------
   method.bias = "naive",
   #---------- assign a prior ----------
