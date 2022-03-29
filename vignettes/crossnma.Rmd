@@ -23,7 +23,8 @@ knitr::opts_chunk$set(
 ```
 
 ```{r mm, warning=FALSE,message=FALSE,include=FALSE}
-library(crossnma)
+devtools::load_all()
+#library(crossnma)
 ```
 
 # Introduction 
