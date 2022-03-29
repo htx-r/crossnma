@@ -8,6 +8,40 @@
 #' @param outcome Outcome variable in prt.data and std.data.
 #' @param n Number of participants in std.data.
 #' @param design Design variable in prt.data and std.data.
+#' @param cov1 Optional first covariate in prt.data and std.data to
+#'   conduct network meta-regression (see Details).
+#' @param cov2 Optional second covariate in prt.data and std.data to
+#'   conduct network meta-regression (see Details).
+#' @param cov3 Optional third covariate in prt.data and std.data to
+#'   conduct network meta-regression (see Details).
+#' @param bias A character indicating the name of the variable
+#'   (required when method.bias= 'adjust1' or 'adjust2') that includes
+#'   the risk of bias of the study in prt.data and std.data.  The
+#'   values of this variable should be a character with entries that
+#'   need to be spelled as such 'low', 'high' or 'unclear'. These
+#'   values need to be repeated for the participants that belong to
+#'   the same study.
+#' @param unfav A character for defining the name of the variable
+#'   which indicates the unfavored treatment in each study (should be
+#'   provided when method.bias= 'adjust1' or 'adjust2') in prt.data
+#'   and std.data.  The entries of this variable are either 0
+#'   (unfavored treatment) or 1 (favorable treatment or
+#'   treatments). Each study should include only one 0 entry. The
+#'   values need to be repeated for participants who take the same
+#'   treatment.
+#' @param bias.covariate A character of the variable name that will be
+#'   used in estimating the probability of bias (can be provided when
+#'   method.bias='adjust1' or 'adjust2')
+#' @param bias.group An optional character for defining the name of
+#'   the variable in prt.data and std.data that indicates the bias
+#'   effect in each study (can be provided when method.bias= 'adjust1'
+#'   or 'adjust2').  The entries of these variables should be either 1
+#'   (study has inactive treatment and its estimate should be adjusted
+#'   for bias effect), 2 (study has only active treatments and its
+#'   estimate should be adjusted for bias effect (different from
+#'   inactive bias effect) or 0 (study does not need any bias
+#'   adjustment). The values need to be repeated for the participants
+#'   assigned to the same treatment. Default is 1.
 #' @param prt.data An object of class data.frame containing the
 #'   individual participant dataset. Each row contains the data of a
 #'   single participant.  The dataset needs to have the following
@@ -26,12 +60,6 @@
 #' @param trt.effect A character defining the model for the
 #'   study-specific treatment effects. Options are 'random' (default)
 #'   or 'common'.
-#' @param cov1 Optional first covariate in prt.data and std.data to
-#'   conduct network meta-regression (see Details).
-#' @param cov2 Optional second covariate in prt.data and std.data to
-#'   conduct network meta-regression (see Details).
-#' @param cov3 Optional third covariate in prt.data and std.data to
-#'   conduct network meta-regression (see Details).
 #' @param cov1.ref An optional value to center the first covariate
 #'   which is only useful for a continuous covariate. Dichotomous
 #'   covariates should be given NA value. The default is the overall
@@ -44,26 +72,26 @@
 #'   which is only useful for a continuous covariate. Dichotomous
 #'   covariates should be given NA value. The default is the overall
 #'   minimum covariate value from all studies.
-#' @param reg0.effect An optional character (needed when
-#'   \code{covariate} is not NULL) indicating the relationship across
+#' @param reg0.effect An optional character (needed when at least
+#'   \code{cov1} is not NULL) indicating the relationship across
 #'   studies for the prognostic effects expressed by the regression
 #'   coefficient, (\eqn{\beta_0}), in a study \eqn{j}.  Options are
 #'   'independent' or 'random'. We recommend using 'independent'
 #'   (default).
-#' @param regb.effect An optional character (needed when
-#'   \code{covariate} is not NULL) indicating the relationship across
+#' @param regb.effect An optional character (needed when at least
+#'   \code{cov1} is not NULL) indicating the relationship across
 #'   treatments for the between-study regression coefficient
 #'   (\eqn{\beta^B}). This parameter quantifies the treatment-mean
 #'   covariate interaction.  Options are 'independent', 'random' or
 #'   'common'. Default is 'random'.
-#' @param regw.effect An optional character (needed when
-#'   \code{covariate} is not NULL) indicating the relationship across
+#' @param regw.effect An optional character (needed when at least
+#'   \code{cov1} is not NULL) indicating the relationship across
 #'   treatments for the within-study regression coefficient
 #'   (\eqn{\beta^W}). This parameter quantifies the
 #'   treatment-covariate interaction effect at the individual level.
 #'   Options are 'independent', 'random' and 'common'. Default is
 #'   'random'.
-#' @param split.regcoef A logical value (needed when \code{covariate}
+#' @param split.regcoef A logical value (needed when at least \code{cov1}
 #'   is not NULL). If TRUE (default) the within- and between-study
 #'   coefficients will be splitted in the analysis of prt.data.  When
 #'   the split.regcoef = FALSE, only a single regression coefficient
@@ -80,39 +108,11 @@
 #'   available (either rct or nrs), this argument needs also to be
 #'   specified to indicate whether unadjusted (naive) or bias-adjusted
 #'   analysis (adjust1 or adjust2) should be applied.
-#' @param bias A character indicating the name of the variable
-#'   (required when method.bias= 'adjust1' or 'adjust2') that includes
-#'   the risk of bias of the study in prt.data and std.data.  The
-#'   values of this variable should be a character with entries that
-#'   need to be spelled as such 'low', 'high' or 'unclear'. These
-#'   values need to be repeated for the participants that belong to
-#'   the same study.
-#' @param bias.group An optional character for defining the name of
-#'   the variable in prt.data and std.data that indicates the bias
-#'   effect in each study (can be provided when method.bias= 'adjust1'
-#'   or 'adjust2').  The entries of these variables should be either 1
-#'   (study has inactive treatment and its estimate should be adjusted
-#'   for bias effect), 2 (study has only active treatments and its
-#'   estimate should be adjusted for bias effect (different from
-#'   inactive bias effect) or 0 (study does not need any bias
-#'   adjustment). The values need to be repeated for the participants
-#'   assigned to the same treatment. Default is 1.
-#' @param unfav A character for defining the name of the variable
-#'   which indicates the unfavored treatment in each study (should be
-#'   provided when method.bias= 'adjust1' or 'adjust2') in prt.data
-#'   and std.data.  The entries of this variable are either 0
-#'   (unfavored treatment) or 1 (favorable treatment or
-#'   treatments). Each study should include only one 0 entry. The
-#'   values need to be repeated for participants who take the same
-#'   treatment.
 #' @param bias.type An optional character defining of bias on the
 #'   treatment effect (required when method.bias='adjust1').  Three
 #'   options are possible: 'add' to add the additive bias
 #'   effect,'mult' for multiplicative bias effect and 'both' includes
 #'   both an additive and a multiplicative terms.
-#' @param bias.covariate A character of the variable name that will be
-#'   used in estimating the probability of bias (can be provided when
-#'   method.bias='adjust1' or 'adjust2')
 #' @param bias.effect An optional character indicating the
 #'   relationship for the bias coefficients across studies.  Options
 #'   are 'random' or 'common' (default). It is required when
@@ -161,7 +161,7 @@
 #'  provided as factor or character) variables. By default, no
 #'  covariate adjustment is applied (network meta-analysis).
 #'
-#' 
+#'
 #' @return \code{crossnma.model} returns an object of class
 #'   \code{crossnmaModel} which is a list containing the following
 #'   components (the JAGS model to be ran under these settings):
@@ -177,11 +177,11 @@
 #' @return \code{method.bias} A character for defining the method to
 #'   combine randomized clinical trials (RCT) and non-randomized
 #'   studies (NRS).
-#' @return \code{covariate} A list of the the names of the covariates
+#' @return \code{covariate} A vector of the the names of the covariates (\code{cov1, cov2 and cov3})
 #'   in prt.data and std.data used in network meta-regression.
-#' @return \code{cov1.ref, cov2.ref, cov3.ref} Values to center
+#' @return \code{cov.ref} A vector of values of \code{cov1.ref, cov2.ref, cov3.ref} to center
 #'   continuous covariates. Dichotomous covariates take NA.
-#' @return \code{cov1.labels, cov2.labels, cov3.labels} A matrix with the levels of each
+#' @return \code{dich.cov.labels} A matrix with the levels of each
 #'   dichotomous covariate and the corresponding assigned 0/1 values.
 #' @return \code{split.regcoef} A logical value. If FALSE the within-
 #'   and between-study regression coefficients will be considered
@@ -197,7 +197,7 @@
 #'   ('mult') or both ('both').
 #' @return \code{all.data.ad} A data.frame object with the prt.data
 #'   (after it is aggregated) and std.data in a single dataset.
-#' 
+#'
 #' @examples
 #' # We conduct a network meta-analysis assuming a random-effects
 #' # model.
@@ -205,14 +205,14 @@
 #' # non-randomized studies (combined naively)
 #' head(ipddata) # participant-level data
 #' head(stddata) # study-level data
-#' 
+#'
 #' #=========================#
 #' # Create a jags model     #
 #' #=========================#
 #' mod <- crossnma.model(treat, id, relapse, n, design,
 #'   prt.data = ipddata, std.data = stddata,
 #'   reference = "A", trt.effect = "random", method.bias = "naive")
-#' 
+#'
 #' #=========================#
 #' # Fit jags model          #
 #' #=========================#
@@ -225,7 +225,7 @@
 #' #=========================#
 #' summary(fit)
 #' plot(fit)
-#' 
+#'
 #' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch}, Guido
 #'   Schwarzer \email{sc@@imbi.uni-freiburg.de}
 #'
@@ -285,7 +285,7 @@ crossnma.model <- function(trt,
                                         n.burnin = 4000,
                                         thin=1,
                                         n.chains=2)) {
-  
+
   ## Check and set variables
   ##
   if (missing(trt))
@@ -339,8 +339,8 @@ crossnma.model <- function(trt,
     if (!is.null(down.wgt) & !is.null(prior$tau.gamma))
       message("The assigned prior for the heterogeneity parameters of bias effect is ignored when 'down.wgt' is provided")
   }
-  
-  
+
+
   options(warn=-1)
   ## Bind variables to function
   ##
@@ -348,7 +348,7 @@ crossnma.model <- function(trt,
     arm <- value <- variable <- bias_index <-
       x.bias <- x1 <- x1f <- x2 <- x2f <- x3 <- x3f <-
         ref.trt.std <- n.arms <- NULL
-  
+
   ## Extract names of covariates
   ##
   covariates <- NULL
@@ -361,8 +361,8 @@ crossnma.model <- function(trt,
       }
     }
   }
-  
-  
+
+
   ## Prepare IPD dataset
   ##
   sfsp <- sys.frame(sys.parent())
@@ -373,6 +373,8 @@ crossnma.model <- function(trt,
   if (!is.null(prt.data)) {
 
     trt <- catch("trt", mc, prt.data, sfsp)
+    if (is.factor(trt))
+      trt <- as.character(trt)
     ##
     study <- catch("study", mc, prt.data, sfsp)
     if (is.factor(study))
@@ -402,6 +404,13 @@ crossnma.model <- function(trt,
     data11 <- data.frame(trt = trt, study = study,
                          r = outcome,
                          design = design)
+    #! trt is a charachter and data11$trt is factor! we should convert trt to charachter after we put it in a dataset, I do the same for all factors
+    if (is.factor(data11$trt))
+      data11$trt <- as.character(data11$trt)
+    if (is.factor(data11$study))
+      data11$study <- as.character(data11$study)
+    if (is.factor(data11$design))
+      data11$design <- as.character(data11$design)
     ##
     if (!is.null(bias)) {
       bias <- as.character(bias)
@@ -410,6 +419,8 @@ crossnma.model <- function(trt,
                                    '"low", "high", or "unclear"',
                                    "(IPD dataset)"))
       data11$bias <- bias
+      if (is.factor(data11$bias))
+        data11$bias <- as.character(data11$bias)
     }
     if (!is.null(bias.covariate))
       data11$x.bias <- bias.covariate
@@ -467,8 +478,8 @@ crossnma.model <- function(trt,
   else {
     data11 <- NULL
   }
-  
-  
+
+
   ## Prepare AD dataset
   ##
   excl2 <- FALSE
@@ -477,8 +488,10 @@ crossnma.model <- function(trt,
 
     if (missing(outcome))
       stop("Mandatory argument 'outcome' missing.")
-    
+
     trt <- catch("trt", mc, std.data, sfsp)
+    if (is.factor(trt))
+      trt <- as.character(trt)
     ##
     study <- catch("study", mc, std.data, sfsp)
     if (is.factor(study))
@@ -518,6 +531,11 @@ crossnma.model <- function(trt,
     data22 <- data.frame(trt = trt, study = study,
                          r = outcome, n = n,
                          design = design)
+    if (is.factor(data22$trt))
+      data22$trt <- as.character(data22$trt)
+    if (is.factor(data22$study))
+      data22$study <- as.character(data22$study)
+
     ##
     if (!is.null(bias)) {
       bias <- as.character(bias)
@@ -526,6 +544,8 @@ crossnma.model <- function(trt,
                                    '"low", "high", or "unclear"',
                                    "(study-level dataset)"))
       data22$bias <- bias
+      if (is.factor(data22$bias))
+        data22$bias <- as.character(data22$bias)
     }
     if (!is.null(bias.covariate))
       data22$x.bias <- bias.covariate
@@ -587,8 +607,8 @@ crossnma.model <- function(trt,
   else{
     data22 <- NULL
   }
-  
-  
+
+
   ## Messages for missing values
   ##
   if (any(excl1))
@@ -600,13 +620,13 @@ crossnma.model <- function(trt,
     message('Arms with missing data in these variables: ',
             'outcome, n, bias, unfav or bias.group are ',
             'discarded from the analysis')
-  
-  
+
+
   ## jagsdata for IPD
   ##
-  
+
   ## pull relevant fields from the data and apply naming convention
-  
+
   ## include / exclude NRS
   if (is.null(method.bias)) {
     if (any(data11$design == 'nrs') | any(data22$design == 'nrs'))
@@ -627,8 +647,8 @@ crossnma.model <- function(trt,
       data2.nrs <- data22[data22$design == 'nrs', ]
     }
   }
-  
-  
+
+
   cov.ref <- NULL
   ##
   ## Set reference covariate values if missing
@@ -691,7 +711,7 @@ crossnma.model <- function(trt,
             cov3.ref <- NA
           }
         }
-      } 
+      }
       cov.ref <- c(cov.ref, cov3.ref)
     }
   }
@@ -699,11 +719,11 @@ crossnma.model <- function(trt,
   cov1.labels <- NULL
   cov2.labels <- NULL
   cov3.labels <- NULL
-  
-  
+
+
   ## set a trt key from the two datasets
   ##
-  trts <- sort(as.character(unique(c(data1$trt, data2$trt))))
+  trts <- sort(as.character(unique(c(as.character(data1$trt), as.character(data2$trt) ))))
   if (is.null(reference))
     reference <- trts[1]
   else
@@ -711,14 +731,14 @@ crossnma.model <- function(trt,
   ##
   trt.key <- data.frame(trt.ini = c(reference, trts[trts != reference]),
                         trt.jags = seq_along(trts))
-  
-  
+
+
   ## set a study key from the two datasets
   ##
   study.key <- data.frame(std.id = c(unique(data1$study), unique(data2$study)))
   study.key$study.jags <- seq_len(nrow(study.key))
-  
-  
+
+
   if (!is.null(prt.data)){
     #Trt mapping
     #add treatment mapping to data
@@ -874,8 +894,8 @@ crossnma.model <- function(trt,
       xm2.ipd <- NULL
       xm3.ipd <- NULL
     }
-    
-    
+
+
     # create a matrix of treatment per study row
     jagsdata1 <- list()
 
@@ -1002,7 +1022,7 @@ crossnma.model <- function(trt,
       bias_index.ad <- NULL
       xbias.ad <- NULL
     }
-    
+
     # pre-process the covariate if specified
     if (!is.null(cov1)) {
       ## continuous
@@ -1206,14 +1226,14 @@ crossnma.model <- function(trt,
     trt.key.nrs <-
       data.frame(trt.ini = c(reference, trts.nrs[trts.nrs != reference]),
                  trt.jags = seq_along(trts.nrs))
-    
-    
+
+
     ## set a study key from the two datasets
     study.key.nrs <-
       data.frame(std.id = c(unique(data1.nrs$study), unique(data2.nrs$study)))
     study.key.nrs$study.jags <- seq_len(nrow(study.key.nrs))
-    
-    
+
+
     #====================================
     # 1. IPD-NRS
     if (!is.null(data1.nrs)){
@@ -1417,7 +1437,7 @@ crossnma.model <- function(trt,
   model <- crossnma.code(ipd = !is.null(prt.data),
                          ad = !is.null(std.data),
                          trt.effect=trt.effect,
-                         covariate=cov1,
+                         covariate=covariates,
                          split.regcoef=split.regcoef,
                          reg0.effect=reg0.effect,
                          regb.effect=regb.effect,
@@ -1453,7 +1473,7 @@ crossnma.model <- function(trt,
                                ##
                                covariate = covariates,
                                cov.ref = cov.ref,
-                               dich.cov.labels = cov1.labels,
+                               dich.cov.labels = rbind(cov1.labels,cov2.labels,cov3.labels),
                                ##
                                split.regcoef=split.regcoef,
                                regb.effect=regb.effect,
@@ -1463,6 +1483,6 @@ crossnma.model <- function(trt,
                                all.data.ad=all.data.ad
                                ),
                           class = "crossnmaModel")
-  
+
   return(crossmodel)
 }

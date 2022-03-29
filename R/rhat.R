@@ -1,6 +1,5 @@
 rhat <- function(x,
                  confidence = 0.95,
-                 ##transform = FALSE,
                  autoburnin = FALSE,
                  multivariate = TRUE) {
   # Bind variables to function
@@ -13,8 +12,6 @@ rhat <- function(x,
   Nchain <- nchain(x)
   Nvar <- nvar(x)
   xnames <- varnames(x)
-  ##if (transform)
-  ##  x <- gelman.transform(x)
   x <- lapply(x, as.matrix)
   S2 <- array(sapply(x, var, simplify = TRUE),
               dim = c(Nvar, Nvar, Nchain)
