@@ -129,29 +129,29 @@ which is only useful for a continuous covariate. Dichotomous
 covariates should be given NA value. The default is the overall
 minimum covariate value from all studies.}
 
-\item{reg0.effect}{An optional character (needed when
-\code{covariate} is not NULL) indicating the relationship across
+\item{reg0.effect}{An optional character (needed when at least
+\code{cov1} is not NULL) indicating the relationship across
 studies for the prognostic effects expressed by the regression
 coefficient, (\eqn{\beta_0}), in a study \eqn{j}.  Options are
 'independent' or 'random'. We recommend using 'independent'
 (default).}
 
-\item{regb.effect}{An optional character (needed when
-\code{covariate} is not NULL) indicating the relationship across
+\item{regb.effect}{An optional character (needed when at least
+\code{cov1} is not NULL) indicating the relationship across
 treatments for the between-study regression coefficient
 (\eqn{\beta^B}). This parameter quantifies the treatment-mean
 covariate interaction.  Options are 'independent', 'random' or
 'common'. Default is 'random'.}
 
-\item{regw.effect}{An optional character (needed when
-\code{covariate} is not NULL) indicating the relationship across
+\item{regw.effect}{An optional character (needed when at least
+\code{cov1} is not NULL) indicating the relationship across
 treatments for the within-study regression coefficient
 (\eqn{\beta^W}). This parameter quantifies the
 treatment-covariate interaction effect at the individual level.
 Options are 'independent', 'random' and 'common'. Default is
 'random'.}
 
-\item{split.regcoef}{A logical value (needed when \code{covariate}
+\item{split.regcoef}{A logical value (needed when at least \code{cov1}
 is not NULL). If TRUE (default) the within- and between-study
 coefficients will be splitted in the analysis of prt.data.  When
 the split.regcoef = FALSE, only a single regression coefficient
@@ -244,13 +244,13 @@ arguments.}
   combine randomized clinical trials (RCT) and non-randomized
   studies (NRS).
 
-\code{covariate} A list of the the names of the covariates
+\code{covariate} A vector of the the names of the covariates (\code{cov1, cov2 and cov3})
   in prt.data and std.data used in network meta-regression.
 
-\code{cov1.ref, cov2.ref, cov3.ref} Values to center
+\code{cov.ref} A vector of values of \code{cov1.ref, cov2.ref, cov3.ref} to center
   continuous covariates. Dichotomous covariates take NA.
 
-\code{cov1.labels, cov2.labels, cov3.labels} A matrix with the levels of each
+\code{dich.cov.labels} A matrix with the levels of each
   dichotomous covariate and the corresponding assigned 0/1 values.
 
 \code{split.regcoef} A logical value. If FALSE the within-
