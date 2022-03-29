@@ -23,6 +23,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r mm, warning=FALSE,message=FALSE,include=FALSE}
+#devtools::load_all()
 library(crossnma)
 ```
 
@@ -274,7 +275,7 @@ Optionally, we can specify a prior to the common heterogeneity of the treatment 
 # jags model: code+data
 mod1 <- crossnma.model(treat, id, relapse, n, design,
   prt.data = ipddata, std.data = stddata,
-  reference = "A", trt.effect = "random",
+  reference = NULL, trt.effect = "random",
   #---------- bias adjustment ----------
   method.bias = "naive",
   #---------- assign a prior ----------
@@ -351,10 +352,7 @@ Now, we additionally estimate b_1 which indicates the mean effect of age and tau
 
 The league table summarizes the relative effect with the 95% credible interval of each treatment on the top compared to the treatment on the left. All estimates are computed for participant age 38.
 ```{r, fig.width=6, fig.height=5,fig.show='hold',fig.align='center'}
-league_table <- crossnma.league(jagsfit2, exp = TRUE, prt.cov.value = 38, cell.text.size = 4.5)
-league_table$heatplot
-league_table$table
-league_table$longtable
+crossnma.league(jagsfit2, exp = TRUE, prt.cov1.value = 38)
 ```
 
 ### Using non-randomized studies (NRS) to construct priors for the treatment effects

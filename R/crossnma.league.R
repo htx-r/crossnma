@@ -1,24 +1,21 @@
-#' League Table and Heat Plot
-#' @description Produces a league table and a league heat plot that contain point estimates of relative effects
+#' League Table
+#' @description Produces a league table that contain point estimates of relative effects
 #' for all possible pairs of treatments along with 95\% credible intervals obtained with the quantile method.
 #' @param x A \code{crossrun} object produced by running \code{crossnma.run()}.
 #' @param central.tdcy The statistic to be used to measure the relative treatment effects. The options are "mean" and "median".
 #' @param exp If TRUE (default), odds ratios are displayed. If FALSE, log odds ratios will be presented.
 #' @param order A vector of treatment names (character) representing the order in which to display these treatments.
-#' @param low.colour A string indicating the colour of low relative treatment effects for the heat plot (e.g odds ratio of ~0.5)
-#' @param mid.colour A string indicating the colour of null relative treatment effects for the heat plot (e.g odds ratio of ~1.0).
-#' @param high.colour A string indicating the colour of high relative treatment effects for the heat plot (e.g odds ratio of ~2.0).
-#' @param prt.cov.value  A vector of values of participant covariate for which to report the results. Must be specified for meta-regression and when individual participant dataset is used in the analysis.
-#' The order of these values should match the order in \code{covariate} vector in crossnma.model(). For dichotomous covariates, a character of the level (used in the data) should be indicated.
+#' @param prt.cov1.value  The participant covariate value of \code{cov1} for which to report the results. Must be specified for network meta-regression and when individual participant dataset is used in the analysis.
+#' For dichotomous covariates, a character of the level (used in the data) should be indicated.
+#' @param prt.cov2.value  The participant covariate value of \code{cov2} for which to report the results. Must be specified for network meta-regression and when individual participant dataset is used in the analysis.
+#' For dichotomous covariates, a character of the level (used in the data) should be indicated.
+#' @param prt.cov3.value  The participant covariate value of \code{cov3} for which to report the results. Must be specified for network meta-regression and when individual participant dataset is used in the analysis.
+#' For dichotomous covariates, a character of the level (used in the data) should be indicated.
 #' @param digits The number of digits to be used when displaying the results
-#' @param cell.text.size The size of the cell entries; the relative treatment effect and the 95\% credible intervals
-#' @param trt.name.size The size of treatment names placed on the top and left of the plot
-#' @param axis.title.size The size of titles placed on the top and left of the plot
+#' @param direction The format to dispaly league table. Two options "wide" (default) and "long"
 #'
 #' @return \code{table}  A league table. Row names indicate comparator treatments.
-#' @return \code{longtable}  League table in the long format.
-#' @return \code{heatplot}  League heat plot, where a color scale is used to represent the relative treatment effects.
-#' 
+#' The table will be displayed in a long or wide formatting.
 #' @examples
 #' # We conduct a network meta-analysis assuming a random-effects
 #' # model.
@@ -26,14 +23,14 @@
 #' # non-randomized studies (combined naively)
 #' head(ipddata) # participant-level data
 #' head(stddata) # study-level data
-#' 
+#'
 #' #=========================#
 #' # Create a jags model     #
 #' #=========================#
 #' mod <- crossnma.model(treat, id, relapse, n, design,
 #'   prt.data = ipddata, std.data = stddata,
 #'   reference = "A", trt.effect = "random", method.bias = "naive")
-#' 
+#'
 #' #=========================#
 #' # Fit jags model          #
 #' #=========================#
@@ -41,14 +38,12 @@
 #'   crossnma.run(model = mod, n.adapt = 20,
 #'     n.iter = 50, thin = 1, n.chains = 3)
 #'
-#' #=========================#
-#' # Create the league table #
-#' #=========================#
-#' league_table <- crossnma.league(fit,exp = TRUE)
-#' league_table$heatplot
-#' league_table$table
-#' league_table$longtable
-#' 
+#' #==========================#
+#' # Display the league table #
+#' #==========================#
+#' crossnma.league(fit,exp = TRUE)                   #  wide formatting
+#' crossnma.league(fit,exp = TRUE, direction="long") #  long formatting
+#'
 #' @seealso \code{\link{crossnma.run}}
 #' @export
 
@@ -57,14 +52,11 @@ crossnma.league <- function(x,
                             central.tdcy = "median",
                             exp = FALSE,
                             order = NULL,
-                            low.colour = "darkgoldenrod1",
-                            mid.colour = "white",
-                            high.colour = "cornflowerblue",
-                            prt.cov.value=NULL,
+                            prt.cov1.value=NULL,
+                            prt.cov2.value=NULL,
+                            prt.cov3.value=NULL,
                             digits = 2,
-                            cell.text.size=6,
-                            trt.name.size=16,
-                            axis.title.size=20) {
+                            direction="wide") {
 
   # Bind variables to function
   trt <- NULL
@@ -75,7 +67,7 @@ crossnma.league <- function(x,
   if (class(x) != "crossnma")
     stop("\'x \' must be a valid crossnma object created using the crossnma.run function.")
 
-  if(!is.null(x$model$covariate) & is.null(prt.cov.value)) stop("prt.cov.value must be specified for meta-regression")
+  if(!is.null(x$model$covariate) & is.null(prt.cov1.value)) stop("prt.cov.value must be specified for network meta-regression")
 
   dmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("d."))
   trt.names <- x$trt.key$trt.ini
@@ -90,22 +82,22 @@ if(!is.null(x$model$covariate)){
       if(x$model$regw.effect=="independent"){
         bwmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("betaw.t_"))
         # split bwmat by nt_column to generate bwmat.cov for each covariate
-        bwmat.cov1 <- bwmat[,1:nt]*ifelse(is.numeric(prt.cov.value[1]),
-                                          prt.cov.value[1]-x$model$cov.ref[1], # for numeric covariate
-                                          as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[1],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+        bwmat.cov1 <- bwmat[,1:nt]*ifelse(is.numeric(prt.cov1.value),
+                                          prt.cov1.value-x$model$cov.ref[1], # for numeric covariate
+                                          as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov1.value,2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
         )
         if(nc==2){
-          bwmat.cov2 <- bwmat[,(nt+1):(nt*2)]*ifelse(is.numeric(prt.cov.value[2]),
-                                                     prt.cov.value[2]-x$model$cov.ref[2], # for numeric covariate
-                                                     as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[2],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+          bwmat.cov2 <- bwmat[,(nt+1):(nt*2)]*ifelse(is.numeric(prt.cov2.value),
+                                                     prt.cov2.value-x$model$cov.ref[2], # for numeric covariate
+                                                     as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov2.value,2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
           )
         } else{
           bwmat.cov2 <- 0
         }
         if(nc==3){
-          bwmat.cov3 <- bwmat[,(nt*2+1):(nt*3)]*ifelse(is.numeric(prt.cov.value[3]),
-                                                       prt.cov.value[3]-x$model$cov.ref[3], # for numeric covariate
-                                                       as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[3],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+          bwmat.cov3 <- bwmat[,(nt*2+1):(nt*3)]*ifelse(is.numeric(prt.cov3.value),
+                                                       prt.cov3.value-x$model$cov.ref[3], # for numeric covariate
+                                                       as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov3.value,2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
           )
         } else{
           bwmat.cov3 <- 0
@@ -113,24 +105,24 @@ if(!is.null(x$model$covariate)){
         dmat <- dmat+bwmat.cov1+bwmat.cov2+bwmat.cov3
       } else{
         bwmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("bw_"))
-        bwmat.cov1 <- sweep(cbind(bwmat[,1]),MARGIN = 2,ifelse(is.numeric(prt.cov.value[1]),
-                                                               prt.cov.value[1]-x$model$cov.ref[1], # for numeric covariate
-                                                               as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[1],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+        bwmat.cov1 <- sweep(cbind(bwmat[,1]),MARGIN = 2,ifelse(is.numeric(prt.cov1.value),
+                                                               prt.cov1.value-x$model$cov.ref[1], # for numeric covariate
+                                                               as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov1.value,2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
         ),'*') # multiply each column values by prt.cov-cov.ref
         bwmat.cov1 <-matrix(unlist(rep(bwmat.cov1,each=nt)), ncol=nt,byrow = TRUE)       # repeat the column for each trt to add it to dmat
         if(nc==2){
-          bwmat.cov2 <- sweep(cbind(bwmat[,2]),MARGIN = 2,ifelse(is.numeric(prt.cov.value[2]),
-                                                                 prt.cov.value[2]-x$model$cov.ref[2], # for numeric covariate
-                                                                 as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[2],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+          bwmat.cov2 <- sweep(cbind(bwmat[,2]),MARGIN = 2,ifelse(is.numeric(prt.cov2.value),
+                                                                 prt.cov2.value-x$model$cov.ref[2], # for numeric covariate
+                                                                 as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov2.value,2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
           ),'*')
           bwmat.cov2 <- matrix(unlist(rep(bwmat.cov2,each=nt)), ncol=nt,byrow = TRUE)
         } else{
           bwmat.cov2 <- 0
         }
         if(nc==3){
-          bwmat.cov3 <- sweep(cbind(bwmat[,3]),MARGIN = 2,ifelse(is.numeric(prt.cov.value[3]),
-                                                                 prt.cov.value[3]-x$model$cov.ref[3], # for numeric covariate
-                                                                 as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[3],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+          bwmat.cov3 <- sweep(cbind(bwmat[,3]),MARGIN = 2,ifelse(is.numeric(prt.cov3.value),
+                                                                 prt.cov3.value-x$model$cov.ref[3], # for numeric covariate
+                                                                 as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov3.value,2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
           ),'*')
           bwmat.cov3 <- matrix(unlist(rep(bwmat.cov3,each=nt)), ncol=nt,byrow = TRUE)
         } else{
@@ -143,16 +135,16 @@ if(!is.null(x$model$covariate)){
         bbmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("betab.t_"))
         # split bbmat by nt_column to generate bbmat.cov for each covariate
         stds.mean1 <- mean(c(x$model$data$xm1.ad, x$model$data$xm1.ipd),na.rm = TRUE)
-        bbmat.cov1 <- bbmat[,1:nt]*ifelse(is.numeric(prt.cov.value[1]),stds.mean1-x$model$cov.ref[1],stds.mean1)
+        bbmat.cov1 <- bbmat[,1:nt]*ifelse(is.numeric(prt.cov1.value),stds.mean1-x$model$cov.ref[1],stds.mean1)
         if(nc==2){
           stds.mean2 <- mean(c(x$model$data$xm2.ad, x$model$data$xm2.ipd),na.rm = TRUE)
-          bbmat.cov2 <- bbmat[,(nt+1):(nt*2)]*ifelse(is.numeric(prt.cov.value[2]),stds.mean2-x$model$cov.ref[2],stds.mean2)
+          bbmat.cov2 <- bbmat[,(nt+1):(nt*2)]*ifelse(is.numeric(prt.cov2.value),stds.mean2-x$model$cov.ref[2],stds.mean2)
         } else{
           bbmat.cov2 <- 0
         }
         if(nc==3){
           stds.mean3 <- mean(c(x$model$data$xm3.ad, x$model$data$xm3.ipd),na.rm = TRUE)
-          bbmat.cov3 <- bbmat[,(nt*2+1):(nt*3)]*ifelse(is.numeric(prt.cov.value[3]),stds.mean3-x$model$cov.ref[3],stds.mean3)
+          bbmat.cov3 <- bbmat[,(nt*2+1):(nt*3)]*ifelse(is.numeric(prt.cov3.value),stds.mean3-x$model$cov.ref[3],stds.mean3)
         } else{
           bbmat.cov3 <- 0
         }
@@ -163,16 +155,16 @@ if(!is.null(x$model$covariate)){
                        mean(c(x$model$data$xm3.ad, x$model$data$xm3.ipd),na.rm = TRUE))
 
         bbmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("bb_"))
-        bbmat.cov1 <- sweep(cbind(bbmat[,1]),MARGIN = 2,ifelse(is.numeric(prt.cov.value[1]),stds.mean[1]-x$model$cov.ref[1],stds.mean[1]),'*')
+        bbmat.cov1 <- sweep(cbind(bbmat[,1]),MARGIN = 2,ifelse(is.numeric(prt.cov1.value),stds.mean[1]-x$model$cov.ref[1],stds.mean[1]),'*')
         bbmat.cov1 <-matrix(unlist(rep(bbmat.cov1,each=nt)), ncol=nt,byrow = TRUE)
         if(nc==2){
-          bbmat.cov2 <- sweep(cbind(bbmat[,2]),MARGIN = 2,ifelse(is.numeric(prt.cov.value[2]),stds.mean[2]-x$model$cov.ref[2],stds.mean[2]),'*')
+          bbmat.cov2 <- sweep(cbind(bbmat[,2]),MARGIN = 2,ifelse(is.numeric(prt.cov2.value),stds.mean[2]-x$model$cov.ref[2],stds.mean[2]),'*')
           bbmat.cov2 <- matrix(unlist(rep(bbmat.cov2,each=nt)), ncol=nt,byrow = TRUE)
         } else{
           bbmat.cov2 <- 0
         }
         if(nc==3){
-          bbmat.cov3 <- sweep(cbind(bbmat[,3]),MARGIN = 2,ifelse(is.numeric(prt.cov.value[3]),stds.mean[3]-x$model$cov.ref[3],stds.mean[3]),'*')
+          bbmat.cov3 <- sweep(cbind(bbmat[,3]),MARGIN = 2,ifelse(is.numeric(prt.cov3.value),stds.mean[3]-x$model$cov.ref[3],stds.mean[3]),'*')
           bbmat.cov3 <- matrix(unlist(rep(bbmat.cov3,each=nt)), ncol=nt,byrow = TRUE)
         } else{
           bbmat.cov3 <- 0
@@ -183,23 +175,23 @@ if(!is.null(x$model$covariate)){
     } else{
       if(x$model$regb.effect=="independent"&&x$model$regw.effect=="independent"){
         bmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("beta.t_"))
-        bmat.cov1 <- bmat[,1:nt]*(ifelse(is.numeric(prt.cov.value[1]),
-                                         prt.cov.value[1]-x$model$cov.ref[1], # for numeric covariate
-                                         as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[1],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+        bmat.cov1 <- bmat[,1:nt]*(ifelse(is.numeric(prt.cov1.value),
+                                         prt.cov1.value-x$model$cov.ref[1], # for numeric covariate
+                                         as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov1.value,2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
         ))
         if(nc==2){
-          bmat.cov2 <- bmat[,(nt+1):(nt*2)]*(ifelse(is.numeric(prt.cov.value[2]),
-                                                    prt.cov.value[2]-x$model$cov.ref[2], # for numeric covariate
-                                                    as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[2],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+          bmat.cov2 <- bmat[,(nt+1):(nt*2)]*(ifelse(is.numeric(prt.cov2.value),
+                                                    prt.cov2.value-x$model$cov.ref[2], # for numeric covariate
+                                                    as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov2.value,2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
           ))
 
         } else{
           bmat.cov2 <- 0
         }
         if(nc==3){
-          bmat.cov3 <- bmat[,(nt*2+1):(nt*3)]*(ifelse(is.numeric(prt.cov.value[3]),
-                                                      prt.cov.value[3]-x$model$cov.ref[3], # for numeric covariate
-                                                      as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[3],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+          bmat.cov3 <- bmat[,(nt*2+1):(nt*3)]*(ifelse(is.numeric(prt.cov3.value),
+                                                      prt.cov3.value-x$model$cov.ref[3], # for numeric covariate
+                                                      as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov3.value,2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
           ))
         } else{
           bmat.cov3 <- 0
@@ -207,24 +199,24 @@ if(!is.null(x$model$covariate)){
         dmat <- dmat+bmat.cov1+bmat.cov2+bmat.cov3
       } else{
         bmat <- do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("b_"))
-        bmat.cov1 <- sweep(cbind(bmat[,1]),MARGIN = 2,ifelse(is.numeric(prt.cov.value[1]),
-                                                             prt.cov.value[1]-x$model$cov.ref[1], # for numeric covariate
-                                                             as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[1],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+        bmat.cov1 <- sweep(cbind(bmat[,1]),MARGIN = 2,ifelse(is.numeric(prt.cov1.value),
+                                                             prt.cov1.value-x$model$cov.ref[1], # for numeric covariate
+                                                             as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov1.value,2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
         ),'*')
         bmat.cov1 <-matrix(unlist(rep(bmat.cov1,each=nt)), ncol=nt,byrow = TRUE)
         if(nc==2){
-          bmat.cov2 <- sweep(cbind(bmat[,2]),MARGIN = 2,ifelse(is.numeric(prt.cov.value[2]),
-                                                               prt.cov.value[2]-x$model$cov.ref[2], # for numeric covariate
-                                                               as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[2],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+          bmat.cov2 <- sweep(cbind(bmat[,2]),MARGIN = 2,ifelse(is.numeric(prt.cov2.value),
+                                                               prt.cov2.value-x$model$cov.ref[2], # for numeric covariate
+                                                               as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov2.value,2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
           ),'*')
           bmat.cov2 <- matrix(unlist(rep(bmat.cov2,each=nt)), ncol=nt,byrow = TRUE)
         } else{
           bmat.cov2 <- 0
         }
         if(nc==3){
-          bmat.cov3 <- sweep(cbind(bmat[,3]),MARGIN = 2,ifelse(is.numeric(prt.cov.value[3]),
-                                                               prt.cov.value[3]-x$model$cov.ref[3], # for numeric covariate
-                                                               as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov.value[3],2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
+          bmat.cov3 <- sweep(cbind(bmat[,3]),MARGIN = 2,ifelse(is.numeric(prt.cov3.value),
+                                                               prt.cov3.value-x$model$cov.ref[3], # for numeric covariate
+                                                               as.numeric(x$model$dich.cov.labels[x$model$dich.cov.labels[,1]==prt.cov3.value,2]) # for factor covariate, multiply by 0 or 1 depends on what value the user indicate in prt.cov.value
           ),'*')
           bmat.cov3 <- matrix(unlist(rep(bmat.cov3,each=nt)), ncol=nt,byrow = TRUE)
         } else{
@@ -283,12 +275,12 @@ if(!is.null(x$model$covariate)){
   # # when we adjust for covariate, add a message with the values that we adjusted for
   # if(!is.null(prt.cov.value)){
   #   msg.adjust <-  paste0("The estimates of treatment effect are adjusted for \n
-  #                               participant ",x$model$covariate[1],"= ",prt.cov.value[1],
+  #                               participant ",x$model$covariate[1],"= ",prt.cov1.value,
   #                          "and study mean = ",round(mean(c(x$model$data$xm1.ad, x$model$data$xm1.ipd),na.rm = TRUE),2)
   #   )
-  #   if(nc==2) msg.adjust <- paste0(msg.adjust, paste0("\n participant ",x$model$covariate[2],"= ",prt.cov.value[2],
+  #   if(nc==2) msg.adjust <- paste0(msg.adjust, paste0("\n participant ",x$model$covariate[2],"= ",prt.cov2.value,
   #                                       "and study mean = ",round(mean(c(x$model$data$xm2.ad, x$model$data$xm2.ipd),na.rm = TRUE),2)))
-  #   if(nc==3) msg.adjust <- paste0(msg.adjust, paste0("\n participant ",x$model$covariate[3],"= ",prt.cov.value[3],
+  #   if(nc==3) msg.adjust <- paste0(msg.adjust, paste0("\n participant ",x$model$covariate[3],"= ",prt.cov3.value,
   #                                       "and study mean = ",round(mean(c(x$model$data$xm3.ad, x$model$data$xm3.ipd),na.rm = TRUE),2))
   #                    )
   # }
@@ -453,73 +445,81 @@ if(!is.null(x$model$covariate)){
   } else{
     null.value <- 0
   }
+if(direction=="wide"){
+  tab <- default
+} else if(direction=="long"){
+tab <- longtable
+} else {
+  stop("direction takes values 'wide' or 'long' ")
+}
 
+  return(tab)
 
-
-  return(list("table"=default, "longtable"=longtable, "heatplot"=league.heat.plot(leaguetable=longtable,
-                                                                                  central.tdcy=central.tdcy,
-                                                                                  order = order,
-                                                                                  low.colour = low.colour,
-                                                                                  mid.colour = mid.colour,
-                                                                                  high.colour = high.colour,
-                                                                                  midpoint = null.value,
-                                                                                  digits = digits,
-                                                                                  cell.text.size=cell.text.size,
-                                                                                  trt.name.size=trt.name.size,
-                                                                                  axis.title.size=axis.title.size)))
+  # return(list("table"=default, "longtable"=longtable, "heatplot"=league.heat.plot(leaguetable=longtable,
+  #                                                                                 central.tdcy=central.tdcy,
+  #                                                                                 order = order,
+  #                                                                                 low.colour = low.colour,
+  #                                                                                 mid.colour = mid.colour,
+  #                                                                                 high.colour = high.colour,
+  #                                                                                 midpoint = null.value,
+  #                                                                                 digits = digits,
+  #                                                                                 cell.text.size=cell.text.size,
+  #                                                                                 trt.name.size=trt.name.size,
+  #                                                                                 axis.title.size=axis.title.size))
+  #        )
 }
 
 
 
 
 
-league.heat.plot <- function(leaguetable,
-                             central.tdcy,
-                             order = NULL,
-                             low.colour = "red",
-                             mid.colour = "white",
-                             high.colour = "springgreen4",
-                             midpoint,
-                             digits,
-                             cell.text.size=cell.text.size,
-                             trt.name.size=trt.name.size,
-                             axis.title.size=axis.title.size){
-
-  #Bind Variables to function
-  Treatment <- NULL
-  Comparator <- NULL
-  ct.stat <- NULL
-  lci <- NULL
-  uci <- NULL
-
-  league.tmp <- leaguetable%>%filter(Treatment != Comparator)
-
-  #rename central tendancy statistic to ct.stat
-  names(league.tmp)[names(league.tmp) == central.tdcy] <- "ct.stat"
-  #create C-style formatting string from the digits parameter
-  fmt <- paste0("%.", digits, "f")
-
-  heatplot <- ggplot(data = league.tmp, aes(x=Treatment, y=Comparator, fill=ct.stat)) +
-    geom_tile()+
-    geom_text(aes(label = paste0(sprintf(fmt, ct.stat), "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")")),
-                    # ifelse(((midpoint<lci & midpoint< uci) | (midpoint>lci & midpoint> uci)),
-                    #        ifelse(Treatment!=Comparator, paste0("**", sprintf(fmt, ct.stat), "**", "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")"), " "),
-                    #        ifelse(Treatment!=Comparator, paste0(sprintf(fmt, ct.stat), "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")"), " "))),
-              size=cell.text.size)
-  heatplot <- heatplot +
-    scale_fill_gradient2(low = low.colour, high = high.colour, mid = mid.colour, midpoint = midpoint)+
-    theme_dark()+
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          legend.position="none", panel.border=element_blank(),
-          axis.ticks.x=element_blank(),
-          axis.ticks.y=element_blank(),
-          axis.text = element_text(size=trt.name.size),
-          axis.title = element_text(size = axis.title.size))+
-    scale_x_discrete(limits = order, expand = c(0, 0), position="top") +
-    scale_y_discrete(limits = rev(order), expand = c(0, 0))
-
-  return(heatplot)
-}
+# league.heat.plot <- function(leaguetable,
+#                              central.tdcy,
+#                              order = NULL,
+#                              low.colour = "red",
+#                              mid.colour = "white",
+#                              high.colour = "springgreen4",
+#                              midpoint,
+#                              digits,
+#                              cell.text.size=cell.text.size,
+#                              trt.name.size=trt.name.size,
+#                              axis.title.size=axis.title.size){
+#
+#   #Bind Variables to function
+#   Treatment <- NULL
+#   Comparator <- NULL
+#   ct.stat <- NULL
+#   lci <- NULL
+#   uci <- NULL
+#
+#   league.tmp <- leaguetable%>%filter(Treatment != Comparator)
+#
+#   #rename central tendancy statistic to ct.stat
+#   names(league.tmp)[names(league.tmp) == central.tdcy] <- "ct.stat"
+#   #create C-style formatting string from the digits parameter
+#   fmt <- paste0("%.", digits, "f")
+#
+#   heatplot <- ggplot(data = league.tmp, aes(x=Treatment, y=Comparator, fill=ct.stat)) +
+#     geom_tile()+
+#     geom_text(aes(label = paste0(sprintf(fmt, ct.stat), "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")")),
+#                     # ifelse(((midpoint<lci & midpoint< uci) | (midpoint>lci & midpoint> uci)),
+#                     #        ifelse(Treatment!=Comparator, paste0("**", sprintf(fmt, ct.stat), "**", "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")"), " "),
+#                     #        ifelse(Treatment!=Comparator, paste0(sprintf(fmt, ct.stat), "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")"), " "))),
+#               size=cell.text.size)
+#   heatplot <- heatplot +
+#     scale_fill_gradient2(low = low.colour, high = high.colour, mid = mid.colour, midpoint = midpoint)+
+#     theme_dark()+
+#     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#           legend.position="none", panel.border=element_blank(),
+#           axis.ticks.x=element_blank(),
+#           axis.ticks.y=element_blank(),
+#           axis.text = element_text(size=trt.name.size),
+#           axis.title = element_text(size = axis.title.size))+
+#     scale_x_discrete(limits = order, expand = c(0, 0), position="top") +
+#     scale_y_discrete(limits = rev(order), expand = c(0, 0))
+#
+#   return(heatplot)
+# }
 
 
 

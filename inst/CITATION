@@ -4,16 +4,17 @@ year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date, perl = TRUE)
 vers <- paste("R package version", meta$Version)
 
 citEntry(entry = "Manual",
-         title = "crossnma: CROSS-Design and CROSS-Format Synthesis using Network Meta-Analysis and Network Meta-Regression",
+         title = "crossnma: cross-design and cross-format synthesis using network meta-analysis and network meta-regression",
          author = c(person("Tasnim", "Hamza"),
+                    person("Guido", "Schwarzer"),
                     person("Georgia", "Salanti")),
          year = year,
          note = vers,
          url = "https://github.com/htx-r/crossnma",
 
          textVersion =
-           paste0("Tasnim Hamza and Georgia Salanti (",
+           paste0("Tasnim Hamza, Guido Schwarzer and Georgia Salanti (",
                   year,
                   "). crossnma: CROSS-Design and CROSS-Format Synthesis using Network Meta-Analysis and Network Meta-Regression. ",
-                  vers, ". ", 
+                  vers, ". ",
                   "https://github.com/htx-r/crossnma."))
