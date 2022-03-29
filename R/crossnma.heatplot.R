@@ -62,9 +62,9 @@ crossnma.heatplot <- function(x,
                              prt.cov2.value=NULL,
                              prt.cov3.value=NULL,
                              digits=2,
-                             cell.text.size=16,
+                             cell.text.size=12,
                              trt.name.size=20,
-                             axis.title.size=16){
+                             axis.title.size=12){
 
   # Bind variables to function
   trt <- NULL

@@ -455,71 +455,7 @@ tab <- longtable
 
   return(tab)
 
-  # return(list("table"=default, "longtable"=longtable, "heatplot"=league.heat.plot(leaguetable=longtable,
-  #                                                                                 central.tdcy=central.tdcy,
-  #                                                                                 order = order,
-  #                                                                                 low.colour = low.colour,
-  #                                                                                 mid.colour = mid.colour,
-  #                                                                                 high.colour = high.colour,
-  #                                                                                 midpoint = null.value,
-  #                                                                                 digits = digits,
-  #                                                                                 cell.text.size=cell.text.size,
-  #                                                                                 trt.name.size=trt.name.size,
-  #                                                                                 axis.title.size=axis.title.size))
-  #        )
 }
-
-
-
-
-
-# league.heat.plot <- function(leaguetable,
-#                              central.tdcy,
-#                              order = NULL,
-#                              low.colour = "red",
-#                              mid.colour = "white",
-#                              high.colour = "springgreen4",
-#                              midpoint,
-#                              digits,
-#                              cell.text.size=cell.text.size,
-#                              trt.name.size=trt.name.size,
-#                              axis.title.size=axis.title.size){
-#
-#   #Bind Variables to function
-#   Treatment <- NULL
-#   Comparator <- NULL
-#   ct.stat <- NULL
-#   lci <- NULL
-#   uci <- NULL
-#
-#   league.tmp <- leaguetable%>%filter(Treatment != Comparator)
-#
-#   #rename central tendancy statistic to ct.stat
-#   names(league.tmp)[names(league.tmp) == central.tdcy] <- "ct.stat"
-#   #create C-style formatting string from the digits parameter
-#   fmt <- paste0("%.", digits, "f")
-#
-#   heatplot <- ggplot(data = league.tmp, aes(x=Treatment, y=Comparator, fill=ct.stat)) +
-#     geom_tile()+
-#     geom_text(aes(label = paste0(sprintf(fmt, ct.stat), "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")")),
-#                     # ifelse(((midpoint<lci & midpoint< uci) | (midpoint>lci & midpoint> uci)),
-#                     #        ifelse(Treatment!=Comparator, paste0("**", sprintf(fmt, ct.stat), "**", "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")"), " "),
-#                     #        ifelse(Treatment!=Comparator, paste0(sprintf(fmt, ct.stat), "\n", "(",sprintf(fmt, lci), ", ", sprintf(fmt, uci),")"), " "))),
-#               size=cell.text.size)
-#   heatplot <- heatplot +
-#     scale_fill_gradient2(low = low.colour, high = high.colour, mid = mid.colour, midpoint = midpoint)+
-#     theme_dark()+
-#     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-#           legend.position="none", panel.border=element_blank(),
-#           axis.ticks.x=element_blank(),
-#           axis.ticks.y=element_blank(),
-#           axis.text = element_text(size=trt.name.size),
-#           axis.title = element_text(size = axis.title.size))+
-#     scale_x_discrete(limits = order, expand = c(0, 0), position="top") +
-#     scale_y_discrete(limits = rev(order), expand = c(0, 0))
-#
-#   return(heatplot)
-# }
 
 
 

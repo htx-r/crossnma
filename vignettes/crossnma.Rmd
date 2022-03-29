@@ -1,6 +1,6 @@
 ---
 title: "crossnma to synthesize cross-design evidence and cross-format data using network meta-analysis (dichotomous outcome)"
-author: "Tasnim Hamza and Georgia Salanti"
+author: "Tasnim Hamza, Guido Schwarzer and Georgia Salanti"
 date: "`r Sys.Date()`"
 output: 
   rmarkdown::html_vignette:
@@ -50,7 +50,7 @@ We first introduce the model that synthesizes studies  with individual-level (IP
 |$r_{jk}$ | the number of events per arm| `outcome` |
 |$n_{jk}$ | the sample size per arm| `n` |
 |$b$ |the study-specific reference|*|
-|$u_{jb}$ | The treatment effect of the study-specific reference $b$ when when $x_{ijk}=\bar{x}_{j}=0$ | |
+|$u_{jb}$ | The treatment effect of the study-specific reference $b$  when $x_{ijk}=\bar{x}_{j}=0$ | |
 |$\delta_{jbk}$|log(OR) of treatment $k$ relative to $b$||
 |$x_{ijk}$|the covariate|`covariate`|
 |$\bar{x}_{j}$|the mean covariate for study $j$||
@@ -392,6 +392,10 @@ jagsfit3 <- crossnma.run(mod3,
 knitr::kable(summary(jagsfit3, exp = FALSE))
 ```
 
+```{r, fig.width=6, fig.height=5,fig.show='hold',fig.align='center'}
+crossnma.heatplot(jagsfit3, exp = TRUE, prt.cov1.value = 38,
+                  cell.text.size=6,trt.name.size=20,axis.title.size=12)
+```
 
 ###   Bias-adjusted model 1
 In this part, the overall relative treatment effects are estimated from both NRS and RCT with adjustment to study-specific bias.
