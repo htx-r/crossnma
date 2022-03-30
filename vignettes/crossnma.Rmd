@@ -25,6 +25,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r mm, warning=FALSE,message=FALSE,include=FALSE}
+devtools::install_github("htx-r/crossnma",force = TRUE)
 library(crossnma)
 ```
 
@@ -163,7 +164,7 @@ Another parameterisation of the logistic model with additive bias effect is
  \beta^B_{1,jbk} \bar{x}_{j} & \text{if $k≠b$}
     \end{cases}       
 \end{equation}
-Then the bias-adjusted relative treatment effect $\delta_{jbk}^{bias}=\delta_{jbk}+\gamma_{jbk}$ can be assumed exchangeable across studies $ \delta_{jbk}^{bias}\sim N(g_{bk}+d_{Ak}-d_{Ab}, \tau^2/q_j)$ or fixed as $ \delta_{jbk}^{bias}= g_{bk}+d_{Ak}-d_{Ab}$. In this parameterisation, instead of assigning prior to the between-study heterogeneity in bias effect $\tau_{\gamma}$, we model the RoB weight $q_j=\tau^2/(\tau^2+\tau_{\gamma}^2$) for each study. This quantity $0<q_j<1$ quantifies the proportion of the between-study heterogeneity that is not explained by accounting for risk of bias. The values of $v$ determine the extent studies at high risk of bias will be down-weighted on average. Setting $v=1$ gives $E(q_j )=v/(v+1)=0.5$, which means that high risk of bias studies will be penalized by 50% on average. In `crossnma.model()`, the user can assign the average down-weight $E(q_j )$ to the argument `down.wgt`.
+Then the bias-adjusted relative treatment effect ($\delta_{jbk}^{bias}=\delta_{jbk}+\gamma_{jbk}$) can be assumed exchangeable across studies $\delta_{jbk}^{bias} \sim N(g_{bk}+d_{Ak}-d_{Ab}, \tau^2 /q_j)$ or fixed as $\delta_{jbk}^{bias}=g_{bk} + d_{Ak}-d_{Ab}$. In this parameterisation, instead of assigning prior to the between-study heterogeneity in bias effect $\tau_{\gamma}$, we model the RoB weight $q_j=\tau^2/(\tau^2+\tau_{\gamma}^2$) for each study. This quantity $0<q_j<1$ quantifies the proportion of the between-study heterogeneity that is not explained by accounting for risk of bias. The values of $v$ determine the extent studies at high risk of bias will be down-weighted on average. Setting $v=1$ gives $E(q_j )=v/(v+1)=0.5$, which means that high risk of bias studies will be penalized by 50% on average. In `crossnma.model()`, the user can assign the average down-weight $E(q_j )$ to the argument `down.wgt`.
 
 ## Bias-adjusted model 2
 Another way to incorporate the RoB of the study is by replacing $\delta_{jbk}$ by a "bias-adjusted" relative treatment effect $\theta_{jbk}$. Then $\theta_{jbk}$ is modeled with a bimodal normal distribution as described in Section 2.5. For more details see @verde_2020.
