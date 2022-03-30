@@ -13,7 +13,11 @@ remotes::install_github("htx-r/crossnma")
 # How to use crossnma?
 There are two steps to run the NMA/NMR model. The first step is to create a JAGS model using `crossnma.model()` which produces the JAGS code and the data. In the second step, the output of that function will be used in `crossnma.run()` to run the MCMC (Markov chain Monte Carlo) through JAGS.
 
-In the vignettes [here](), we illustrate how to use `crossnma` through several examples.
+We illustrate how to use `crossnma` through several examples in the vignette:
+```
+vignette("crossnma", package = "crossnma")
+```
+
 
 # How to cite crossnma?
 

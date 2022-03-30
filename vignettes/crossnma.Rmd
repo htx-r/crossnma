@@ -6,6 +6,8 @@ output:
   rmarkdown::html_vignette:
    toc: true
    number_sections: true
+   pdf_document:
+     latex_engine: xelatex
 bibliography: references.bib 
 vignette: >
   %\VignetteIndexEntry{crossnma}
@@ -329,13 +331,15 @@ Now, we additionally estimate b_1 which indicates the mean effect of age and tau
 
 The league table summarizes the relative effect with the 95% credible interval of each treatment on the top compared to the treatment on the left. All estimates are computed for participant age 38. We can display the table in wide format
 ```{r, fig.width=6, fig.height=5,fig.show='hold',fig.align='center'}
-crossnma.league(jagsfit2, exp = TRUE, prt.cov1.value = 38)
+league(jagsfit2, exp = TRUE, prt.cov1.value = 38)
 ```
 
 or in long format
 ```{r, fig.width=6, fig.height=5,fig.show='hold',fig.align='center'}
-crossnma.league(jagsfit2, exp = TRUE, prt.cov1.value = 38,direction = "long")
+league(jagsfit2, exp = TRUE, prt.cov1.value = 38, direction = "long")
 ```
+
+
 ### Using non-randomized studies (NRS) to construct priors for the treatment effects
 
 To run NMA with a prior constructed from NRS, two additional arguments are needed: we indicate using NRS as a prior by setting ` method.bias='prior'`. That means that the model runs internally NMA with only NRS data which are then used to construct informative priors. This requires defining MCMC settings (the number of adaptations, iterations, burn-ins, thinning and chains) in the argument `run.nrs`. 
@@ -371,8 +375,8 @@ jagsfit3 <- crossnma.run(mod3,
 The heat plot summarizes the relative effect with the 95% credible interval of each treatment on the top compared to the treatment on the left. All estimates are computed for participant age 38.
 
 ```{r, fig.width=6, fig.height=5,fig.show='hold',fig.align='center'}
-crossnma.heatplot(jagsfit3, exp = TRUE, prt.cov1.value = 38,
-                  cell.text.size=6,trt.name.size=20,axis.title.size=12)
+heatplot(jagsfit3, exp = TRUE, prt.cov1.value = 38,
+  cell.text.size = 6, trt.name.size = 20, axis.title.size = 12)
 ```
 
 ###   Bias-adjusted model 1
