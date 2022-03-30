@@ -18,6 +18,7 @@
 #' @param cell.text.size The size of the cell entries; the relative treatment effect and the 95\% credible intervals
 #' @param trt.name.size The size of treatment names placed on the top and left of the plot
 #' @param axis.title.size The size of titles placed on the top and left of the plot
+#' @param \dots Additional arguments (ignored at the moment).
 #'
 #' @return \code{heatplot}  League heat plot, where a color scale is used to represent the relative treatment effects.
 #'
@@ -46,26 +47,29 @@
 #' #=========================#
 #' # Create the league table #
 #' #=========================#
-#' crossnma.heatplot(fit)
+#' heatplot(fit)
 #'
 #' @seealso \code{\link{crossnma.run}}
+#' 
+#' @method heatplot crossnma
 #' @export
 
-crossnma.heatplot <- function(x,
-                             central.tdcy="median",
-                             exp=TRUE,
-                             order = NULL,
-                             low.colour = "red",
-                             mid.colour = "white",
-                             high.colour = "springgreen4",
-                             prt.cov1.value=NULL,
-                             prt.cov2.value=NULL,
-                             prt.cov3.value=NULL,
-                             digits=2,
-                             cell.text.size=12,
-                             trt.name.size=20,
-                             axis.title.size=12){
-
+heatplot.crossnma <- function(x,
+                              central.tdcy="median",
+                              exp=TRUE,
+                              order = NULL,
+                              low.colour = "red",
+                              mid.colour = "white",
+                              high.colour = "springgreen4",
+                              prt.cov1.value=NULL,
+                              prt.cov2.value=NULL,
+                              prt.cov3.value=NULL,
+                              digits=2,
+                              cell.text.size=12,
+                              trt.name.size=20,
+                              axis.title.size=12,
+                              ...){
+  
   # Bind variables to function
   trt <- NULL
   Treatment <- NULL
@@ -449,3 +453,11 @@ crossnma.heatplot <- function(x,
 
   return(heatplot)
 }
+
+
+#' @rdname heatplot.crossnma
+#' @export heatplot
+
+
+heatplot <- function(x, ...)
+  UseMethod("heatplot")

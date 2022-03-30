@@ -13,6 +13,7 @@
 #' For dichotomous covariates, a character of the level (used in the data) should be indicated.
 #' @param digits The number of digits to be used when displaying the results.
 #' @param direction The format to display the league table. Two options "wide" (default) and "long".
+#' @param \dots Additional arguments (ignored at the moment).
 #'
 #' @return \code{table}  A league table. Row names indicate comparator treatments.
 #' The table will be displayed in a long or wide formatting.
@@ -41,14 +42,16 @@
 #' #==========================#
 #' # Display the league table #
 #' #==========================#
-#' crossnma.league(fit,exp = TRUE)                   #  wide formatting
-#' crossnma.league(fit,exp = TRUE, direction="long") #  long formatting
+#' league(fit,exp = TRUE)                   #  wide formatting
+#' league(fit,exp = TRUE, direction="long") #  long formatting
 #'
 #' @seealso \code{\link{crossnma.run}}
+#' 
+#' @method league crossnma
 #' @export
 
 
-crossnma.league <- function(x,
+league.crossnma <- function(x,
                             central.tdcy = "median",
                             exp = FALSE,
                             order = NULL,
@@ -56,7 +59,8 @@ crossnma.league <- function(x,
                             prt.cov2.value=NULL,
                             prt.cov3.value=NULL,
                             digits = 2,
-                            direction="wide") {
+                            direction="wide",
+                            ...) {
 
   # Bind variables to function
   trt <- NULL
@@ -461,3 +465,9 @@ tab <- longtable
 
 
 
+#' @rdname league.crossnma
+#' @export league
+
+
+league <- function(x, ...)
+  UseMethod("league")
