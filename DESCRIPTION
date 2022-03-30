@@ -1,7 +1,7 @@
 Package: crossnma
 Title: Cross-design and cross-format synthesis using network meta-analysis and network meta-regression
 Version: 1.0.0
-Date: 2022-03-22
+Date: 2022-03-30
 Depends: 
     R (>= 3.5), netmeta
 Imports: 
@@ -27,8 +27,8 @@ RoxygenNote: 7.1.2
 NeedsCompilation: no
 Author@R: c( 
 	person("Tasnim", "Hamza", email = "tasnim.hamza@ispm.unibe.ch", role = c("aut", "cre")),
-	person("Guido", "Schwarzer", email = "sc@imbi.uni-freiburg.de", role = c("aut", "cre")),
+	person("Guido", "Schwarzer", email = "sc@imbi.uni-freiburg.de", role = "aut"),
 	person("Georgia", "Salanti", email = "georgia.salanti@ispm.unibe.ch", role = "aut")) 
 Maintainer: Tasnim Hamza <tasnim.hamza@ispm.unibe.ch>
-Author: Tasnim Hamza [aut, cre],Guido Schwarzer [aut, cre], Georgia Salanti [aut]
+Author: Tasnim Hamza [aut, cre],Guido Schwarzer [aut], Georgia Salanti [aut]
 Repository: CRAN
