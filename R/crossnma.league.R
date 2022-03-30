@@ -11,8 +11,8 @@
 #' For dichotomous covariates, a character of the level (used in the data) should be indicated.
 #' @param prt.cov3.value  The participant covariate value of \code{cov3} for which to report the results. Must be specified for network meta-regression and when individual participant dataset is used in the analysis.
 #' For dichotomous covariates, a character of the level (used in the data) should be indicated.
-#' @param digits The number of digits to be used when displaying the results
-#' @param direction The format to dispaly league table. Two options "wide" (default) and "long"
+#' @param digits The number of digits to be used when displaying the results.
+#' @param direction The format to display the league table. Two options "wide" (default) and "long".
 #'
 #' @return \code{table}  A league table. Row names indicate comparator treatments.
 #' The table will be displayed in a long or wide formatting.

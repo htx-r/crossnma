@@ -32,7 +32,7 @@
 #'   with the corresponding parameter.
 #'
 #' @seealso \code{\link{print.summary.crossnma}}
-#' 
+#'
 #' @examples
 #' # We conduct a network meta-analysis assuming a random-effects
 #' # model.
@@ -40,14 +40,14 @@
 #' # non-randomized studies (combined naively)
 #' head(ipddata) # participant-level data
 #' head(stddata) # study-level data
-#' 
+#'
 #' #=========================#
 #' # Create a jags model     #
 #' #=========================#
 #' mod <- crossnma.model(treat, id, relapse, n, design,
 #'   prt.data = ipddata, std.data = stddata,
 #'   reference = "A", trt.effect = "random", method.bias = "naive")
-#' 
+#'
 #' #=========================#
 #' # Fit jags model          #
 #' #=========================#
@@ -66,7 +66,7 @@
 
 summary.crossnma <- function(object, quantiles = c(0.025, 0.5, 0.975),
                              exp = TRUE, ...) {
-  
+
   ## initial
   sum.fit <- summary((object$samples), quantiles = quantiles, ...)
   ## mean and sd
@@ -84,11 +84,11 @@ summary.crossnma <- function(object, quantiles = c(0.025, 0.5, 0.975),
   ## add number of effective sample size
   n.eff <- round(effectiveSize(object$samples))
   mat <- cbind(mat, n.eff)
-  
+
   ## attach treatment names to basic parameters (d's)
   row.names(mat)[startsWith(rownames(mat), "d")] <-
-    paste("d", c(object$trt.key$trt.ini), sep = ".")
-  
+    paste("d", c(object$model$trt.key$trt.ini), sep = ".")
+
   class(mat) <- c("summary.crossnma", class(mat))
   attr(mat, "exp") <- exp
   ##

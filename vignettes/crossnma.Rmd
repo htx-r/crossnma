@@ -42,8 +42,8 @@ We first introduce the model that synthesizes studies  with individual-level (IP
 | Notation 	| Description| Argument in `crossnma.model()`| 
 |:-------------------|:-----------|:------|
 |$i=1, ..., np_j$ | participant id|  |
-|$j=1, ..., ns$ | study id|  |
-|$k=1, ..., K$ | treatment index|  |
+|$j=1, ..., ns$ | study id| `study` |
+|$k=1, ..., K$ | treatment index| `trt` |
 |$ns_{IPD}, ns_{AD}, ns_{RCT}, ns_{NRS}$| the number of studies. The index refers to the design or format of the study|  |
 |$y_{ijk}$ | binary outcome (0/1)| `outcome` |
 |$p_{ijk}$ | probability of the event to occur| |
@@ -52,7 +52,7 @@ We first introduce the model that synthesizes studies  with individual-level (IP
 |$b$ |the study-specific reference|*|
 |$u_{jb}$ | The treatment effect of the study-specific reference $b$  when $x_{ijk}=\bar{x}_{j}=0$ | |
 |$\delta_{jbk}$|log(OR) of treatment $k$ relative to $b$||
-|$x_{ijk}$|the covariate|`covariate`|
+|$x_{ijk}$|the covariate|`cov1`, `cov2`, `cov3`|
 |$\bar{x}_{j}$|the mean covariate for study $j$||
 |$d_{Ak}$| the basic parameters. Here, $d_{AA}=0$ when A is set as the reference in the network|use `reference` to assign the reference treatment|
 |$z_j$| study characteristics to estimate the bias probability $\pi_j$| `bias.covariate` |
@@ -90,7 +90,7 @@ $$
 \end{equation}
 
 ## Using non-randomized studies (NRS) to construct priors for the treatment effects
-First, the (network) meta-regression with only NRS data estimates the relative treatment effects with posterior distribution of mean $\tilde{d}^{NRS}_{Ak}$ and variance $V^{NRS}_{Ak}$ (use `run.nrs` in `crossnma.model()` to control this process). Then the posteriors of NRS results are then used as priors for the corresponding basic parameters in the RCT model, $d_{Ak} \sim N(\tilde{d}^{NRS}_{Ak},V^{NRS}_{Ak})$. We can adjust for potential biases associated with NRS by either shifting the mean of the prior distribution with a bias term $\zeta$ or by dividing the prior variance with a common inflation factor $w, 0<w<1$ control NRS contribution. The assigned priors become $d_{Ak} \sim N(\tilde{d}^{NRS}_{Ak}+\zeta,V^{NRS}_{Ak}/w)$.
+First, the (network) meta-regression with only NRS data estimates the relative treatment effects with posterior distribution of mean $\tilde{d}^{NRS}_{Ak}$ and variance $V^{NRS}_{Ak}$ (use `run.nrs` in `crossnma.model()` to control this process). The posteriors of NRS results are then used as priors for the corresponding basic parameters in the RCT model, $d_{Ak} \sim N(\tilde{d}^{NRS}_{Ak},V^{NRS}_{Ak})$. We can adjust for potential biases associated with NRS by either shifting the mean of the prior distribution with a bias term $\zeta$ or by dividing the prior variance with a common inflation factor $w, 0<w<1$ controls NRS contribution. The assigned priors become $d_{Ak} \sim N(\tilde{d}^{NRS}_{Ak}+\zeta,V^{NRS}_{Ak}/w)$.
 
 ## Bias-adjusted model 1
 
@@ -137,10 +137,9 @@ We combine the multiplicative and the additive treatment-specific bias effects a
       0 \text{ or } (-1)^{dir_{bk}} g_m^{act} & \text{if $b$ and $k$ are active treatments}
     \end{cases}       
 \end{equation}
-where $m={1,2}$
-One approach is to assume a common mean bias for studies that compare active treatments with an inactive treatment (placebo, standard or no treatment). For active vs active comparisons, we could assume either a zero mean bias effect or a common and fixed bias effect $g_m^{act}$. The direction of bias $dir_{bk}$ in studies that compare active treatments with each other should be defined in the data. That is set to be either 0, meaning that bias favors $b$ over $k$, or 1 , meaning that $k$ is favored to $b$.  In `crossnma.model()`, the bias can be determined by providing (as data) the unfavoured treatment for each study `unfav`  to define the direction of the bias. To select the mean bias effect to be applied for each comparison the user can provid `bias.group` as data which can be 0 (no bias adjustment), 1 (to assign for the comparison $g_m$) or 2 (to assign $g_m^{act}$).
+where $m={1,2}$. This approach assumes a common mean bias for studies that compare active treatments with an inactive treatment (placebo, standard or no treatment). For active vs active comparisons, we could assume either a zero mean bias effect or a common bias effect $g_m^{act}$. The direction of bias $dir_{bk}$ in studies that compare active treatments with each other should be defined in the data. That is set to be either 0, meaning that bias favors $b$ over $k$, or 1 , meaning that $k$ is favored to $b$.  In `crossnma.model()`, the bias direction is specified by providing the unfavoured treatment for each study,  `unfav`. To select which mean bias effect should be applied, the user can provide the `bias.group` column as data. Its values can be 0 (no bias adjustment), 1 (to assign for the comparison mean bias effect $g_m$) or 2 (to set bias $g_m^{act}$).
 
-Other parameterisation of the logistic model with additive bias effect is
+Another parameterisation of the logistic model with additive bias effect is
 
 **NMR model for IPD studies**
 
@@ -163,15 +162,7 @@ Other parameterisation of the logistic model with additive bias effect is
  \beta^B_{1,jbk} \bar{x}_{j} & \text{if $k≠b$}
     \end{cases}       
 \end{equation}
-Then the bias-adjusted relative treatment effect $\delta_{jbk}^{bias}=\delta_{jbk}+\gamma_{jbk}$ can be assumed exchangeable across studies 
-$$
-\delta_{jbk}^{bias}\sim N(g_{bk}+d_{Ak}-d_{Ab}, \tau^2/q_j)
-$$
-or fixed as 
-$$
-\delta_{jbk}^{bias}= g_{bk}+d_{Ak}-d_{Ab}
-$$
-In this parameterisation, instead of assigning prior to the between-study heterogeneity in bias effect $\tau_{\gamma}$, we model the RoB weight $q_j=\tau^2/(\tau^2+\tau_{\gamma}^2$) for each study. This quantity quantifies the proportion of the between-study heterogeneity that is not explained by accounting for risk of bias. These weights take values between 0 and 1, $0<q_j<1$. The values of $v$ determine the extent studies at high risk of bias will be down-weighted on average. Setting $v=1$ gives $E(q_j )=v/(v+1)=0.5$, which means that high risk of bias studies will be penalized by 50% on average. In `crossnma.model()`, the user can assign the average down-weight $E(q_j )$ to `down.wgt`.
+Then the bias-adjusted relative treatment effect $\delta_{jbk}^{bias}=\delta_{jbk}+\gamma_{jbk}$ can be assumed exchangeable across studies $ \delta_{jbk}^{bias}\sim N(g_{bk}+d_{Ak}-d_{Ab}, \tau^2/q_j)$ or fixed as $ \delta_{jbk}^{bias}= g_{bk}+d_{Ak}-d_{Ab}$. In this parameterisation, instead of assigning prior to the between-study heterogeneity in bias effect $\tau_{\gamma}$, we model the RoB weight $q_j=\tau^2/(\tau^2+\tau_{\gamma}^2$) for each study. This quantity $0<q_j<1$ quantifies the proportion of the between-study heterogeneity that is not explained by accounting for risk of bias. The values of $v$ determine the extent studies at high risk of bias will be down-weighted on average. Setting $v=1$ gives $E(q_j )=v/(v+1)=0.5$, which means that high risk of bias studies will be penalized by 50% on average. In `crossnma.model()`, the user can assign the average down-weight $E(q_j )$ to the argument `down.wgt`.
 
 ## Bias-adjusted model 2
 Another way to incorporate the RoB of the study is by replacing $\delta_{jbk}$ by a "bias-adjusted" relative treatment effect $\theta_{jbk}$. Then $\theta_{jbk}$ is modeled with a bimodal normal distribution as described in Section 2.5. For more details see @verde_2020.
@@ -225,20 +216,7 @@ The table below summarizes the different assumptions implemented in the package 
 |  	|Common-effect: $\beta_{1,jbk}^B = B_{1, Ak}^B-B_{1, Ab}^B$| `regb.effect='common'`|
 |Bias effect ($\gamma_{m,jbk}$), $m={1,2}$| Random-effects: $\gamma_{m,jbk} \sim N(g_{m, bk}, \tau_{m,\gamma}^2)$| `bias.effect='random'` |
 | 	|Common-effect: $\gamma_{m,jbk}=g_{m,bk}$| `bias.effect='common'`|
-|Mean bias effect $g_{m,bk}$|No bias effect on active-active comparisons: \begin{equation}
-  g_{m,bk} =
-    \begin{cases}
-      g_m  & \text{if $b$ is inactive treatment}\\
-      0 & \text{if $b$ and $k$ are active treatments}
-    \end{cases}       
-\end{equation}|`unfav = 0 (inactive), 1 (active)` and `bias.group=1` $(g_{m,bk}=g)$ or `0`$(g_{m,bk}=0)$|
-||A mean bias effect $g_m^{act}$ on active-active comparisons:\begin{equation}
-  g_{m,bk} =
-    \begin{cases}
-      g_m  & \text{if $b$ is inactive treatment}\\
-      (-1)^{dir_{bk}} g_m^{act} & \text{if $b$ and $k$ are active treatments}
-    \end{cases}       
-\end{equation}|`unfav = 0 (inactive), 1 (active)` and `bias.group=1` $(g_{m,bk}=g_m)$ or `2` $(g_{m,bk}=g_m^{act})$|
+|Mean bias effect $g_{m,bk}$|The treatment $k$ is active. \ $g_{m,bk}=g_m$ ($b$ inactive), \ $g_{m,bk}=0$ ($b$ active \& no bias) \ $g_{m,bk}=g_m^{act}$($b$ active \& bias)| \ \ `unfav=0`, `bias.group=1` \ `unfav=1`, `bias.group=0` \ `unfav=1`, `bias.group=2`|
 |Bias probability ($\pi_j$)| $\pi_j \sim Beta(a_1,a_2)$| `pi.high.nrs`, `pi.low.nrs`, `pi.high.rct`, `pi.low.rct`|
 || $\pi_j = e+fz_j$| `bias.covariate`|
 
@@ -266,7 +244,7 @@ There are two steps to run the NMA/NMR model. The first step is to create a JAGS
 
 ### Unadjusted network meta-analysis
 
-We start by providing the essential variables which - as stated earlier - must have equal names in both data sets. Next, we give the names of the datasets on participant-level (argument `prt.data`) and aggregate data (argumnet `std.data`). The `reference` treatment needs to be assigned (we set it to drug A). By choosing `trt.effect='random'`, we are assigning a normal distribution to each relative treatment effect to allow the synthesis across studies, see the table in Section 2.1. Finally, the different designs; RCT and NRS are combined with the information taken at face-value as `method.bias = 'naive'`.
+We start by providing the essential variables which - as stated earlier - must have equal names in both data sets. Next, we give the names of the datasets on participant-level (argument `prt.data`) and aggregate data (argument `std.data`). The `reference` treatment needs to be assigned (we set it to drug A). By choosing `trt.effect='random'`, we are assigning a normal distribution to each relative treatment effect to allow the synthesis across studies, see the table in Section 2.1. Finally, the different designs; RCT and NRS are combined with the information taken at face-value as `method.bias = 'naive'`.
 
 Optionally, we can specify a prior to the common heterogeneity of the treatment effect across studies. We indicate that distribution in the argument `prior` as `tau.trt='dunif(0,3)'`, see below.
 
@@ -350,11 +328,15 @@ knitr::kable(summary(jagsfit2, exp = FALSE))
 
 Now, we additionally estimate b_1 which indicates the mean effect of age and tau.b_1 which refers to the heterogeneity standard deviation in the effect of age across studies. Here, we obtain a single estimate  because we choose to not split the within- and between-study age coefficients $(\beta^w_{1,jbk} = \beta^B_{1,jbk}=\beta_{1,jbk})$ to improve the convergence of MCMC.
 
-The league table summarizes the relative effect with the 95% credible interval of each treatment on the top compared to the treatment on the left. All estimates are computed for participant age 38.
+The league table summarizes the relative effect with the 95% credible interval of each treatment on the top compared to the treatment on the left. All estimates are computed for participant age 38. We can display the table in wide format
 ```{r, fig.width=6, fig.height=5,fig.show='hold',fig.align='center'}
 crossnma.league(jagsfit2, exp = TRUE, prt.cov1.value = 38)
 ```
 
+or in long format
+```{r, fig.width=6, fig.height=5,fig.show='hold',fig.align='center'}
+crossnma.league(jagsfit2, exp = TRUE, prt.cov1.value = 38,direction = "long")
+```
 ### Using non-randomized studies (NRS) to construct priors for the treatment effects
 
 To run NMA with a prior constructed from NRS, two additional arguments are needed: we indicate using NRS as a prior by setting ` method.bias='prior'`. That means that the model runs internally NMA with only NRS data which are then used to construct informative priors. This requires defining MCMC settings (the number of adaptations, iterations, burn-ins, thinning and chains) in the argument `run.nrs`. 
@@ -387,10 +369,7 @@ jagsfit3 <- crossnma.run(mod3,
   thin = 1, n.chains = 2)
 ```
 
-
-```{r}
-knitr::kable(summary(jagsfit3, exp = FALSE))
-```
+The heat plot summarizes the relative effect with the 95% credible interval of each treatment on the top compared to the treatment on the left. All estimates are computed for participant age 38.
 
 ```{r, fig.width=6, fig.height=5,fig.show='hold',fig.align='center'}
 crossnma.heatplot(jagsfit3, exp = TRUE, prt.cov1.value = 38,

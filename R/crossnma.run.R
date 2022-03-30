@@ -24,7 +24,7 @@
 #'   \code{\link{crossnma.model}} which was used to run \code{jags}.
 #' @return \code{trt.key} A table of the treatment names and their
 #'   correspondence to integers used in the JAGS model.
-#' 
+#'
 #' @examples
 #' # We conduct a network meta-analysis assuming a random-effects
 #' # model.
@@ -32,14 +32,14 @@
 #' # non-randomized studies (combined naively)
 #' head(ipddata) # participant-level data
 #' head(stddata) # study-level data
-#' 
+#'
 #' #=========================#
 #' # Create a jags model     #
 #' #=========================#
 #' mod <- crossnma.model(treat, id, relapse, n, design,
 #'   prt.data = ipddata, std.data = stddata,
 #'   reference = "A", trt.effect = "random", method.bias = "naive")
-#' 
+#'
 #' #=========================#
 #' # Fit jags model          #
 #' #=========================#
@@ -177,7 +177,7 @@ crossnma.run <- function(model,
 
   crossrun <- structure(list(samples=jagssamples,
                              model=model,
-                             "trt.key"=model$trt.key),
+                             "trt.key"=model$trt.key), # we can delete it
                         class = "crossnma")
   return(crossrun)
 }
