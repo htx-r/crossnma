@@ -87,7 +87,7 @@ summary.crossnma <- function(object, quantiles = c(0.025, 0.5, 0.975),
 
   ## attach treatment names to basic parameters (d's)
   row.names(mat)[startsWith(rownames(mat), "d")] <-
-    paste("d", c(object$model$trt.key$trt.ini), sep = ".")
+    paste("d", as.character(object$model$trt.key$trt.ini), sep = ".")
 
   class(mat) <- c("summary.crossnma", class(mat))
   attr(mat, "exp") <- exp

@@ -34,9 +34,9 @@ For dichotomous covariates, a character of the level (used in the data) should b
 \item{prt.cov3.value}{The participant covariate value of \code{cov3} for which to report the results. Must be specified for network meta-regression and when individual participant dataset is used in the analysis.
 For dichotomous covariates, a character of the level (used in the data) should be indicated.}
 
-\item{digits}{The number of digits to be used when displaying the results}
+\item{digits}{The number of digits to be used when displaying the results.}
 
-\item{direction}{The format to dispaly league table. Two options "wide" (default) and "long"}
+\item{direction}{The format to display the league table. Two options "wide" (default) and "long".}
 }
 \value{
 \code{table}  A league table. Row names indicate comparator treatments.
