@@ -272,7 +272,7 @@ Next, we fit the NMA model using `crossnma.run()` which requires us to set the n
 ```{r}
 # run jags
 jagsfit1 <- crossnma.run(mod1,
-  n.adapt = 50, n.iter = 500, n.burnin = 200,
+  n.adapt = 500, n.iter = 5000, n.burnin = 2000,
   thin = 1, n.chains = 2)
 ```
 
@@ -315,7 +315,7 @@ The MCMC is run under the same set up as in the network meta-analysis.
 ```{r}
 # run jags
 jagsfit2 <- crossnma.run(mod2,
-  n.adapt = 50, n.iter = 500, n.burnin = 200,
+  n.adapt = 500, n.iter = 5000, n.burnin = 2000,
   thin = 1, n.chains = 2)
 ```
 
@@ -364,7 +364,7 @@ mod3 <- crossnma.model(treat, id, relapse, n, design,
 ```{r}
 # run jags
 jagsfit3 <- crossnma.run(mod3,
-  n.adapt = 50, n.iter = 500, n.burnin = 200,
+  n.adapt = 500, n.iter = 5000, n.burnin = 2000,
   thin = 1, n.chains = 2)
 ```
 
@@ -402,7 +402,7 @@ mod4 <- crossnma.model(treat, id, relapse, n, design,
 ```{r}
 # run jags
 jagsfit4 <- crossnma.run(mod4,
-  n.adapt = 50, n.iter = 500, n.burnin = 200,
+  n.adapt = 500, n.iter = 5000, n.burnin = 2000,
   thin = 1, n.chains = 2)
 ```
 
@@ -437,7 +437,7 @@ mod5 <- crossnma.model(treat, id, relapse, n, design,
 ```{r}
 # run jags
 jagsfit5 <- crossnma.run(mod5,
-  n.adapt = 50, n.iter = 500, n.burnin = 200,
+  n.adapt = 500, n.iter = 5000, n.burnin = 2000,
   thin = 1, n.chains = 2)
 ```
 
