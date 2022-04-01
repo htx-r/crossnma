@@ -1,4 +1,3 @@
-# crossnma 1.0.0
+## crossnma, version 1.0.0 (2022-04-01)
 
-* Added a `NEWS.md` file to track changes to the package.
-
+* first submission to CRAN

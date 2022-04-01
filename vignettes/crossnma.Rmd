@@ -1,18 +1,18 @@
 ---
-title: "crossnma to synthesize cross-design evidence and cross-format data using network meta-analysis (dichotomous outcome)"
+title: "crossnma: Cross-Design and Cross-Format Synthesis using Network Meta-Analysis and Network Meta-Regression (dichotomous outcome)"
 author: "Tasnim Hamza, Guido Schwarzer and Georgia Salanti"
 date: "`r Sys.Date()`"
-output: 
+output:
   rmarkdown::html_vignette:
    toc: true
    number_sections: true
-   pdf_document:
+  rmarkdown::pdf_document:
      latex_engine: xelatex
 bibliography: references.bib 
 vignette: >
   %\VignetteIndexEntry{crossnma}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
 ---
 
 ```{r setup, include = FALSE}
@@ -25,15 +25,14 @@ knitr::opts_chunk$set(
 ```
 
 ```{r mm, warning=FALSE,message=FALSE,include=FALSE}
-devtools::install_github("htx-r/crossnma",force = TRUE)
 library(crossnma)
 ```
 
 # Introduction 
 
-In network meta-analysis we synthesize all relevant available evidence about health outcomes from competing treatments. That evidence might come from different study designs and in different formats: from non-randomized studies (NRS) or randomized controlled trials (RCT) as individual participant data (IPD) or as aggregate data (AD). We set up the package `crossnma` to synthesize all available evidence.
+In network meta-analysis we synthesize all relevant available evidence about health outcomes from competing treatments. That evidence might come from different study designs and in different formats: from non-randomized studies (NRS) or randomized controlled trials (RCT) as individual participant data (IPD) or as aggregate data (AD). We set up the package **crossnma** to synthesize all available evidence.
 
-This document demonstrates how to use `crossnma` to synthesize cross-design evidence and cross-format data via Bayesian network meta-analysis and meta-regression (NMA and NMR). All models are implemented in JAGS [@plummer_jags].
+This document demonstrates how to use **crossnma** to synthesize cross-design evidence and cross-format data via Bayesian network meta-analysis and meta-regression (NMA and NMR). All models are implemented in JAGS [@plummer_jags].
 
 We describe the workflow within the package using a worked example from a network meta-analysis of studies for treatments in  relapsing remitting multiple sclerosis (RRMS). The primary outcome is the occurrence of relapses in two years (binary outcome). In the analysis, the relative effect will be the odds ratio (OR). The aim is to compare the efficacy of four treatments using the data from 6 different studies in different formats and different designs. 
 
@@ -282,7 +281,7 @@ jagsfit1 <- crossnma.run(mod1,
 We summarize the estimated parameters in the following table. 
 
 ```{r}
-knitr::kable(summary(jagsfit1, exp = FALSE))
+knitr::kable(summary(jagsfit1, exp = FALSE), digits = 3)
 ```
 
 The estimated OR of B vs A can be obtained as exp(d.B) and similarly for exp(d.C) and exp(d.D) are the ORs of C and D relative to A, respectively. The value of tau refers to the estimates of the heterogeneity standard deviation in the relative treatment effects across studies.
@@ -325,7 +324,7 @@ jagsfit2 <- crossnma.run(mod2,
 and the output table is presented below
 
 ```{r}
-knitr::kable(summary(jagsfit2, exp = FALSE))
+knitr::kable(summary(jagsfit2, exp = FALSE), digits = 3)
 ```
 
 Now, we additionally estimate b_1 which indicates the mean effect of age and tau.b_1 which refers to the heterogeneity standard deviation in the effect of age across studies. Here, we obtain a single estimate  because we choose to not split the within- and between-study age coefficients $(\beta^w_{1,jbk} = \beta^B_{1,jbk}=\beta_{1,jbk})$ to improve the convergence of MCMC.
@@ -414,7 +413,7 @@ jagsfit4 <- crossnma.run(mod4,
 The results are presented below
 
 ```{r}
-knitr::kable(summary(jagsfit4, exp = FALSE))
+knitr::kable(summary(jagsfit4, exp = FALSE), digits = 3)
 ```
 
 The parameter `g` refers to the mean bias effect, common for all studies.
@@ -448,7 +447,7 @@ jagsfit5 <- crossnma.run(mod5,
 
 
 ```{r}
-knitr::kable(summary(jagsfit5, exp = FALSE))
+knitr::kable(summary(jagsfit5, exp = FALSE), digits = 3)
 ```
 
 
