@@ -3,11 +3,11 @@ title: "crossnma: Cross-Design and Cross-Format Synthesis using Network Meta-Ana
 author: "Tasnim Hamza, Guido Schwarzer and Georgia Salanti"
 date: "`r Sys.Date()`"
 output:
+  rmarkdown::pdf_document:
+   number_sections: true
   rmarkdown::html_vignette:
    toc: true
    number_sections: true
-  rmarkdown::pdf_document:
-     latex_engine: xelatex
 bibliography: references.bib 
 vignette: >
   %\VignetteIndexEntry{crossnma}
@@ -74,7 +74,7 @@ $$
     \begin{cases}
       u_{jb} +\beta_{0j} x_{ijk} & \text{if $k=b$}\\
       u_{jb} +\delta_{jbk} + \beta_{0j}x_{ijk}+\beta^w_{1,jbk}x_{ijk} +
- (\beta^B_{1,jbk}-\beta^w_{1,jbk}) \bar{x}_{j} & \text{if $k≠b$}
+ (\beta^B_{1,jbk}-\beta^w_{1,jbk}) \bar{x}_{j} & \text{if $k\ne b$}
     \end{cases}       
 \end{equation}
 
@@ -86,12 +86,12 @@ $$
   logit(p_{.jk}) =
     \begin{cases}
       u_{jb}  & \text{if $k=b$}\\
-      u_{jb} +\delta_{jbk} +\beta^B_{1,jbk} \bar{x}_{j} & \text{if $k≠b$}
+      u_{jb} +\delta_{jbk} +\beta^B_{1,jbk} \bar{x}_{j} & \text{if $k\ne b$}
     \end{cases}       
 \end{equation}
 
 ## Using non-randomized studies (NRS) to construct priors for the treatment effects
-First, the (network) meta-regression with only NRS data estimates the relative treatment effects with posterior distribution of mean $\tilde{d}^{NRS}_{Ak}$ and variance $V^{NRS}_{Ak}$ (use `run.nrs` in `crossnma.model()` to control this process). The posteriors of NRS results are then used as priors for the corresponding basic parameters in the RCT model, $d_{Ak} \sim N(\tilde{d}^{NRS}_{Ak},V^{NRS}_{Ak})$. We can adjust for potential biases associated with NRS by either shifting the mean of the prior distribution with a bias term $\zeta$ or by dividing the prior variance with a common inflation factor $w, 0<w<1$ controls NRS contribution. The assigned priors become $d_{Ak} \sim N(\tilde{d}^{NRS}_{Ak}+\zeta,V^{NRS}_{Ak}/w)$.
+First, the (network) meta-regression with only NRS data estimates the relative treatment effects with posterior distribution of mean $\tilde{d}^{NRS}_{Ak}$ and variance $V^{NRS}_{Ak}$ (use `run.nrs` in `crossnma.model()` to control this process). The posteriors of NRS results are then used as priors for the corresponding basic parameters in the RCT model, $d_{Ak} \sim \mathcal{N}(\tilde{d}^{NRS}_{Ak},V^{NRS}_{Ak})$. We can adjust for potential biases associated with NRS by either shifting the mean of the prior distribution with a bias term $\zeta$ or by dividing the prior variance with a common inflation factor $w, 0<w<1$ controls NRS contribution. The assigned priors become $d_{Ak} \sim \mathcal{N}(\tilde{d}^{NRS}_{Ak}+\zeta,V^{NRS}_{Ak}/w)$.
 
 ## Bias-adjusted model 1
 
@@ -104,7 +104,7 @@ We incorporate judgments about study risk of bias (RoB) in bias-adjusted model 1
     \begin{cases}
       u_{jb} +\beta_{0j} x_{ijk} & \text{if $k=b$}\\
       u_{jb} +\overbrace{\delta_{jbk} \gamma_{1,jbk}^{R_j}}^{\text{multiplicative}}+\overbrace{\delta_{jbk}+\gamma_{2,jbk} R_j}^{\text{additive}}+ \beta_{0j}x_{ijk}+\beta^w_{1,jbk} x_{ijk}+
- (\beta^B_{1,jbk}-\beta^w_{1,jbk}) \bar{x}_{j} & \text{if $k≠b$}
+ (\beta^B_{1,jbk}-\beta^w_{1,jbk}) \bar{x}_{j} & \text{if $k\ne b$}
     \end{cases}       
 \end{equation}
 
@@ -115,7 +115,7 @@ We incorporate judgments about study risk of bias (RoB) in bias-adjusted model 1
     \begin{cases}
       u_{jb}  & \text{if $k=b$}\\
       u_{jb} +\overbrace{\delta_{jbk} \gamma_{1,jbk}^{R_j}}^{\text{multiplicative}}+\overbrace{\delta_{jbk}+\gamma_{2,jbk} R_j}^{\text{additive}}+
- \beta^B_{1,jbk} \bar{x}_{j} & \text{if $k≠b$}
+ \beta^B_{1,jbk} \bar{x}_{j} & \text{if $k\ne b$}
     \end{cases}       
 \end{equation}
 
@@ -128,9 +128,9 @@ The bias probabilities $\pi_j$ are study-specific and can be estimated in two di
 $$
 \pi_j \sim Beta(a_1, a_2)
 $$
-The hyperparameters $a_1$ and $a_2$ should be chosen in a way that reflects the risk of bias for each study. The degree of skewness in beta distribution can be controlled by the ratio $a_1/a_2$ . When $a_1/a_2$ equals 1 (or $a_1=a_2$), there is no skewness in the beta distribution (the distribution is reduced to a uniform distribution), which is appropriate for studies with unclear risk of bias. When the ratio $a_1/a_2$ is closer to 1, the more the mean of probability of bias (expected value of $\pi_j=a_1/(a_1+a_2))$ gets closer to 1 and the study acquires ‘major’ bias adjustment. The default beta priors are as follows: high bias RCT `pi.high.rct='dbeta(10,1)'`, low bias RCT `pi.low.rct='dbeta(1,10)'`, high bias NRS `pi.high.nrs='dbeta(30,1)'` and low bias NRS `pi.low.nrs='dbeta(1,30)'`. Alternatively,  we can use the study characteristics $z_j$ to estimate $\pi_j$ through a logistic transformation (internally coded).
+The hyperparameters $a_1$ and $a_2$ should be chosen in a way that reflects the risk of bias for each study. The degree of skewness in beta distribution can be controlled by the ratio $a_1/a_2$ . When $a_1/a_2$ equals 1 (or $a_1=a_2$), there is no skewness in the beta distribution (the distribution is reduced to a uniform distribution), which is appropriate for studies with unclear risk of bias. When the ratio $a_1/a_2$ is closer to 1, the more the mean of probability of bias (expected value of $\pi_j=a_1/(a_1+a_2))$ gets closer to 1 and the study acquires 'major' bias adjustment. The default beta priors are as follows: high bias RCT `pi.high.rct='dbeta(10,1)'`, low bias RCT `pi.low.rct='dbeta(1,10)'`, high bias NRS `pi.high.nrs='dbeta(30,1)'` and low bias NRS `pi.low.nrs='dbeta(1,30)'`. Alternatively,  we can use the study characteristics $z_j$ to estimate $\pi_j$ through a logistic transformation (internally coded).
 
-We combine the multiplicative and the additive treatment-specific bias effects across studies by assuming they are exchangeable $\gamma_{1,jbk}\sim Ν(g_{1,bk},\tau_{1,\gamma}^2 )$,$\gamma_{2,jbk}\sim Ν(g_{2,bk},\tau_{2,\gamma}^2 )$) or common $\gamma_{1,jbk}=g_{1,bk}$ and $\gamma_{2,jbk}=g_{2,bk}$. @dias_2010 proposed to model the mean bias effect $(g_{1,bk}, g_{2,bk})$ based on the treatments being compared.  
+We combine the multiplicative and the additive treatment-specific bias effects across studies by assuming they are exchangeable $\gamma_{1,jbk}\sim \mathcal{N}(g_{1,bk},\tau_{1,\gamma}^2 )$,$\gamma_{2,jbk}\sim \mathcal{N}(g_{2,bk},\tau_{2,\gamma}^2 )$) or common $\gamma_{1,jbk}=g_{1,bk}$ and $\gamma_{2,jbk}=g_{2,bk}$. @dias_2010 proposed to model the mean bias effect $(g_{1,bk}, g_{2,bk})$ based on the treatments being compared.  
 \begin{equation}
   g_{m,bk} =
     \begin{cases}
@@ -149,7 +149,7 @@ Another parameterisation of the logistic model with additive bias effect is
     \begin{cases}
       u_{jb} +\beta_{0j} x_{ijk} & \text{if $k=b$}\\
       u_{jb} +(1-R_j)\delta_{jbk}+\delta_{jbk}^{bias}R_j+ \beta_{0j}x_{ijk}+\beta^w_{1,jbk} x_{ijk}+
- (\beta^B_{1,jbk}-\beta^w_{1,jbk}) \bar{x}_{j} & \text{if $k≠b$}
+ (\beta^B_{1,jbk}-\beta^w_{1,jbk}) \bar{x}_{j} & \text{if $k\ne b$}
     \end{cases}       
 \end{equation}
 
@@ -160,10 +160,10 @@ Another parameterisation of the logistic model with additive bias effect is
     \begin{cases}
       u_{jb}  & \text{if $k=b$}\\
       u_{jb} +(1-R_j)\delta_{jbk}+\delta_{jbk}^{bias}R_j+
- \beta^B_{1,jbk} \bar{x}_{j} & \text{if $k≠b$}
+ \beta^B_{1,jbk} \bar{x}_{j} & \text{if $k\ne b$}
     \end{cases}       
 \end{equation}
-Then the bias-adjusted relative treatment effect ($\delta_{jbk}^{bias}=\delta_{jbk}+\gamma_{jbk}$) can be assumed exchangeable across studies $\delta_{jbk}^{bias} \sim N(g_{bk}+d_{Ak}-d_{Ab}, \tau^2 /q_j)$ or fixed as $\delta_{jbk}^{bias}=g_{bk} + d_{Ak}-d_{Ab}$. In this parameterisation, instead of assigning prior to the between-study heterogeneity in bias effect $\tau_{\gamma}$, we model the RoB weight $q_j=\tau^2/(\tau^2+\tau_{\gamma}^2$) for each study. This quantity $0<q_j<1$ quantifies the proportion of the between-study heterogeneity that is not explained by accounting for risk of bias. The values of $v$ determine the extent studies at high risk of bias will be down-weighted on average. Setting $v=1$ gives $E(q_j )=v/(v+1)=0.5$, which means that high risk of bias studies will be penalized by 50% on average. In `crossnma.model()`, the user can assign the average down-weight $E(q_j )$ to the argument `down.wgt`.
+Then the bias-adjusted relative treatment effect ($\delta_{jbk}^{bias}=\delta_{jbk}+\gamma_{jbk}$) can be assumed exchangeable across studies $\delta_{jbk}^{bias} \sim \mathcal{N}(g_{bk}+d_{Ak}-d_{Ab}, \tau^2 /q_j)$ or fixed as $\delta_{jbk}^{bias}=g_{bk} + d_{Ak}-d_{Ab}$. In this parameterisation, instead of assigning prior to the between-study heterogeneity in bias effect $\tau_{\gamma}$, we model the RoB weight $q_j=\tau^2/(\tau^2+\tau_{\gamma}^2$) for each study. This quantity $0<q_j<1$ quantifies the proportion of the between-study heterogeneity that is not explained by accounting for risk of bias. The values of $v$ determine the extent studies at high risk of bias will be down-weighted on average. Setting $v=1$ gives $E(q_j )=v/(v+1)=0.5$, which means that high risk of bias studies will be penalized by 50% on average. In `crossnma.model()`, the user can assign the average down-weight $E(q_j )$ to the argument `down.wgt`.
 
 ## Bias-adjusted model 2
 Another way to incorporate the RoB of the study is by replacing $\delta_{jbk}$ by a "bias-adjusted" relative treatment effect $\theta_{jbk}$. Then $\theta_{jbk}$ is modeled with a bimodal normal distribution as described in Section 2.5. For more details see @verde_2020.
@@ -175,7 +175,7 @@ Another way to incorporate the RoB of the study is by replacing $\delta_{jbk}$ b
     \begin{cases}
       u_{jb} +\beta_{0j} x_{ijk} & \text{if $k=b$}\\
       u_{jb} +\theta_{jbk} + \beta_{0j} x_{ijk}+\beta^w_{1,jbk} x_{ijk}+
- (\beta^B_{1,jbk}-\beta^w_{1,jbk}) \bar{x}_{j} & \text{if $k≠b$}
+ (\beta^B_{1,jbk}-\beta^w_{1,jbk}) \bar{x}_{j} & \text{if $k\ne b$}
     \end{cases}       
 \end{equation}
 
@@ -185,13 +185,13 @@ Another way to incorporate the RoB of the study is by replacing $\delta_{jbk}$ b
   logit(p_{jk}) =
     \begin{cases}
       u_{jb} & \text{if $k=b$}\\
-      u_{jb} +\theta_{jbk} +\beta^B_{1,jbk} \bar{x}_{j} & \text{if $k≠b$}
+      u_{jb} +\theta_{jbk} +\beta^B_{1,jbk} \bar{x}_{j} & \text{if $k\ne b$}
     \end{cases}       
 \end{equation}
 
 where the bias-adjusted relative treatment effect ($\theta_{jk}$) are modeled  via random-effects model with a mixture of two normal distributions.
 $$
-\theta_{jbk} \sim (1-\pi_j) N(d_{Ak}-d_{Ab}, \tau^2) +  \pi_j N(d_{Ak}-d_{Ab}+\gamma_{jbk}, \tau^2+\tau_\gamma^2)
+\theta_{jbk} \sim (1-\pi_j) \mathcal{N}(d_{Ak}-d_{Ab}, \tau^2) +  \pi_j \mathcal{N}(d_{Ak}-d_{Ab}+\gamma_{jbk}, \tau^2+\tau_\gamma^2)
 $$
 
 Alternatively, we can summarize these relative effects assuming a common-effect model
@@ -205,17 +205,17 @@ The table below summarizes the different assumptions implemented in the package 
 
 | Parameter 	| Assumptions| Argument in `crossnma.model()`|  	
 |:----------------------|:-----------|:------|
-|Relative treatment effect ($\delta_{jbk}$)| Random-effects: $\delta_{jbk}\sim N(d_{Ak}-d_{Ab}, \tau^2)$| `trt.effect='random'` |
+|Relative treatment effect ($\delta_{jbk}$)| Random-effects: $\delta_{jbk}\sim \mathcal{N}(d_{Ak}-d_{Ab}, \tau^2)$| `trt.effect='random'` |
 | |Common-effect: $\delta_{jbk}=d_{Ak}-d_{Ab}$| `trt.effect='common'`|
-|Covariate effect ($\beta_{0j}$) | Independent effects: $\beta_{0j} \sim N(0, 10^2)$| `reg0.effect='independent'` |
-|  |Random-effects: $\beta_{0j} \sim N(B_0, \tau^2_{0})$| `reg0.effect='random'`|
-|Within-study covariate-treatment interaction ($\beta_{1,jbk}^W$)| Independent effects: $\beta_{1,jbk}^W \sim N(0, 10^2)$| `regw.effect='independent'` |
-| | Random-effects: $\beta_{1,jbk}^W \sim N(B_{1,Ak}^W-B_{1,Ab}^W, \tau^2_{W})$| `regw.effect='random'` |
+|Covariate effect ($\beta_{0j}$) | Independent effects: $\beta_{0j} \sim \mathcal{N}(0, 10^2)$| `reg0.effect='independent'` |
+|  |Random-effects: $\beta_{0j} \sim \mathcal{N}(B_0, \tau^2_{0})$| `reg0.effect='random'`|
+|Within-study covariate-treatment interaction ($\beta_{1,jbk}^W$)| Independent effects: $\beta_{1,jbk}^W \sim \mathcal{N}(0, 10^2)$| `regw.effect='independent'` |
+| | Random-effects: $\beta_{1,jbk}^W \sim \mathcal{N}(B_{1,Ak}^W-B_{1,Ab}^W, \tau^2_{W})$| `regw.effect='random'` |
 | 	|Common-effect: $\beta_{1,jbk}^W = B_{1, Ak}^W-B_{1, Ab}^W$| `regw.effect='common'`|
-|Between-study covariate-treatment interaction ($\beta_{1,jbk}^B$)| Independent effects: $\beta_{1,jbk}^B \sim N(0, 10^2)$| `regb.effect='independent'` |
-| | Random-effects: $\beta_{1,jbk}^B \sim N(B_{1, Ak}^B-B_{1, Ab}^B, \tau_B^2)$| `regb.effect='random'` |
+|Between-study covariate-treatment interaction ($\beta_{1,jbk}^B$)| Independent effects: $\beta_{1,jbk}^B \sim \mathcal{N}(0, 10^2)$| `regb.effect='independent'` |
+| | Random-effects: $\beta_{1,jbk}^B \sim \mathcal{N}(B_{1, Ak}^B-B_{1, Ab}^B, \tau_B^2)$| `regb.effect='random'` |
 |  	|Common-effect: $\beta_{1,jbk}^B = B_{1, Ak}^B-B_{1, Ab}^B$| `regb.effect='common'`|
-|Bias effect ($\gamma_{m,jbk}$), $m={1,2}$| Random-effects: $\gamma_{m,jbk} \sim N(g_{m, bk}, \tau_{m,\gamma}^2)$| `bias.effect='random'` |
+|Bias effect ($\gamma_{m,jbk}$), $m={1,2}$| Random-effects: $\gamma_{m,jbk} \sim \mathcal{N}(g_{m, bk}, \tau_{m,\gamma}^2)$| `bias.effect='random'` |
 | 	|Common-effect: $\gamma_{m,jbk}=g_{m,bk}$| `bias.effect='common'`|
 |Mean bias effect $g_{m,bk}$|The treatment $k$ is active. \ $g_{m,bk}=g_m$ ($b$ inactive), \ $g_{m,bk}=0$ ($b$ active \& no bias) \ $g_{m,bk}=g_m^{act}$($b$ active \& bias)| \ \ `unfav=0`, `bias.group=1` \ `unfav=1`, `bias.group=0` \ `unfav=1`, `bias.group=2`|
 |Bias probability ($\pi_j$)| $\pi_j \sim Beta(a_1,a_2)$| `pi.high.nrs`, `pi.low.nrs`, `pi.high.rct`, `pi.low.rct`|
