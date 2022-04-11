@@ -6,3 +6,4 @@ roxygen2.*[.]R
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^cran-comments\.md$
+^CRAN-SUBMISSION$
