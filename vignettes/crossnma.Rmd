@@ -1,5 +1,5 @@
 ---
-title: "crossnma: Cross-Design and Cross-Format Synthesis using Network Meta-Analysis and Network Meta-Regression (dichotomous outcome)"
+title: "crossnma: Cross-Design & Cross-Format Network Meta-Analysis and Regression"
 author: "Tasnim Hamza, Guido Schwarzer and Georgia Salanti"
 date: "`r Sys.Date()`"
 output:
@@ -10,8 +10,8 @@ output:
    number_sections: true
 bibliography: references.bib 
 vignette: >
-  %\VignetteIndexEntry{crossnma}
   %\VignetteEncoding{UTF-8}
+  %\VignetteIndexEntry{crossnma: Cross-Design & Cross-Format Network Meta-Analysis and Regression}
   %\VignetteEngine{knitr::rmarkdown}
 ---
 
@@ -19,18 +19,18 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  message = FALSE,
-  warning=FALSE
+  message = TRUE,
+  warning = FALSE
 )
 ```
 
-```{r mm, warning=FALSE,message=FALSE,include=FALSE}
+```{r mm, message = FALSE, include=FALSE}
 library(crossnma)
 ```
 
 # Introduction 
 
-In network meta-analysis we synthesize all relevant available evidence about health outcomes from competing treatments. That evidence might come from different study designs and in different formats: from non-randomized studies (NRS) or randomized controlled trials (RCT) as individual participant data (IPD) or as aggregate data (AD). We set up the package **crossnma** to synthesize all available evidence.
+In network meta-analysis we synthesize all relevant available evidence about health outcomes from competing treatments. That evidence might come from different study designs and in different formats: from non-randomized studies (NRS) or randomized controlled trials (RCT) as individual participant data (IPD) or as aggregate data (AD). We set up the package **crossnma** to synthesize all available evidence for a binary outcome with the odds ratio as effect measure.
 
 This document demonstrates how to use **crossnma** to synthesize cross-design evidence and cross-format data via Bayesian network meta-analysis and meta-regression (NMA and NMR). All models are implemented in JAGS [@plummer_jags].
 
@@ -38,7 +38,7 @@ We describe the workflow within the package using a worked example from a networ
 
 # The synthesis models
 
-We first introduce the model that synthesizes studies  with individual-level (IPD) or/and aggregate data (AD) ignoring their design (unadjusted   synthesis).  Then, we present three possible models that account for the different study designs. In the table below we set the notation that will be used in the description of the four synthesis models. 
+We first introduce the model that synthesizes studies  with individual-level (IPD) or/and aggregate data (AD) ignoring their design (unadjusted synthesis). Then, we present three possible models that account for the different study designs. In the table below we set the notation that will be used in the description of the four synthesis models. 
 
 | Notation 	| Description| Argument in `crossnma.model()`| 
 |:-------------------|:-----------|:------|
@@ -241,7 +241,7 @@ head(stddata)
 ```
 
 ## Analysis
-There are two steps to run the NMA/NMR model. The first step is to create a JAGS model using `crossnma.model()` which produces the JAGS code and the data. In the second step, the output of that function will be used in `crossnma.run()` to run the analysis through JAGS. 
+There are two steps to run the NMA/NMR model. The first step is to create a JAGS model using `crossnma.model()` which produces the JAGS code and the data. In the second step, the output of that function will be used in `crossnma()` to run the analysis through JAGS. 
 
 ### Unadjusted network meta-analysis
 
@@ -269,11 +269,11 @@ The network should be checked for its connectivity before running the analysis. 
 netgraph(mod1)
 ```
 
-Next, we fit the NMA model using `crossnma.run()` which requires us to set the number of adaptations, iterations, thinning and chains.
+Next, we fit the NMA model using `crossnma()` which requires us to set the number of adaptations, iterations, thinning and chains.
 
 ```{r}
 # run jags
-jagsfit1 <- crossnma.run(mod1,
+jagsfit1 <- crossnma(mod1,
   n.adapt = 500, n.iter = 5000, n.burnin = 2000,
   thin = 1, n.chains = 2)
 ```
@@ -289,8 +289,8 @@ The estimated OR of B vs A can be obtained as exp(d.B) and similarly for exp(d.C
 We need also to assess the convergence of the MCMC chains either by checking the Gelman and Rubin statistic, Rhat (it should be approximately 1) in the table above or visually inspect the trace plot.
 
 ```{r}
-par(mar = rep(2, 4))
-coda::traceplot(jagsfit1$samples)
+par(mar = rep(2, 4), mfrow = c(2, 3))
+plot(jagsfit1)
 ```
 
 ### Unadjusted network meta-regression 
@@ -316,7 +316,7 @@ The MCMC is run under the same set up as in the network meta-analysis.
 
 ```{r}
 # run jags
-jagsfit2 <- crossnma.run(mod2,
+jagsfit2 <- crossnma(mod2,
   n.adapt = 500, n.iter = 5000, n.burnin = 2000,
   thin = 1, n.chains = 2)
 ```
@@ -331,12 +331,12 @@ Now, we additionally estimate b_1 which indicates the mean effect of age and tau
 
 The league table summarizes the relative effect with the 95% credible interval of each treatment on the top compared to the treatment on the left. All estimates are computed for participant age 38. We can display the table in wide format
 ```{r, fig.width=6, fig.height=5,fig.show='hold',fig.align='center'}
-league(jagsfit2, exp = TRUE, prt.cov1.value = 38)
+league(jagsfit2, exp = TRUE, cov1.value = 38)
 ```
 
 or in long format
 ```{r, fig.width=6, fig.height=5,fig.show='hold',fig.align='center'}
-league(jagsfit2, exp = TRUE, prt.cov1.value = 38, direction = "long")
+league(jagsfit2, exp = TRUE, cov1.value = 38, direction = "long")
 ```
 
 
@@ -367,7 +367,7 @@ mod3 <- crossnma.model(treat, id, relapse, n, design,
 
 ```{r}
 # run jags
-jagsfit3 <- crossnma.run(mod3,
+jagsfit3 <- crossnma(mod3,
   n.adapt = 500, n.iter = 5000, n.burnin = 2000,
   thin = 1, n.chains = 2)
 ```
@@ -375,8 +375,8 @@ jagsfit3 <- crossnma.run(mod3,
 The heat plot summarizes the relative effect with the 95% credible interval of each treatment on the top compared to the treatment on the left. All estimates are computed for participant age 38.
 
 ```{r, fig.width=6, fig.height=5,fig.show='hold',fig.align='center'}
-heatplot(jagsfit3, exp = TRUE, prt.cov1.value = 38,
-  cell.text.size = 6, trt.name.size = 20, axis.title.size = 12)
+heatplot(jagsfit3, exp = TRUE, cov1.value = 38,
+  size = 6, size.trt = 20, size.axis = 12)
 ```
 
 ###   Bias-adjusted model 1
@@ -405,7 +405,7 @@ mod4 <- crossnma.model(treat, id, relapse, n, design,
 
 ```{r}
 # run jags
-jagsfit4 <- crossnma.run(mod4,
+jagsfit4 <- crossnma(mod4,
   n.adapt = 500, n.iter = 5000, n.burnin = 2000,
   thin = 1, n.chains = 2)
 ```
@@ -440,7 +440,7 @@ mod5 <- crossnma.model(treat, id, relapse, n, design,
 
 ```{r}
 # run jags
-jagsfit5 <- crossnma.run(mod5,
+jagsfit5 <- crossnma(mod5,
   n.adapt = 500, n.iter = 5000, n.burnin = 2000,
   thin = 1, n.chains = 2)
 ```

@@ -1,21 +1,13 @@
 Package: crossnma
-Title: Cross-Design and Cross-Format Synthesis using Network Meta-Analysis and Network Meta-Regression
+Title: Cross-Design & Cross-Format Network Meta-Analysis and Regression
 Version: 1.0.0
-Date: 2022-04-06
+Date: 2022-04-11
 Depends: 
     R (>= 3.5), netmeta
 Imports: 
-    rjags (>= 4-10),
-    coda (>= 0.19-4),
-    dplyr (>= 1.0.2),
-    plyr (>= 1.8.6),
-    rlang (>= 0.4.11),
-    magrittr (>= 2.0.1),
-    tidyr (>= 1.1.2),
-    ggplot2 (>= 3.3.2)
+    rjags, coda, dplyr, plyr, rlang, magrittr, tidyr, ggplot2
 Suggests: 
-    rmarkdown,
-    knitr
+    rmarkdown, knitr
 URL: https://github.com/htx-r/crossnma 
 Description: Network meta-analysis and meta-regression (allows including up to 3 covariates) for individual participant data, aggregate data, and mixtures of both formats using the three-level hierarchical model. Each format can come from randomized controlled trials or non-randomized studies or mixtures of both. Estimates are generated in a Bayesian framework using JAGS. The implemented models are described by Hamza et al. 2022 <DOI:10.48550/arXiv.2203.06350>.
 License: GPL (>=2)

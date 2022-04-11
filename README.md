@@ -43,8 +43,8 @@ There are two steps to conduct a network meta-analysis or
 meta-regression. The first step is to create a JAGS model using
 `crossnma.model()` which produces the JAGS code and transforms the
 data to the JAGS format. In the second step, the output of that
-function will be used in `crossnma.run()` to run the MCMC (Markov
-chain Monte Carlo) through JAGS.
+function will be used in `crossnma()` to run the MCMC (Markov chain
+Monte Carlo) through JAGS.
 
 We illustrate how to use **crossnma** through several examples in the vignette:
 
