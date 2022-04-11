@@ -2,8 +2,8 @@
 % Please edit documentation in R/crossnma.model.R
 \name{crossnma.model}
 \alias{crossnma.model}
-\title{Creates a JAGS model and the needed data to perform cross NMA and
-NMR (dichotomous outcomes)}
+\title{Create JAGS model and data to perform cross network meta-analysis
+or meta-regression}
 \usage{
 crossnma.model(
   trt,
@@ -37,7 +37,8 @@ crossnma.model(
     tau.gamma = NULL, pi.high.rct = NULL, pi.low.rct = NULL, pi.high.nrs = NULL,
     pi.low.nrs = NULL),
   run.nrs = list(var.infl = 1, mean.shift = 0, trt.effect = "common", n.adapt = 2000,
-    n.iter = 10000, n.burnin = 4000, thin = 1, n.chains = 2)
+    n.iter = 10000, n.burnin = 4000, thin = 1, n.chains = 2),
+  quiet = TRUE
 )
 }
 \arguments{
@@ -60,37 +61,34 @@ conduct network meta-regression (see Details).}
 \item{cov3}{Optional third covariate in prt.data and std.data to
 conduct network meta-regression (see Details).}
 
-\item{bias}{A character indicating the name of the variable
-(required when method.bias= 'adjust1' or 'adjust2') that includes
-the risk of bias of the study in prt.data and std.data.  The
-values of this variable should be a character with entries that
-need to be spelled as such 'low', 'high' or 'unclear'. These
-values need to be repeated for the participants that belong to
-the same study.}
+\item{bias}{Variable with information on risk of bias in prt.data
+and std.data (can be provided when method.bias = 'adjust1' or
+'adjust2'). Possible values of this variable are 'low', 'high' or
+'unclear' (can be abbreviated). These values must be identical
+for all participants from the same study.}
 
-\item{unfav}{A character for defining the name of the variable
-which indicates the unfavored treatment in each study (should be
-provided when method.bias= 'adjust1' or 'adjust2') in prt.data
-and std.data.  The entries of this variable are either 0
-(unfavored treatment) or 1 (favorable treatment or
-treatments). Each study should include only one 0 entry. The
-values need to be repeated for participants who take the same
-treatment.}
+\item{unfav}{Variable in prt.data and std.data indicating the
+unfavored treatment in each study (can be provided when
+method.bias = 'adjust1' or 'adjust2'). The entries of this
+variable are either 0 (unfavored treatment) or 1 (favorable
+treatment or treatments). Each study should include only one 0
+entry. The values need to be repeated for participants who take
+the same treatment.}
 
-\item{bias.covariate}{A character of the variable name that will be
-used in estimating the probability of bias (can be provided when
-method.bias='adjust1' or 'adjust2')}
+\item{bias.covariate}{Variable in prt.data and std.data used to
+estimate the probability of bias (can be provided when
+method.bias = 'adjust1' or 'adjust2').}
 
-\item{bias.group}{An optional character for defining the name of
-the variable in prt.data and std.data that indicates the bias
-effect in each study (can be provided when method.bias= 'adjust1'
-or 'adjust2').  The entries of these variables should be either 1
-(study has inactive treatment and its estimate should be adjusted
-for bias effect), 2 (study has only active treatments and its
-estimate should be adjusted for bias effect (different from
-inactive bias effect) or 0 (study does not need any bias
-adjustment). The values need to be repeated for the participants
-assigned to the same treatment. Default is 1.}
+\item{bias.group}{An optional variable in prt.data and std.data
+that indicates the bias effect in each study (can be provided
+when method.bias = 'adjust1' or 'adjust2'). The entries of these
+variables should be either 1 (study has inactive treatment and
+its estimate should be adjusted for bias effect), 2 (study has
+only active treatments and its estimate should be adjusted for
+bias effect (different from inactive bias effect) or 0 (study
+does not need any bias adjustment). The values need to be
+repeated for the participants assigned to the same
+treatment. Default is 1.}
 
 \item{prt.data}{An object of class data.frame containing the
 individual participant dataset. Each row contains the data of a
@@ -151,14 +149,15 @@ treatment-covariate interaction effect at the individual level.
 Options are 'independent', 'random' and 'common'. Default is
 'random'.}
 
-\item{split.regcoef}{A logical value (needed when at least \code{cov1}
-is not NULL). If TRUE (default) the within- and between-study
-coefficients will be splitted in the analysis of prt.data.  When
-the split.regcoef = FALSE, only a single regression coefficient
-will be estimated to represent both the between-studies and
-within-studies covariate effects.  In this case, both arguments
-\code{regb.effect} and \code{regw.effect} need to be given the
-same option to model the single regression effect.}
+\item{split.regcoef}{A logical value (needed when at least
+\code{cov1} is not NULL). If TRUE (default) the within- and
+between-study coefficients will be splitted in the analysis of
+prt.data.  When the split.regcoef = FALSE, only a single
+regression coefficient will be estimated to represent both the
+between-studies and within-studies covariate effects.  In this
+case, both arguments \code{regb.effect} and \code{regw.effect}
+need to be given the same option to model the single regression
+effect.}
 
 \item{method.bias}{A character for defining the method to combine
 randomized clinical trials (RCT) and non-randomized studies
@@ -182,7 +181,7 @@ are 'random' or 'common' (default). It is required when
 method.bias='adjust1' or 'adjust2'.}
 
 \item{down.wgt}{An optional numeric indicating the percent to which
-studies at high risk of bias will be downweighed on average. The
+studies at high risk of bias will be downweighted on average. The
 value ranges between 0 and 1. It can be provided when
 method.bias='adjust1' or 'adjust2'.}
 
@@ -218,71 +217,68 @@ control the MCMC chains with default value is in the parentheses:
 the number of adaptions n.adapt (500), number of iterations
 n.iter(10000), number of burn in n.burnin (4000), number of
 thinning thin (1) and number of chains n.chains
-(2). \code{\link{jags.model}} from rjags package describes these
-arguments.}
+(2). \code{\link[rjags]{jags.model}} from rjags package describes
+these arguments.}
+
+\item{quiet}{A logical passed on to
+\code{\link[rjags]{jags.model}}.}
 }
 \value{
-\code{crossnma.model} returns an object of class
-  \code{crossnmaModel} which is a list containing the following
-  components (the JAGS model to be ran under these settings):
+An object of class \code{crossnma.model} containing information on
+the JAGS model, which is a list containing the following
+components:
 
-\code{jagsmodel} A long character string containing JAGS
-  code that will be run in \code{\link{jags.model}}.
-
-\code{data} The data to be used to run JAGS model.
-
-\code{trt.key} A table of the treatments and its mapped
-  integer number (as used in JAGS model).
-
-\code{study.key} A table of the studies and its mapped
-  integer number (as used in JAGS model).
-
-\code{trt.effect} A character defining the model for the
-  study-specific treatment effects.
-
-\code{method.bias} A character for defining the method to
-  combine randomized clinical trials (RCT) and non-randomized
-  studies (NRS).
-
-\code{covariate} A vector of the the names of the covariates (\code{cov1, cov2 and cov3})
-  in prt.data and std.data used in network meta-regression.
-
-\code{cov.ref} A vector of values of \code{cov1.ref, cov2.ref, cov3.ref} to center
-  continuous covariates. Dichotomous covariates take NA.
-
-\code{dich.cov.labels} A matrix with the levels of each
-  dichotomous covariate and the corresponding assigned 0/1 values.
-
-\code{split.regcoef} A logical value. If FALSE the within-
-  and between-study regression coefficients will be considered
-  equal.
-
-\code{regb.effect} A character indicating the model for the
-  between-study regression coefficients across studies.
-
-\code{regw.effect} A character indicating the model for the
-  within-study regression coefficients across studies.
-
-\code{bias.effect} A character indicating the model for the
-  bias coefficients across studies.
-
-\code{bias.type} A character indicating the effect of bias
-  on the treatment effect; additive ('add') or multiplicative
-  ('mult') or both ('both').
-
-\code{all.data.ad} A data.frame object with the prt.data
-  (after it is aggregated) and std.data in a single dataset.
+\item{model}{A long character string containing JAGS code that
+  will be run in \code{\link[rjags]{jags.model}}.}
+\item{data}{The data to be used to run JAGS model.}
+\item{trt.key}{A table of the treatments and its mapped integer
+  number (as used in JAGS model).}
+\item{study.key}{A table of the studies and its mapped integer
+  number (as used in JAGS model).}
+\item{trt.effect}{A character defining the model for the
+  study-specific treatment effects.}
+\item{method.bias}{A character for defining the method to combine
+  randomized clinical trials (RCT) and non-randomized studies
+  (NRS).}
+\item{covariate}{A vector of the the names of the covariates
+  (\code{cov1, cov2 and cov3}) in prt.data and std.data used in
+  network meta-regression.}
+\item{cov.ref}{A vector of values of \code{cov1.ref, cov2.ref,
+  cov3.ref} to center continuous covariates. Dichotomous covariates
+  take NA.}
+\item{dich.cov.labels}{A matrix with the levels of each dichotomous
+  covariate and the corresponding assigned 0 / 1 values.}
+\item{split.regcoef}{A logical value. If FALSE the within- and
+  between-study regression coefficients will be considered equal.}
+\item{regb.effect}{A character indicating the model for the
+  between-study regression coefficients across studies.}
+\item{regw.effect}{A character indicating the model for the
+  within-study regression coefficients across studies.}
+\item{bias.effect}{A character indicating the model for the bias
+  coefficients across studies.}
+\item{bias.type}{A character indicating the effect of bias on the
+  treatment effect; additive ('add') or multiplicative ('mult') or
+  both ('both').}
+\item{all.data.ad}{A data.frame object with the prt.data (after it
+  is aggregated) and std.data in a single dataset.}
+\item{call}{Function call.}
+\item{version}{Version of R package \bold{crossnma} used to create
+  object.}
 }
 \description{
-This function creates a JAGS model and the needed
-  data. The JAGS code is created from the internal function
-  \code{crossnma.code}.
+This function creates a JAGS model and the needed data for
+cross-design and cross-format network meta-analysis or
+meta-regression of a binary outcome with the odds ratio as effect
+measure.
 }
 \details{
+This function creates a JAGS model and the needed data. The JAGS
+code is created from the internal function \code{crossnma.code}.
+
 Covariates provided in arguments \code{cov1}, \code{cov2} and
- \code{cov3} can be either numeric or dichotomous (should be
- provided as factor or character) variables. By default, no
- covariate adjustment is applied (network meta-analysis).
+\code{cov3} can be either numeric or dichotomous (should be
+provided as factor or character) variables. By default, no
+covariate adjustment is applied (network meta-analysis).
 }
 \examples{
 # We conduct a network meta-analysis assuming a random-effects
@@ -292,29 +288,24 @@ Covariates provided in arguments \code{cov1}, \code{cov2} and
 head(ipddata) # participant-level data
 head(stddata) # study-level data
 
-#=========================#
-# Create a jags model     #
-#=========================#
+# Create a JAGS model
 mod <- crossnma.model(treat, id, relapse, n, design,
   prt.data = ipddata, std.data = stddata,
   reference = "A", trt.effect = "random", method.bias = "naive")
 
-#=========================#
-# Fit jags model          #
-#=========================#
+# Fit JAGS model
+# (suppress warning 'Adaptation incomplete' due to n.adapt = 20)
 fit <-
-  crossnma.run(model = mod, n.adapt = 20,
-    n.iter = 50, thin = 1, n.chains = 3)
+  suppressWarnings(crossnma(mod, n.adapt = 20,
+    n.iter = 50, thin = 1, n.chains = 3))
 
-#=========================#
-# Display the output      #
-#=========================#
+# Display the output
 summary(fit)
 plot(fit)
 
 }
 \seealso{
-\code{\link{crossnma.run}}, \code{\link{jags.model}}
+\code{\link{crossnma}}, \code{\link[rjags]{jags.model}}
 }
 \author{
 Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}, Guido

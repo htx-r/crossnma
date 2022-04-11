@@ -2,7 +2,8 @@
 % Please edit documentation in R/print.summary.crossnma.R
 \name{print.summary.crossnma}
 \alias{print.summary.crossnma}
-\title{Print summary results for crossnma.run object}
+\title{Print summary of cross-design & -format network meta-analysis or
+regression}
 \usage{
 \method{print}{summary.crossnma}(x, digits = 3, ...)
 }
@@ -14,8 +15,12 @@ value is 3.}
 
 \item{\dots}{Additional arguments.}
 }
+\value{
+No return value (print function).
+}
 \description{
-Print method for objects of class \code{crossnma}.
+Print summary results for cross-design and cross-format network
+meta-analysis or meta-regression
 }
 \examples{
 # We conduct a network meta-analysis assuming a random-effects
@@ -25,23 +30,18 @@ Print method for objects of class \code{crossnma}.
 head(ipddata) # participant-level data
 head(stddata) # study-level data
 
-#=========================#
-# Create a jags model     #
-#=========================#
+# Create a JAGS model
 mod <- crossnma.model(treat, id, relapse, n, design,
   prt.data = ipddata, std.data = stddata,
   reference = "A", trt.effect = "random", method.bias = "naive")
 
-#=========================#
-# Fit jags model          #
-#=========================#
+# Fit JAGS model
+# (suppress warning 'Adaptation incomplete' due to n.adapt = 20)
 fit <-
-  crossnma.run(model = mod, n.adapt = 20,
-    n.iter = 50, thin = 1, n.chains = 3)
+  suppressWarnings(crossnma(mod, n.adapt = 20,
+    n.iter = 50, thin = 1, n.chains = 3))
 
-#=========================#
-# Display the output      #
-#=========================#
+# Display the output (with 5 digits)
 print(summary(fit), digits = 5)
 
 }
@@ -49,7 +49,6 @@ print(summary(fit), digits = 5)
 \code{\link{summary.crossnma}}
 }
 \author{
-Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}, Guido
-  Schwarzer \email{sc@imbi.uni-freiburg.de}
+Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}
 }
 \keyword{print}

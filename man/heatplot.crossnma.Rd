@@ -7,64 +7,84 @@
 \usage{
 \method{heatplot}{crossnma}(
   x,
-  central.tdcy = "median",
+  median = TRUE,
   exp = TRUE,
   order = NULL,
   low.colour = "red",
   mid.colour = "white",
   high.colour = "springgreen4",
-  prt.cov1.value = NULL,
-  prt.cov2.value = NULL,
-  prt.cov3.value = NULL,
+  cov1.value = NULL,
+  cov2.value = NULL,
+  cov3.value = NULL,
+  size = 6,
+  size.trt = 20,
+  size.axis = 12,
   digits = 2,
-  cell.text.size = 12,
-  trt.name.size = 20,
-  axis.title.size = 12,
   ...
 )
 
 heatplot(x, ...)
 }
 \arguments{
-\item{x}{A \code{crossrun} object produced by running \code{crossnma.run()}.}
+\item{x}{An object created with \code{\link{crossnma}}.}
 
-\item{central.tdcy}{The statistic to be used to measure the relative treatment effects. The options are "mean" and "median".}
+\item{median}{A logical indicating whether to use the median
+(default) or mean to measure relative treatment effects.}
 
-\item{exp}{If TRUE (default), odds ratios are displayed. If FALSE, log odds ratios will be presented.}
+\item{exp}{If TRUE (default), odds ratios are displayed. If FALSE,
+log odds ratios will be presented.}
 
-\item{order}{A vector of treatment names (character) representing the order in which to display these treatments.}
+\item{order}{A vector of treatment names (character) representing
+the order in which to display these treatments.}
 
-\item{low.colour}{A string indicating the colour of low relative treatment effects for the heat plot (e.g odds ratio of ~0.5)}
+\item{low.colour}{A string indicating the colour of low relative
+treatment effects for the heat plot (e.g odds ratio of ~0.5)}
 
-\item{mid.colour}{A string indicating the colour of null relative treatment effects for the heat plot (e.g odds ratio of ~1.0).}
+\item{mid.colour}{A string indicating the colour of null relative
+treatment effects for the heat plot (e.g odds ratio of ~1.0).}
 
-\item{high.colour}{A string indicating the colour of high relative treatment effects for the heat plot (e.g odds ratio of ~2.0).}
+\item{high.colour}{A string indicating the colour of high relative
+treatment effects for the heat plot (e.g odds ratio of ~2.0).}
 
-\item{prt.cov1.value}{The participant covariate value of \code{cov1} for which to report the results. Must be specified for network meta-regression and when individual participant dataset is used in the analysis.
-For dichotomous covariates, a character of the level (used in the data) should be indicated.}
+\item{cov1.value}{The participant covariate value of \code{cov1}
+for which to report the results. Must be specified for network
+meta-regression and when individual participant dataset is used
+in the analysis. For dichotomous covariates, a character of the
+level (used in the data) should be indicated.}
 
-\item{prt.cov2.value}{The participant covariate value of \code{cov2} for which to report the results. Must be specified for network meta-regression and when individual participant dataset is used in the analysis.
-For dichotomous covariates, a character of the level (used in the data) should be indicated.}
+\item{cov2.value}{The participant covariate value of \code{cov2}
+for which to report the results. Must be specified for network
+meta-regression and when individual participant dataset is used
+in the analysis. For dichotomous covariates, a character of the
+level (used in the data) should be indicated.}
 
-\item{prt.cov3.value}{The participant covariate value of \code{cov3} for which to report the results. Must be specified for network meta-regression and when individual participant dataset is used in the analysis.
-For dichotomous covariates, a character of the level (used in the data) should be indicated.}
+\item{cov3.value}{The participant covariate value of \code{cov3}
+for which to report the results. Must be specified for network
+meta-regression and when individual participant dataset is used
+in the analysis. For dichotomous covariates, a character of the
+level (used in the data) should be indicated.}
 
-\item{digits}{The number of digits to be used when displaying the results}
+\item{size}{The size of cell entries with the relative treatment
+effect and 95\% credible intervals.}
 
-\item{cell.text.size}{The size of the cell entries; the relative treatment effect and the 95\% credible intervals}
+\item{size.trt}{The size of treatment names placed on the top and
+left of the plot.}
 
-\item{trt.name.size}{The size of treatment names placed on the top and left of the plot}
+\item{size.axis}{The size of labels on the top and left of the plot}
 
-\item{axis.title.size}{The size of titles placed on the top and left of the plot}
+\item{digits}{The number of digits to be used when displaying the
+results.}
 
 \item{\dots}{Additional arguments (ignored at the moment).}
 }
 \value{
-\code{heatplot}  League heat plot, where a color scale is used to represent the relative treatment effects.
+League heat plot, where a color scale is used to represent the
+relative treatment effects.
 }
 \description{
-Produces a heat plot that contain point estimates of relative effects
-for all possible pairs of treatments along with 95\% credible intervals obtained with the quantile method.
+Produces a heat plot that contain point estimates of relative
+effects for all possible pairs of treatments along with 95\%
+credible intervals obtained with the quantile method.
 }
 \examples{
 # We conduct a network meta-analysis assuming a random-effects
@@ -74,26 +94,24 @@ for all possible pairs of treatments along with 95\% credible intervals obtained
 head(ipddata) # participant-level data
 head(stddata) # study-level data
 
-#=========================#
-# Create a jags model     #
-#=========================#
+# Create a JAGS model
 mod <- crossnma.model(treat, id, relapse, n, design,
   prt.data = ipddata, std.data = stddata,
   reference = "A", trt.effect = "random", method.bias = "naive")
 
-#=========================#
-# Fit jags model          #
-#=========================#
+# Fit JAGS model
+# (suppress warning 'Adaptation incomplete' due to n.adapt = 20)
 fit <-
-  crossnma.run(model = mod, n.adapt = 20,
-    n.iter = 50, thin = 1, n.chains = 3)
+  suppressWarnings(crossnma(mod, n.adapt = 20,
+    n.iter = 50, thin = 1, n.chains = 3))
 
-#=========================#
-# Create the league table #
-#=========================#
+# Create a heat plot
 heatplot(fit)
 
 }
 \seealso{
-\code{\link{crossnma.run}}
+\code{\link{crossnma}}
+}
+\author{
+Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}
 }
