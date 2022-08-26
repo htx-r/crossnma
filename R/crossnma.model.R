@@ -1,5 +1,5 @@
 #' Creates a JAGS model and the needed data to perform cross NMA and
-#' NMR (dichotomous outcomes)
+#' NMR (dichotomous outcomes) (!! Check if r and n computed correctly in all.data.ad)
 #' @description This function creates a JAGS model and the needed
 #'   data. The JAGS code is created from the internal function
 #'   \code{crossnma.code}.
@@ -652,7 +652,7 @@ crossnma.model <- function(trt,
   cov.ref <- NULL
   ##
   ## Set reference covariate values if missing
-  if (isCol(data1, "x1")) {
+  if (isCol(data1, "x1")|isCol(data2, "x1")) {
     if (missing(cov1.ref)) {
       if (is.numeric(data1$x1) & is.numeric(data2$x1))
         cov1.ref <- min(c(min(data1$x1, na.rm = TRUE),
@@ -672,7 +672,7 @@ crossnma.model <- function(trt,
     }
     cov.ref <- cov1.ref
     ##
-    if (isCol(data1, "x2")) {
+    if (isCol(data1, "x2")|isCol(data2, "x2")) {
       if (missing(cov2.ref)) {
         if (is.numeric(data1$x2) & is.numeric(data2$x2))
           cov2.ref <- min(c(min(data1$x2, na.rm = TRUE),
@@ -692,7 +692,7 @@ crossnma.model <- function(trt,
       }
       cov.ref <- c(cov.ref, cov2.ref)
       ##
-      if (isCol(data1, "x3")) {
+      if (isCol(data1, "x3")|isCol(data2, "x3")) {
         if (missing(cov3.ref)) {
           if (is.numeric(data1$x3) & is.numeric(data2$x3))
             cov3.ref <- min(c(min(data1$x3, na.rm = TRUE),

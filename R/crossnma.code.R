@@ -257,7 +257,7 @@ crossnma.code <- function(ipd = T,
                      for (k in 2:nt){
                      beta.t_",i,"[k]~dnorm(0,1e-2)
                      }")
-          beta.prior.ad <- paste0(beta.prior.ad,beta.prior.ipd0)
+          beta.prior.ad <- paste0(beta.prior.ad,beta.prior.ad0)
         }else if(regb.effect=='random'&&regw.effect=='random'){
           for (i in 1:length(covariate[[1]])) {
             beta.prior.ad0 <- paste0("
