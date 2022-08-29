@@ -652,69 +652,255 @@ crossnma.model <- function(trt,
   cov.ref <- NULL
   ##
   ## Set reference covariate values if missing
-  if (isCol(data1, "x1")|isCol(data2, "x1")) {
-    if (missing(cov1.ref)) {
-      if (is.numeric(data1$x1) & is.numeric(data2$x1))
-        cov1.ref <- min(c(min(data1$x1, na.rm = TRUE),
-                          min(data2$x1, na.rm = TRUE)))
-      else
-        cov1.ref <- NA
-    }
-    else {
-      if (length(cov1.ref) != 1)
-        stop("Argument 'cov1.ref' must be of length 1.")
-      ##
-      if (!(is.numeric(data1$x1) & is.numeric(data2$x1)) & !is.na(cov1.ref)) {
-        warning("Argument 'cov1.ref' set to NA as first covariate ",
-                "is not continuous.")
-        cov1.ref <- NA
-      }
-    }
-    cov.ref <- cov1.ref
-    ##
-    if (isCol(data1, "x2")|isCol(data2, "x2")) {
-      if (missing(cov2.ref)) {
-        if (is.numeric(data1$x2) & is.numeric(data2$x2))
-          cov2.ref <- min(c(min(data1$x2, na.rm = TRUE),
-                            min(data2$x2, na.rm = TRUE)))
+  if(!is.null(prt.data)&!is.null(std.data)){ # IPD and AD are provided
+    if (isCol(data1, "x1")&isCol(data2, "x1")) {
+      if (missing(cov1.ref)) {
+        if (is.numeric(data1$x1) & is.numeric(data2$x1)&!(all(data2$x1<1)&all(data2$x1>0)))
+          cov1.ref <- min(c(min(data1$x1, na.rm = TRUE),
+                            min(data2$x1, na.rm = TRUE)))
         else
-          cov2.ref <- NA
+          cov1.ref <- NA
       }
       else {
-        if (length(cov2.ref) != 1)
-          stop("Argument 'cov2.ref' must be of length 1.")
+        if (length(cov1.ref) != 1)
+          stop("Argument 'cov1.ref' must be of length 1.")
         ##
-        if (!(is.numeric(data1$x2) & is.numeric(data2$x2)) & !is.na(cov2.ref)) {
-          warning("Argument 'cov2.ref' set to NA as first covariate ",
+        if (!(is.numeric(data1$x1) & is.numeric(data2$x1)) & !is.na(cov1.ref)) {
+          warning("Argument 'cov1.ref' set to NA as first covariate ",
                   "is not continuous.")
-          cov2.ref <- NA
+          cov1.ref <- NA
         }
       }
-      cov.ref <- c(cov.ref, cov2.ref)
+      cov.ref <- cov1.ref
       ##
-      if (isCol(data1, "x3")|isCol(data2, "x3")) {
-        if (missing(cov3.ref)) {
-          if (is.numeric(data1$x3) & is.numeric(data2$x3))
-            cov3.ref <- min(c(min(data1$x3, na.rm = TRUE),
-                              min(data2$x3, na.rm = TRUE)))
+      if (isCol(data1, "x2")&isCol(data2, "x2")) {
+        if (missing(cov2.ref)) {
+          if (is.numeric(data1$x2) & is.numeric(data2$x2)&!(all(data2$x2<1)&all(data2$x2>0)))
+            cov2.ref <- min(c(min(data1$x2, na.rm = TRUE),
+                              min(data2$x2, na.rm = TRUE)))
           else
-            cov3.ref <- NA
+            cov2.ref <- NA
         }
         else {
-          if (length(cov3.ref) != 1)
-            stop("Argument 'cov3.ref' must be of length 1.")
+          if (length(cov2.ref) != 1)
+            stop("Argument 'cov2.ref' must be of length 1.")
           ##
-          if (!(is.numeric(data1$x3) & is.numeric(data2$x3)) &
-              !is.na(cov3.ref)) {
-            warning("Argument 'cov3.ref' set to NA as first covariate ",
+          if (!(is.numeric(data1$x2) & is.numeric(data2$x2)) & !is.na(cov2.ref)) {
+            warning("Argument 'cov2.ref' set to NA as first covariate ",
                     "is not continuous.")
-            cov3.ref <- NA
+            cov2.ref <- NA
           }
         }
+        cov.ref <- c(cov.ref, cov2.ref)
+        ##
+        if (isCol(data1, "x3")&isCol(data2, "x3")) {
+          if (missing(cov3.ref)) {
+            if (is.numeric(data1$x3) & is.numeric(data2$x3)&!(all(data2$x3<1)&all(data2$x3>0)))
+              cov3.ref <- min(c(min(data1$x3, na.rm = TRUE),
+                                min(data2$x3, na.rm = TRUE)))
+            else
+              cov3.ref <- NA
+          }
+          else {
+            if (length(cov3.ref) != 1)
+              stop("Argument 'cov3.ref' must be of length 1.")
+            ##
+            if (!(is.numeric(data1$x3) & is.numeric(data2$x3)) & !is.na(cov3.ref)) {
+              warning("Argument 'cov3.ref' set to NA as first covariate ",
+                      "is not continuous.")
+              cov3.ref <- NA
+            }
+          }
+        }
+        cov.ref <- c(cov.ref, cov3.ref)
       }
-      cov.ref <- c(cov.ref, cov3.ref)
     }
+  } else if(is.null(prt.data)|missing(prt.data)&!is.null(std.data)) { # only ADs
+    if (isCol(data2, "x1")) {
+      if (missing(cov1.ref)) {
+        if (is.numeric(data2$x1)&!(all(data2$x1<1)&all(data2$x1>0)))
+          cov1.ref <- min(data2$x1, na.rm = TRUE)
+        else
+          cov1.ref <- NA
+      }
+      else {
+        if (length(cov1.ref) != 1)
+          stop("Argument 'cov1.ref' must be of length 1.")
+        ##
+        if (!is.numeric(data2$x1)|(all(data2$x1<1)&all(data2$x1>0)) & !is.na(cov1.ref)) {
+          warning("Argument 'cov1.ref' set to NA as first covariate ",
+                  "is not continuous.")
+          cov1.ref <- NA
+        }
+      }
+      cov.ref <- cov1.ref
+      ##
+      if (isCol(data2, "x2")) {
+        if (missing(cov2.ref)) {
+          if (is.numeric(data2$x2)&!(all(data2$x2<1)&all(data2$x2>0)))
+            cov2.ref <- min(data2$x2, na.rm = TRUE)
+          else
+            cov2.ref <- NA
+        }
+        else {
+          if (length(cov2.ref) != 1)
+            stop("Argument 'cov2.ref' must be of length 1.")
+          ##
+          if (!is.numeric(data2$x2)|(all(data2$x2<1)&all(data2$x2>0)) & !is.na(cov2.ref)) {
+            warning("Argument 'cov2.ref' set to NA as first covariate ",
+                    "is not continuous.")
+            cov2.ref <- NA
+          }
+        }
+        cov.ref <- c(cov.ref, cov2.ref)
+        ##
+        if (isCol(data2, "x3")) {
+          if (missing(cov3.ref)) {
+            if (is.numeric(data2$x3)&!(all(data2$x3<1)&all(data2$x3>0)))
+              cov3.ref <- min(data2$x3, na.rm = TRUE)
+            else
+              cov3.ref <- NA
+          }
+          else {
+            if (length(cov3.ref) != 1)
+              stop("Argument 'cov3.ref' must be of length 1.")
+            ##
+            if (!is.numeric(data2$x3)|(all(data2$x3<1)&all(data2$x3>0)) &!is.na(cov3.ref)) {
+              warning("Argument 'cov3.ref' set to NA as first covariate ",
+                      "is not continuous.")
+              cov3.ref <- NA
+            }
+          }
+        }
+        cov.ref <- c(cov.ref, cov3.ref)
+      }
+    }
+  } else if(!is.null(prt.data)&is.null(std.data)|missing(std.data)){ # only IPDs
+    if (isCol(data1, "x1")) {
+      if (missing(cov1.ref)) {
+        if (is.numeric(data1$x1))
+          cov1.ref <- min(data1$x1, na.rm = TRUE)
+        else
+          cov1.ref <- NA
+      }
+      else {
+        if (length(cov1.ref) != 1)
+          stop("Argument 'cov1.ref' must be of length 1.")
+        ##
+        if (!is.numeric(data1$x1) & !is.na(cov1.ref)) {
+          warning("Argument 'cov1.ref' set to NA as first covariate ",
+                  "is not continuous.")
+          cov1.ref <- NA
+        }
+      }
+      cov.ref <- cov1.ref
+      ##
+      if (isCol(data1, "x2")) {
+        if (missing(cov2.ref)) {
+          if (is.numeric(data1$x2))
+            cov2.ref <- min(data1$x2, na.rm = TRUE)
+          else
+            cov2.ref <- NA
+        }
+        else {
+          if (length(cov2.ref) != 1)
+            stop("Argument 'cov2.ref' must be of length 1.")
+          ##
+          if (!is.numeric(data1$x2)  & !is.na(cov2.ref)) {
+            warning("Argument 'cov2.ref' set to NA as first covariate ",
+                    "is not continuous.")
+            cov2.ref <- NA
+          }
+        }
+        cov.ref <- c(cov.ref, cov2.ref)
+        ##
+        if (isCol(data1, "x3")) {
+          if (missing(cov3.ref)) {
+            if (is.numeric(data1$x3))
+              cov3.ref <- min(data1$x3, na.rm = TRUE)
+            else
+              cov3.ref <- NA
+          }
+          else {
+            if (length(cov3.ref) != 1)
+              stop("Argument 'cov3.ref' must be of length 1.")
+            ##
+            if (!is.numeric(data1$x3) & !is.na(cov3.ref)) {
+              warning("Argument 'cov3.ref' set to NA as first covariate ",
+                      "is not continuous.")
+              cov3.ref <- NA
+            }
+          }
+        }
+        cov.ref <- c(cov.ref, cov3.ref)
+      }
+    }
+  } else{
+    stop("Either the individual participant dataset (prt.data) or the study-level dataset (std.data) should be provided")
   }
+  # if (isCol(data1, "x1")|isCol(data2, "x1")) {
+  #   if (missing(cov1.ref)) {
+  #     if (is.numeric(data1$x1) & is.numeric(data2$x1))
+  #       cov1.ref <- min(c(min(data1$x1, na.rm = TRUE),
+  #                         min(data2$x1, na.rm = TRUE)))
+  #     else
+  #       cov1.ref <- NA
+  #   }
+  #   else {
+  #     if (length(cov1.ref) != 1)
+  #       stop("Argument 'cov1.ref' must be of length 1.")
+  #     ##
+  #     if (!(is.numeric(data1$x1) & is.numeric(data2$x1)) & !is.na(cov1.ref)) {
+  #       warning("Argument 'cov1.ref' set to NA as first covariate ",
+  #               "is not continuous.")
+  #       cov1.ref <- NA
+  #     }
+  #   }
+  #   cov.ref <- cov1.ref
+  #   ##
+  #   if (isCol(data1, "x2")|isCol(data2, "x2")) {
+  #     if (missing(cov2.ref)) {
+  #       if (is.numeric(data1$x2) & is.numeric(data2$x2))
+  #         cov2.ref <- min(c(min(data1$x2, na.rm = TRUE),
+  #                           min(data2$x2, na.rm = TRUE)))
+  #       else
+  #         cov2.ref <- NA
+  #     }
+  #     else {
+  #       if (length(cov2.ref) != 1)
+  #         stop("Argument 'cov2.ref' must be of length 1.")
+  #       ##
+  #       if (!(is.numeric(data1$x2) & is.numeric(data2$x2)) & !is.na(cov2.ref)) {
+  #         warning("Argument 'cov2.ref' set to NA as first covariate ",
+  #                 "is not continuous.")
+  #         cov2.ref <- NA
+  #       }
+  #     }
+  #     cov.ref <- c(cov.ref, cov2.ref)
+  #     ##
+  #     if (isCol(data1, "x3")|isCol(data2, "x3")) {
+  #       if (missing(cov3.ref)) {
+  #         if (is.numeric(data1$x3) & is.numeric(data2$x3))
+  #           cov3.ref <- min(c(min(data1$x3, na.rm = TRUE),
+  #                             min(data2$x3, na.rm = TRUE)))
+  #         else
+  #           cov3.ref <- NA
+  #       }
+  #       else {
+  #         if (length(cov3.ref) != 1)
+  #           stop("Argument 'cov3.ref' must be of length 1.")
+  #         ##
+  #         if (!(is.numeric(data1$x3) & is.numeric(data2$x3)) &
+  #             !is.na(cov3.ref)) {
+  #           warning("Argument 'cov3.ref' set to NA as first covariate ",
+  #                   "is not continuous.")
+  #           cov3.ref <- NA
+  #         }
+  #       }
+  #     }
+  #     cov.ref <- c(cov.ref, cov3.ref)
+  #   }
+  # }
   ##
   cov1.labels <- NULL
   cov2.labels <- NULL
