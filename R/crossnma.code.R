@@ -669,7 +669,7 @@ crossnma.code <- function(ipd = T,
       }else{
         adjust.prior <- paste0(gamma.effect,"
                       # bias adjustment
-                      for (j in 1:(ns.ipd+ns.ad)) {logit(pi[j]) <- a+b*xbias[j]}
+                      for (j in 1:(ns.ipd+ns.ad)) {logit(pi[bias_index[j]]) <- a+b*xbias[j]}
                                a~dnorm(0,1e-2)
                                b~dnorm(0,1e-2)"
         )
