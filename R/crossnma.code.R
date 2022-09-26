@@ -1,5 +1,6 @@
 crossnma.code <- function(ipd = T,
                           ad = T,
+                          #! sm="OR", # NULL
                           trt.effect='random',
                           prior.tau.trt=NULL,
                           # -------- meta-regression
@@ -783,7 +784,38 @@ crossnma.code <- function(ipd = T,
   }else{
     message("The data is analyzed assuming the studies has the same design")
   }
+  #! #-------------------------------------------------#
+  #------  Set up the likelihood and the link  ------#
+  #-------------------------------------------------#
 
+  #! if(sm=="OR"){
+  # like.str.ipd <- " y[i]~dbern(p[i]) # bernoulli likelihood"
+  # link.str.ipd <- "logit(p[i]) <- u[study[i]]+theta[study[i],trt[i]]"
+  # like.str.ad <- " r[j,k] ~ dbin(pa[j,t.ad[j,k]],n[j,k]) # binomial likelihood of number of events"
+  # link.ref.str.ad <- "logit(pa[j,t.ad[j,1]]) <- u[j+ns.ipd]   # Log odds at referent arm"
+  # link.str.ad <-"logit(pa[j,t.ad[j,k]]) <- u[j+ns.ipd]+(theta[j+ns.ipd,t.ad[j,k]])"
+  #
+  # } else if(sm=="MD") {
+  # like.str.ipd <- " y[i]~dnorm(delta[i],prec.delta.ipd[study[i],trt[i]]) # bernoulli likelihood"
+  # link.str.ipd <- "delta[i] <- u[study[i]]+(theta[study[i],trt[i]])
+  #prec.delta.ipd[study[i],trt[i]] <- pow(sd[study[i],trt[i]],-2)"
+  #
+  # like.str.ad <- " ybar[j,k] ~ dnorm(delta.ad[j,t.ad[j,k]],prec.delta.ad[j,k]) # binomial likelihood of number of events
+  # prec.delta.ad[j,k] <- pow(se[j,k],-2)"
+  # link.ref.str.ad <- "delta.ad[j,t.ad[j,k]] <- u[j+ns.ipd]   # link function at referent arm"
+  # link.str.ad <-"delta.ad[j,t.ad[j,k]] <- u[j+ns.ipd]+(theta[j+ns.ipd,t.ad[j,k]])"
+  #
+  # }else if(sm=="SMD") {
+  # like.str.ipd <- " y[i]~dnorm(phi[i],prec.delta.ad[study[i],trt[i]]) # bernoulli likelihood"
+  # link.str.ipd <- "phi[i] <- delta[i]*s.pool.ipd[study[i]]
+  # delta[i] <- u[study[i]]+theta[study[i],trt[i]]
+  #prec.delta.ad[study[i],trt[i]] <- pow(sd[study[i],trt[i]],-2)"
+  # like.str.ad <- " ybar[j,k] ~ dnorm(phi.ad[j,t.ad[j,k]],prec.delta.ad[j,k]) # binomial likelihood of number of events
+  # phi.ad[j,t.ad[j,k]] <- delta.ad[j,t.ad[j,k]]*s.pool.ad[j]
+  # prec.delta.ad[j,k] <- pow(se[j,k],-2)"
+  # link.ref.str.ad <- "delta.ad[j,t.ad[j,k]] <- u[j+ns.ipd]*s.pool.ad[j]   # link function at referent arm"
+  # link.str.ad <-"delta.ad[j,t.ad[j,k]] <- u[j+ns.ipd]+(theta[j+ns.ipd,t.ad[j,k]])"
+  # }
 
   #### Combine the code
 
