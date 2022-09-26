@@ -1,16 +1,14 @@
-crossnma.code <- function(ipd = T,
-                          ad = T,
+crossnma.code <- function(ipd = TRUE,
+                          ad = TRUE,
                           #! sm="OR", # NULL
                           trt.effect='random',
                           prior.tau.trt=NULL,
                           # -------- meta-regression
-                          split.regcoef =F,
+                          split.regcoef =FALSE,
                           covariate=NULL,
-
                           reg0.effect='random',
                           regb.effect='random',
                           regw.effect='random',
-
                           prior.tau.reg0=NULL,
                           prior.tau.regb=NULL,
                           prior.tau.regw=NULL,
@@ -21,15 +19,12 @@ crossnma.code <- function(ipd = T,
                           add.std.in=NULL,
                           add.std.act.no=NULL,
                           add.std.act.yes=NULL,
-
                           prior.tau.gamma=NULL,
                           v=NULL,
-
                           prior.pi.high.rct=NULL,
                           prior.pi.low.rct=NULL,
                           prior.pi.high.nrs=NULL,
                           prior.pi.low.nrs=NULL,
-
                           method.bias = NULL,
                           d.prior.nrs=NULL # required when method.bias='prior'
 ) {
@@ -247,19 +242,21 @@ crossnma.code <- function(ipd = T,
         metareg.str.ad <- paste0(metareg.str.ad,metareg.str.ad0)
         betab.consis.ad <- paste0(betab.consis.ad," \n ",betab.consis.ad0)
       }
-      if(!split.regcoef) { # not splitted
-        if(regb.effect=='independent' &&regw.effect=='independent'){
-          beta.prior.ad0 <- paste0("
-            # Random effect for beta (within=between)
-            beta.t_",i,"[1] <- 0 \n
-           for(k in 1:nt){
-           betab.t_",i,"[k] <- beta.t_",i,"[k]
-           } \n
-                     for (k in 2:nt){
-                     beta.t_",i,"[k]~dnorm(0,1e-2)
-                     }")
-          beta.prior.ad <- paste0(beta.prior.ad,beta.prior.ad0)
-        }else if(regb.effect=='random'&&regw.effect=='random'){
+      if (!split.regcoef) { # not splitted
+        if (regb.effect == 'independent' && regw.effect == 'independent') {
+          beta.prior.ad0 <-
+            paste0("\n\n# Random effect for beta (within=between)
+    beta.t_", i, "[1] <- 0
+    for (k in 1:nt) {
+      betab.t_", i, "[k] <- beta.t_", i, "[k]
+    }
+    for (k in 2:nt) {
+      beta.t_", i, "[k] ~ dnorm(0, 1e-2)
+    }")
+          ##
+          beta.prior.ad <- paste0(beta.prior.ad, beta.prior.ipd0)
+        }
+        else if (regb.effect == 'random' && regw.effect == 'random') {
           for (i in 1:length(covariate[[1]])) {
             beta.prior.ad0 <- paste0("
             # Random effects for beta (within=between)
