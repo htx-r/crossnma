@@ -1,21 +1,19 @@
-#' Print summary of cross-design & -format network meta-analysis or
-#' regression
+#' Print call used to create JAGS model for cross-design & -format
+#' network meta-analysis or regression
 #' 
 #' @description
-#' Print summary results for cross-design and cross-format network
-#' meta-analysis or meta-regression
+#' Print call used to create JAGS model for cross-design & -format
+#' network meta-analysis or regression
 #' 
 #' @param x An object of class \code{crossnma}.
-#' @param digits The number of significant digits printed. The default
-#'   value is 3.
-#' @param \dots Additional arguments.
+#' @param \dots Additional arguments (ignored).
 #'
 #' @return
 #' No return value (print function).
 #' 
-#' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch}
+#' @author Guido Schwarzer \email{sc@@imbi.uni-freiburg.de}
 #'
-#' @seealso \code{\link{summary.crossnma}}
+#' @seealso \code{\link{crossnma}}
 #' 
 #' @keywords print
 #' 
@@ -31,26 +29,25 @@
 #' mod <- crossnma.model(treat, id, relapse, n, design,
 #'   prt.data = ipddata, std.data = stddata,
 #'   reference = "A", trt.effect = "random", method.bias = "naive")
-#'
+#' 
 #' # Fit JAGS model
 #' # (suppress warning 'Adaptation incomplete' due to n.adapt = 20)
 #' fit <-
 #'   suppressWarnings(crossnma(mod, n.adapt = 20,
 #'     n.iter = 50, thin = 1, n.chains = 3))
+#' fit
 #'
-#' # Display the output (with 5 digits)
-#' print(summary(fit), digits = 5)
-#' 
-#' @method print summary.crossnma
+#' @method print crossnma
 #' @export
 
 
-print.summary.crossnma <- function(x, digits = 3, ...) {
-  
-  if (attr(x, "exp"))
-    message("Mean and quantiles are exponentiated")
-  
-  prmatrix(round(x, digits = digits), quote = FALSE, right = TRUE, ...)
+print.crossnma <- function(x, ...) {
+
+  cat("Model:\n")
+  print(x$model)
+
+  cat("\nTreatment coding:\n")
+  print(x$trt.key)
   
   invisible(NULL)
 }
