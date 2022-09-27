@@ -1,5 +1,5 @@
 #' Creates a JAGS model and the needed data to perform cross NMA and
-#' NMR (dichotomous outcomes)
+#' NMR (dichotomous outcomes) (!! Check if r and n computed correctly in all.data.ad)
 #' @description This function creates a JAGS model and the needed
 #'   data. The JAGS code is created from the internal function
 #'   \code{crossnma.code}.
@@ -1645,35 +1645,36 @@ crossnma.model <- function(trt,
 
   # aggregate IPD dataset
   if (!is.null(data1)&!is.null(data2)){
-    prt.data.ad <- data1%>%arrange(study,trt)%>% group_by(study,trt)%>%
-      do(r=sum(.$r),
-         n=nrow(.),
-         design=unique(.$design)
-      )%>%unnest(cols=c(r,n,design))%>%as.data.frame()
-
-
-    # prt.data.ad0 <- sapply(1:length(unique(data1$study)),
-    #                        function(i){
-    #                          with(data1,
-    #                               data.frame(
-    #                                 study=unique(data1$study)[i],
-    #                                 trt=unique(data1[data1$study==unique(data1$study)[i],]$trt),
-    #                                 r=sum(data1[data1$study==unique(data1$study)[i],]$r),
-    #                                 n =nrow(data1[data1$study==unique(data1$study)[i],]),
-    #                                 design=unique(data1[data1$study==unique(data1$study)[i],]$design)
-    #                               )
-    #                          )
-    #                        }, simplify = F)
-    # prt.data.ad <- do.call(rbind,prt.data.ad0)
+    prt.data.ad0 <- sapply(1:length(unique(data1$study)),
+                           function(i){
+                             with(data1,
+                                  data.frame(
+                                    study=unique(data1$study)[i],
+                                    trt=unique(data1[data1$study==unique(data1$study)[i],]$trt),
+                                    r=sum(data1[data1$study==unique(data1$study)[i],]$r),
+                                    n =nrow(data1[data1$study==unique(data1$study)[i],]),
+                                    design=unique(data1[data1$study==unique(data1$study)[i],]$design)
+                                  )
+                             )
+                           }, simplify = F)
+    prt.data.ad <- do.call(rbind,prt.data.ad0)
 
     # combine IPD and AD in a single dataset
     all.data.ad <- rbind(data2[c('study','trt','r','n','design')],prt.data.ad)
   } else if (!is.null(data1)){
-    prt.data.ad <- data1%>%arrange(study,trt)%>% group_by(study,trt)%>%
-      do(r=sum(.$r),
-         n=nrow(.),
-         design=unique(.$design)
-      )%>%unnest(cols=c(r,n,design))%>%as.data.frame()
+    prt.data.ad0 <- sapply(1:length(unique(data1$study)),
+                           function(i){
+                             with(data1,
+                                  data.frame(
+                                    study=unique(data1$study)[i],
+                                    trt=unique(data1[data1$study==unique(data1$study)[i],]$trt),
+                                    r=sum(data1[data1$study==unique(data1$study)[i],]$r),
+                                    n =nrow(data1[data1$study==unique(data1$study)[i],]),
+                                    design=unique(data1[data1$study==unique(data1$study)[i],]$design)
+                                  )
+                             )
+                           }, simplify = F)
+    prt.data.ad <- do.call(rbind,prt.data.ad0)
     all.data.ad <- prt.data.ad
   } else if (!is.null(data2)){
     all.data.ad <- data2[c('study','trt','r','n','design')]
