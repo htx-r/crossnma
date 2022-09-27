@@ -18,21 +18,21 @@
 #'   conduct network meta-regression (see Details).
 #' @param cov3 Optional third covariate in prt.data and std.data to
 #'   conduct network meta-regression (see Details).
-#' @param bias Variable with information on risk of bias in prt.data
-#'   and std.data (can be provided when method.bias = 'adjust1' or
+#' @param bias An optional variable with information on risk of bias in prt.data
+#'   and std.data (should be provided when method.bias = 'adjust1' or
 #'   'adjust2'). Possible values of this variable are 'low', 'high' or
 #'   'unclear' (can be abbreviated). These values must be identical
 #'   for all participants from the same study.
-#' @param unfav Variable in prt.data and std.data indicating the
-#'   unfavored treatment in each study (can be provided when
+#' @param unfav An optional variable in prt.data and std.data indicating the
+#'   unfavored treatment in each study (should be provided when
 #'   method.bias = 'adjust1' or 'adjust2'). The entries of this
 #'   variable are either 0 (unfavored treatment) or 1 (favorable
 #'   treatment or treatments). Each study should include only one 0
 #'   entry. The values need to be repeated for participants who take
 #'   the same treatment.
-#' @param bias.covariate Variable in prt.data and std.data used to
-#'   estimate the probability of bias (can be provided when
-#'   method.bias = 'adjust1' or 'adjust2').
+#' @param bias.covariate An optional variable in prt.data and std.data indicate
+#'   the covariate  used to estimate the probability of bias (can be provided
+#'   when method.bias = 'adjust1' or 'adjust2').
 #' @param bias.group An optional variable in prt.data and std.data
 #'   that indicates the bias effect in each study (can be provided
 #'   when method.bias = 'adjust1' or 'adjust2'). The entries of these
@@ -73,19 +73,19 @@
 #'   which is only useful for a continuous covariate. Dichotomous
 #'   covariates should be given NA value. The default is the overall
 #'   minimum covariate value from all studies.
-#' @param reg0.effect An optional character (needed when at least
+#' @param reg0.effect An optional character (can by provided when at least
 #'   \code{cov1} is not NULL) indicating the relationship across
 #'   studies for the prognostic effects expressed by the regression
 #'   coefficient, (\eqn{\beta_0}), in a study \eqn{j}.  Options are
 #'   'independent' or 'random'. We recommend using 'independent'
 #'   (default).
-#' @param regb.effect An optional character (needed when at least
+#' @param regb.effect An optional character (can by provided when at least
 #'   \code{cov1} is not NULL) indicating the relationship across
 #'   treatments for the between-study regression coefficient
 #'   (\eqn{\beta^B}). This parameter quantifies the treatment-mean
 #'   covariate interaction.  Options are 'independent', 'random' or
 #'   'common'. Default is 'random'.
-#' @param regw.effect An optional character (needed when at least
+#' @param regw.effect An optional character (can by provided when at least
 #'   \code{cov1} is not NULL) indicating the relationship across
 #'   treatments for the within-study regression coefficient
 #'   (\eqn{\beta^W}). This parameter quantifies the
@@ -110,14 +110,14 @@
 #'   available (either rct or nrs), this argument needs also to be
 #'   specified to indicate whether unadjusted (naive) or bias-adjusted
 #'   analysis (adjust1 or adjust2) should be applied.
-#' @param bias.type An optional character defining of bias on the
-#'   treatment effect (required when method.bias='adjust1').  Three
+#' @param bias.type An optional character defining the relationship between
+#'   the bias effect and the treatment effect (required when method.bias='adjust1').  Three
 #'   options are possible: 'add' to add the additive bias
 #'   effect,'mult' for multiplicative bias effect and 'both' includes
 #'   both an additive and a multiplicative terms.
 #' @param bias.effect An optional character indicating the
 #'   relationship for the bias coefficients across studies.  Options
-#'   are 'random' or 'common' (default). It is required when
+#'   are 'random' or 'common' (default). It can be provided when
 #'   method.bias='adjust1' or 'adjust2'.
 #' @param down.wgt An optional numeric indicating the percent to which
 #'   studies at high risk of bias will be downweighted on average. The
@@ -128,7 +128,7 @@
 #'   can set the heterogeneity parameters for: tau.trt for the
 #'   treatment effects, tau.reg0 for the effect of prognostic
 #'   covariates, tau.regb and tau.regw for within- and between-study
-#'   covariate effect, respectively.  and tau.gamma for bias
+#'   covariate effect, respectively and tau.gamma for bias
 #'   effect. The default of all heterogeneity parameters is
 #'   'dunif(0,2)'. Currently only the uniform distribution is
 #'   supported.  When the method.bias= 'adjust1' or 'adjust2', the
@@ -138,7 +138,7 @@
 #'   (pi.low.rct='dbeta(1,10)'), high (pi.high.rct='dbeta(10,1)')
 #'   bias, NRS with low (pi.low.rct='dbeta(1,30)') / high
 #'   (pi.high.rct='dbeta(30,1)') bias (pi.low.nrs, pi.high.nrs).
-#' @param run.nrs An optional list is needed when the NRS used as a
+#' @param run.nrs An optional list can be provided when the NRS used as a
 #'   prior (method.bias='prior').  The list consists of the following:
 #'   (\code{var.infl}) controls the common inflation of the variance
 #'   of NRS estimates (\eqn{w}) and its values range between 0 (NRS
@@ -259,6 +259,8 @@ crossnma.model <- function(trt,
                            prt.data = NULL,
                            std.data = NULL,
                            ##
+                           #! sm="OR" A character string indicating underlying summary measure, eg "OR", "MD" or "SMD"
+                           ##
                            reference=NULL,
                            trt.effect = 'random',
                            ## ---------- meta regression ----------
@@ -306,6 +308,8 @@ crossnma.model <- function(trt,
     stop("Mandatory argument 'outcome' missing.")
   if (missing(design))
     stop("Mandatory argument 'design' missing.")
+  #! if(sm %in% c("MD","SMD")& missing(sd))
+  #!  stop("Mandatory argument for continuous outcome 'sd' missing.")
   ##
   trt.effect <- setchar(trt.effect, c("common", "random"))
   ##
@@ -397,8 +401,13 @@ crossnma.model <- function(trt,
       study <- as.character(study)
     ##
     outcome <- catch("outcome", mc, prt.data, sfsp)
-    if (!is.numeric(outcome) | any(!outcome %in% 0:1))
+    if (!is.numeric(outcome) | any(!outcome %in% 0:1)) #! sm=="OR"& .. Binary outcome values ...
       stop("Outcome values must be either 0 or 1 (IPD dataset).")
+
+    #! sd <- catch("sd", mc, prt.data, sfsp)
+    # if(sm%in% c("MD", "SMD")&&is.null(sd)|missing(sd))
+    # stop("Argument 'sd' must be provided for continuous outcome when",
+    # 'sm=\"MD\" or \"SMD\" (IPD dataset).')
     ##
     design <- catch("design", mc, prt.data, sfsp)
     design <- as.character(design)
@@ -411,16 +420,29 @@ crossnma.model <- function(trt,
     if (is.null(bias) && !is.null(method.bias) &&
         method.bias %in% c("adjust1", "adjust2"))
       stop("Argument 'bias' must be provided if ",
-           "method.bias = \"adjust1\" (IPD dataset).")
+           "method.bias = \"adjust1\" or \"adjust2\" (IPD dataset).")
     ##
     bias.covariate <- catch("bias.covariate", mc, prt.data, sfsp)
     bias.group <- catch("bias.group", mc, prt.data, sfsp)
     unfav <- catch("unfav", mc, prt.data, sfsp)
+    if (is.null(unfav) && !is.null(method.bias) &&
+        method.bias %in% c("adjust1", "adjust2"))
+      stop("Argument 'unfav' must be provided if ",
+           "method.bias = \"adjust1\" or \"adjust2\" (IPD dataset).")
     ##
     data11 <- data.frame(trt = trt, study = study,
                          r = outcome,
                          design = design,
                          stringsAsFactors = FALSE)
+     #! Add sd for continuous outcome
+    # if(sm%in% c("MD", "SMD")) data11$sd <- sd
+    # trt is a charachter and data11$trt is factor! we should convert trt to charachter after we put it in a dataset, I do the same for all factors
+   # if (is.factor(data11$trt))
+    #  data11$trt <- as.character(data11$trt)
+    #if (is.factor(data11$study))
+    #  data11$study <- as.character(data11$study)
+    #if (is.factor(data11$design))
+    #  data11$design <- as.character(data11$design)
     ##
     if (!is.null(bias)) {
       bias <- as.character(bias)
@@ -459,7 +481,8 @@ crossnma.model <- function(trt,
     ## Delete NAs
     ##
     nam <-
-      c("trt", "study", "outcome", "design", "bias", "unfav", "bias.group")
+      c("trt", "study", "outcome", "design", "bias", "unfav", "bias.group") #! ,"sd"
+
     nam <- nam[nam %in% names(data11)]
     excl1 <- apply(is.na(data11[, nam]), 1, anyNA)
     if (any(excl1))
@@ -505,6 +528,10 @@ crossnma.model <- function(trt,
 
     if (missing(outcome))
       stop("Mandatory argument 'outcome' missing.")
+    #! sd <- catch("sd", mc, std.data, sfsp)
+    # if(sm%in% c("MD", "SMD")&&is.null(sd)|missing(sd))
+    # stop("Argument 'sd' must be provided for continuous outcome when",
+    # 'sm=\"MD\" or \"SMD\" (AD dataset).')
 
     trt <- catch("trt", mc, std.data, sfsp)
     if (is.factor(trt))
@@ -538,16 +565,31 @@ crossnma.model <- function(trt,
     if (is.null(bias) && !is.null(method.bias) &&
         method.bias %in% c("adjust1", "adjust2"))
       stop("Argument 'bias' must be provided if ",
-           "method.bias = \"adjust1\" (study-level dataset).")
+           "method.bias = \"adjust1\" or \"adjust2\" (study-level dataset).")
     ##
     bias.covariate <- catch("bias.covariate", mc, std.data, sfsp)
     bias.group <- catch("bias.group", mc, std.data, sfsp)
     unfav <- catch("unfav", mc, std.data, sfsp)
+    if (is.null(unfav) && !is.null(method.bias) &&
+        method.bias %in% c("adjust1", "adjust2"))
+      stop("Argument 'unfav' must be provided if ",
+           "method.bias = \"adjust1\" or \"adjust2\" (study-level dataset).")
+
     ##
     data22 <- data.frame(trt = trt, study = study,
                          r = outcome, n = n,
                          design = design,
                          stringsAsFactors = FALSE)
+    #! Add sd for continuous outcome
+    # if(sm%in% c("MD", "SMD")) data22$sd <- sd
+
+    # (delete if not needed because stringsAsFactors is enough )
+    #if (is.factor(data22$trt))
+    #  data22$trt <- as.character(data22$trt)
+    #if (is.factor(data22$study))
+     # data22$study <- as.character(data22$study)
+
+
     ##
     if (!is.null(bias)) {
       bias <- as.character(bias)
@@ -586,8 +628,9 @@ crossnma.model <- function(trt,
     ##
     ## Delete NAs
     ##
-    nam <- c("trt", "study", "outcome", "n", "design", "bias", "unfav",
+    nam <- c("trt", "study", "outcome", "n", "design", "bias", "unfav", #! ,"sd"
              "bias.group")
+
     nam <- nam[nam %in% names(data22)]
     excl2 <- apply(is.na(data22[, nam]), 1, anyNA)
     if (any(excl2))
@@ -669,70 +712,257 @@ crossnma.model <- function(trt,
   cov.ref <- NULL
   ##
   ## Set reference covariate values if missing
-  if (isCol(data1, "x1")) {
-    if (missing(cov1.ref)) {
-      if (is.numeric(data1$x1) & is.numeric(data2$x1))
-        cov1.ref <- min(c(min(data1$x1, na.rm = TRUE),
-                          min(data2$x1, na.rm = TRUE)))
-      else
-        cov1.ref <- NA
-    }
-    else {
-      if (length(cov1.ref) != 1)
-        stop("Argument 'cov1.ref' must be of length 1.")
-      ##
-      if (!(is.numeric(data1$x1) & is.numeric(data2$x1)) & !is.na(cov1.ref)) {
-        warning("Argument 'cov1.ref' set to NA as first covariate ",
-                "is not continuous.")
-        cov1.ref <- NA
-      }
-    }
-    cov.ref <- cov1.ref
-    ##
-    if (isCol(data1, "x2")) {
-      if (missing(cov2.ref)) {
-        if (is.numeric(data1$x2) & is.numeric(data2$x2))
-          cov2.ref <- min(c(min(data1$x2, na.rm = TRUE),
-                            min(data2$x2, na.rm = TRUE)))
+  if(!is.null(prt.data)&!is.null(std.data)){ # IPD and AD are provided
+    if (isCol(data1, "x1")&isCol(data2, "x1")) {
+      if (missing(cov1.ref)) {
+        if (is.numeric(data1$x1) & is.numeric(data2$x1)&!(all(data2$x1<1)&all(data2$x1>0)))
+          cov1.ref <- min(c(min(data1$x1, na.rm = TRUE),
+                            min(data2$x1, na.rm = TRUE)))
         else
-          cov2.ref <- NA
+          cov1.ref <- NA
       }
       else {
-        if (length(cov2.ref) != 1)
-          stop("Argument 'cov2.ref' must be of length 1.")
+        if (length(cov1.ref) != 1)
+          stop("Argument 'cov1.ref' must be of length 1.")
         ##
-        if (!(is.numeric(data1$x2) & is.numeric(data2$x2)) &
-            !is.na(cov2.ref)) {
-          warning("Argument 'cov2.ref' set to NA as first covariate ",
+        if (!(is.numeric(data1$x1) & is.numeric(data2$x1)) & !is.na(cov1.ref)) {
+          warning("Argument 'cov1.ref' set to NA as first covariate ",
                   "is not continuous.")
-          cov2.ref <- NA
+          cov1.ref <- NA
         }
       }
-      cov.ref <- c(cov.ref, cov2.ref)
+      cov.ref <- cov1.ref
       ##
-      if (isCol(data1, "x3")) {
-        if (missing(cov3.ref)) {
-          if (is.numeric(data1$x3) & is.numeric(data2$x3))
-            cov3.ref <- min(c(min(data1$x3, na.rm = TRUE),
-                              min(data2$x3, na.rm = TRUE)))
+      if (isCol(data1, "x2")&isCol(data2, "x2")) {
+        if (missing(cov2.ref)) {
+          if (is.numeric(data1$x2) & is.numeric(data2$x2)&!(all(data2$x2<1)&all(data2$x2>0)))
+            cov2.ref <- min(c(min(data1$x2, na.rm = TRUE),
+                              min(data2$x2, na.rm = TRUE)))
           else
-            cov3.ref <- NA
+            cov2.ref <- NA
         }
         else {
-          if (length(cov3.ref) != 1)
-            stop("Argument 'cov3.ref' must be of length 1.")
+          if (length(cov2.ref) != 1)
+            stop("Argument 'cov2.ref' must be of length 1.")
           ##
-          if (!(is.numeric(data1$x3) & is.numeric(data2$x3)) &
-              !is.na(cov3.ref)) {
-            warning("Argument 'cov3.ref' set to NA as first covariate ",
+          if (!(is.numeric(data1$x2) & is.numeric(data2$x2)) & !is.na(cov2.ref)) {
+            warning("Argument 'cov2.ref' set to NA as first covariate ",
                     "is not continuous.")
-            cov3.ref <- NA
+            cov2.ref <- NA
           }
         }
+        cov.ref <- c(cov.ref, cov2.ref)
+        ##
+        if (isCol(data1, "x3")&isCol(data2, "x3")) {
+          if (missing(cov3.ref)) {
+            if (is.numeric(data1$x3) & is.numeric(data2$x3)&!(all(data2$x3<1)&all(data2$x3>0)))
+              cov3.ref <- min(c(min(data1$x3, na.rm = TRUE),
+                                min(data2$x3, na.rm = TRUE)))
+            else
+              cov3.ref <- NA
+          }
+          else {
+            if (length(cov3.ref) != 1)
+              stop("Argument 'cov3.ref' must be of length 1.")
+            ##
+            if (!(is.numeric(data1$x3) & is.numeric(data2$x3)) & !is.na(cov3.ref)) {
+              warning("Argument 'cov3.ref' set to NA as first covariate ",
+                      "is not continuous.")
+              cov3.ref <- NA
+            }
+          }
+        }
+        cov.ref <- c(cov.ref, cov3.ref)
       }
-      cov.ref <- c(cov.ref, cov3.ref)
     }
+  } else if(is.null(prt.data)|missing(prt.data)&!is.null(std.data)) { # only ADs
+    if (isCol(data2, "x1")) {
+      if (missing(cov1.ref)) {
+        if (is.numeric(data2$x1)&!(all(data2$x1<1)&all(data2$x1>0)))
+          cov1.ref <- min(data2$x1, na.rm = TRUE)
+        else
+          cov1.ref <- NA
+      }
+      else {
+        if (length(cov1.ref) != 1)
+          stop("Argument 'cov1.ref' must be of length 1.")
+        ##
+        if (!is.numeric(data2$x1)|(all(data2$x1<1)&all(data2$x1>0)) & !is.na(cov1.ref)) {
+          warning("Argument 'cov1.ref' set to NA as first covariate ",
+                  "is not continuous.")
+          cov1.ref <- NA
+        }
+      }
+      cov.ref <- cov1.ref
+      ##
+      if (isCol(data2, "x2")) {
+        if (missing(cov2.ref)) {
+          if (is.numeric(data2$x2)&!(all(data2$x2<1)&all(data2$x2>0)))
+            cov2.ref <- min(data2$x2, na.rm = TRUE)
+          else
+            cov2.ref <- NA
+        }
+        else {
+          if (length(cov2.ref) != 1)
+            stop("Argument 'cov2.ref' must be of length 1.")
+          ##
+          if (!is.numeric(data2$x2)|(all(data2$x2<1)&all(data2$x2>0)) & !is.na(cov2.ref)) {
+            warning("Argument 'cov2.ref' set to NA as first covariate ",
+                    "is not continuous.")
+            cov2.ref <- NA
+          }
+        }
+        cov.ref <- c(cov.ref, cov2.ref)
+        ##
+        if (isCol(data2, "x3")) {
+          if (missing(cov3.ref)) {
+            if (is.numeric(data2$x3)&!(all(data2$x3<1)&all(data2$x3>0)))
+              cov3.ref <- min(data2$x3, na.rm = TRUE)
+            else
+              cov3.ref <- NA
+          }
+          else {
+            if (length(cov3.ref) != 1)
+              stop("Argument 'cov3.ref' must be of length 1.")
+            ##
+            if (!is.numeric(data2$x3)|(all(data2$x3<1)&all(data2$x3>0)) &!is.na(cov3.ref)) {
+              warning("Argument 'cov3.ref' set to NA as first covariate ",
+                      "is not continuous.")
+              cov3.ref <- NA
+            }
+          }
+        }
+        cov.ref <- c(cov.ref, cov3.ref)
+      }
+    }
+  } else if(!is.null(prt.data)&is.null(std.data)|missing(std.data)){ # only IPDs
+    if (isCol(data1, "x1")) {
+      if (missing(cov1.ref)) {
+        if (is.numeric(data1$x1))
+          cov1.ref <- min(data1$x1, na.rm = TRUE)
+        else
+          cov1.ref <- NA
+      }
+      else {
+        if (length(cov1.ref) != 1)
+          stop("Argument 'cov1.ref' must be of length 1.")
+        ##
+
+        if (!is.numeric(data1$x1) & !is.na(cov1.ref)) {
+          warning("Argument 'cov1.ref' set to NA as first covariate ",
+
+                  "is not continuous.")
+          cov1.ref <- NA
+        }
+      }
+      cov.ref <- cov1.ref
+      ##
+      if (isCol(data1, "x2")) {
+        if (missing(cov2.ref)) {
+          if (is.numeric(data1$x2))
+            cov2.ref <- min(data1$x2, na.rm = TRUE)
+          else
+            cov2.ref <- NA
+        }
+        else {
+          if (length(cov2.ref) != 1)
+            stop("Argument 'cov2.ref' must be of length 1.")
+          ##
+          if (!is.numeric(data1$x2)  & !is.na(cov2.ref)) {
+            warning("Argument 'cov2.ref' set to NA as first covariate ",
+                    "is not continuous.")
+            cov2.ref <- NA
+          }
+        }
+        cov.ref <- c(cov.ref, cov2.ref)
+        ##
+        if (isCol(data1, "x3")) {
+          if (missing(cov3.ref)) {
+            if (is.numeric(data1$x3))
+              cov3.ref <- min(data1$x3, na.rm = TRUE)
+            else
+              cov3.ref <- NA
+          }
+          else {
+            if (length(cov3.ref) != 1)
+              stop("Argument 'cov3.ref' must be of length 1.")
+            ##
+            if (!is.numeric(data1$x3) & !is.na(cov3.ref)) {
+              warning("Argument 'cov3.ref' set to NA as first covariate ",
+                      "is not continuous.")
+              cov3.ref <- NA
+            }
+          }
+        }
+        cov.ref <- c(cov.ref, cov3.ref)
+      }
+    }
+  } else{
+    stop("Either the individual participant dataset (prt.data) or the study-level dataset (std.data) should be provided")
   }
+  # if (isCol(data1, "x1")|isCol(data2, "x1")) {
+  #   if (missing(cov1.ref)) {
+  #     if (is.numeric(data1$x1) & is.numeric(data2$x1))
+  #       cov1.ref <- min(c(min(data1$x1, na.rm = TRUE),
+  #                         min(data2$x1, na.rm = TRUE)))
+  #     else
+  #       cov1.ref <- NA
+  #   }
+  #   else {
+  #     if (length(cov1.ref) != 1)
+  #       stop("Argument 'cov1.ref' must be of length 1.")
+  #     ##
+  #     if (!(is.numeric(data1$x1) & is.numeric(data2$x1)) & !is.na(cov1.ref)) {
+  #       warning("Argument 'cov1.ref' set to NA as first covariate ",
+  #               "is not continuous.")
+  #       cov1.ref <- NA
+  #     }
+  #   }
+  #   cov.ref <- cov1.ref
+  #   ##
+  #   if (isCol(data1, "x2")|isCol(data2, "x2")) {
+  #     if (missing(cov2.ref)) {
+  #       if (is.numeric(data1$x2) & is.numeric(data2$x2))
+  #         cov2.ref <- min(c(min(data1$x2, na.rm = TRUE),
+  #                           min(data2$x2, na.rm = TRUE)))
+  #       else
+  #         cov2.ref <- NA
+  #     }
+  #     else {
+  #       if (length(cov2.ref) != 1)
+  #         stop("Argument 'cov2.ref' must be of length 1.")
+  #       ##
+  #       if (!(is.numeric(data1$x2) & is.numeric(data2$x2)) & !is.na(cov2.ref)) {
+  #         warning("Argument 'cov2.ref' set to NA as first covariate ",
+  #                 "is not continuous.")
+  #         cov2.ref <- NA
+  #       }
+  #     }
+  #     cov.ref <- c(cov.ref, cov2.ref)
+  #     ##
+  #     if (isCol(data1, "x3")|isCol(data2, "x3")) {
+  #       if (missing(cov3.ref)) {
+  #         if (is.numeric(data1$x3) & is.numeric(data2$x3))
+  #           cov3.ref <- min(c(min(data1$x3, na.rm = TRUE),
+  #                             min(data2$x3, na.rm = TRUE)))
+  #         else
+  #           cov3.ref <- NA
+  #       }
+  #       else {
+  #         if (length(cov3.ref) != 1)
+  #           stop("Argument 'cov3.ref' must be of length 1.")
+  #         ##
+  #         if (!(is.numeric(data1$x3) & is.numeric(data2$x3)) &
+  #             !is.na(cov3.ref)) {
+  #           warning("Argument 'cov3.ref' set to NA as first covariate ",
+  #                   "is not continuous.")
+  #           cov3.ref <- NA
+  #         }
+  #       }
+  #     }
+  #     cov.ref <- c(cov.ref, cov3.ref)
+  #   }
+  # }
   ##
   cov1.labels <- NULL
   cov2.labels <- NULL
@@ -986,6 +1216,17 @@ crossnma.model <- function(trt,
       for (v in names(jagstemp)) {
         jagsdata1[[v]] <- jagstemp %>% pull(v)
       }
+      #! for continuous outcome, when sm="MD" or "SMD",
+      # 1. compute sd
+      #sd_jk <- data1%>%group_by(study.jags,trt.jags)%>%select(outcome) %>%
+      # summarise_all(stats::sd)
+      #  2. make it as a matrix with dim: study X treatment arm
+      # jagsdata1$sd <- sd_jk %>% arrange(study.jags) %>% group_by(study.jags) %>%
+      # dplyr::mutate(arm = row_number()) %>%  ungroup()%>%
+      #   dplyr::select(-c(trt.jags))  %>%
+      #   gather("variable", "value",-study.jags, -arm) %>% spread(arm, value)%>%
+      #   dplyr::select(-c(study.jags,variable))%>%
+      #   as.matrix()
     }
     else {
       suppressMessages(
@@ -998,10 +1239,23 @@ crossnma.model <- function(trt,
           as.matrix())
       ## generate JAGS data object
       jagstemp <- data1 %>% select(-c(study, trt,design))
-      for (v in names(jagstemp))
+      for (v in names(jagstemp)){
         jagsdata1[[v]] <- jagstemp %>% pull(v)
     }
-    ## add number of treatments, studies, and arms to JAGS data object
+
+    # if(sm=="SMD"){
+    # s_n_jk <- data1%>% arrange(study.jags,trt.jags)%>%group_by(study.jags,trt.jags)%>%
+    #   do(sd=stats::sd(.$outcome),
+    #      n=summarize(.,n.arms = group_size(.))%>%pull(n.arms))%>%unnest(cols = c(sd,n))
+    #! for continuous outcome (doesn't matter the order of treatments)
+    #! s.pool0.ipd <- data1%>%arrange(study.jags) %>%group_by(study.jags)%>%
+    # do(num=sum(.$sd^2 * .$n),
+    #    den=sum(.$n),
+    #    na= summarize(.,n.arms = group_size(.)) %>%pull(n.arms))%>%unnest(cols=c(num,den,na))
+    # jagsdata1$s.pool.ipd <- with(s.pool0.ipd,num/(den-na))
+    # }
+
+    # add number of treatments, studies, and arms to JAGS data object
     jagsdata1$nt <- trt.key %>% nrow()
     jagsdata1$ns.ipd <-
       if (!is.null(data1))
@@ -1017,6 +1271,7 @@ crossnma.model <- function(trt,
     jagsdata1$x.bias <- NULL
 
     ## modify names in JAGS object
+
     names(jagsdata1)[names(jagsdata1) == "r"]  <- "y"
     names(jagsdata1)[names(jagsdata1) == "trt.jags"] <- "trt"
     names(jagsdata1)[names(jagsdata1) == "study.jags"] <- "study"
@@ -1215,6 +1470,12 @@ crossnma.model <- function(trt,
 
     ## generate JAGS data object
 
+    #! For continuous outcome, compute the standard error
+   # if(sm%in%c("MD","SMD")){
+   # data2$se <- data2$sd/sqrt(data2$n)
+   # }
+    # generate JAGS data object
+
     ## create the matrix of trt index following the values of unfav column (adjust 1 & 2)
     if (method.bias %in% c("adjust1", "adjust2")) {
       if (is.null(bias.group))
@@ -1236,7 +1497,6 @@ crossnma.model <- function(trt,
                   ,simplify = FALSE)
       dd2 <- do.call(rbind,dd1)
 
-
       ## create a matrix with the treatment index
       suppressMessages(
         jagstemp2 <- dd2 %>% arrange(study.jags) %>%
@@ -1252,6 +1512,7 @@ crossnma.model <- function(trt,
           jagsdata2[[v]] <-
             as.matrix(jagstemp2 %>% filter(variable == v) %>%
                       select(-study.jags, -variable)))
+
       }
     }
     else {
@@ -1270,7 +1531,13 @@ crossnma.model <- function(trt,
                       select(-study.jags, -variable)))
       }
     }
-    
+     #! for continuous outcome (doesn't matter the order of treatments)
+    #! s.pool0.ad <- data2%>%arrange(study.jags) %>%group_by(study.jags)%>%
+    # do(num=sum(.$sd^2 * .$n),
+    #    den=sum(.$n),
+    #    na= summarize(.,n.arms = group_size(.)) %>%pull(n.arms))%>%unnest(cols=c(num,den,na))
+    # jagsdata2$s.pool1.ad <- with(s.pool0.ad,num/(den-na))
+
     ## add number of treatments, studies, and arms to JAGS data object
     suppressMessages(
       jagsdata2$ns.ad <-
@@ -1285,7 +1552,8 @@ crossnma.model <- function(trt,
         dplyr::summarize(n.arms = n()) %>%
         ungroup() %>% select(n.arms) %>% t() %>% as.vector)
     ## add covariate
-    jagsdata2$x1 <- jagsdata2$x2 <- jagsdata2$x3 <- NULL
+   
+   jagsdata2$x1 <- jagsdata2$x2 <- jagsdata2$x3 <- NULL
     if (isCol(data2, "xm1.ad"))
       jagsdata2$xm1.ad <- unique(data2$xm1.ad)
     if (isCol(data2, "xm2.ad"))
@@ -1296,8 +1564,10 @@ crossnma.model <- function(trt,
     
     ## change names
     names(jagsdata2)[names(jagsdata2) == "trt.jags"] <- "t.ad"
+    #! if(sm%in%c("MD","SMD")) names(jagsdata2)[names(jagsdata2) == "r"] <- "ybar"
   }
   else {
+
     jagsdata2 <- list(ns.ad=0)
     xbias.ad <- NULL
     bias_index.ad <- NULL
@@ -1571,50 +1841,37 @@ crossnma.model <- function(trt,
   ## data to be used in netgraph.crossnma() to plot the network
   ##
   ## aggregate IPD dataset
-  if (!is.null(data1) & !is.null(data2)) {
-    prt.data.ad0 <-
-      sapply(1:length(unique(data1$study)),
-             function(i) {
-               with(data1,
-                    data.frame(
-                      study = unique(data1$study)[i],
-                      trt = unique(data1[data1$study ==
-                                         unique(data1$study)[i], ]$trt),
-                      r = sum(data1[data1$study ==
-                                    unique(data1$study)[i], ]$r),
-                      n = nrow(data1[data1$study ==
-                                     unique(data1$study)[i], ]),
-                      design = unique(data1[data1$study ==
-                                            unique(data1$study)[i], ]$design),
-                      stringsAsFactors = FALSE)
-                    )
-             },
-             simplify = FALSE)
-    prt.data.ad <- do.call(rbind,prt.data.ad0)
-    
-    ## combine IPD and AD in a single dataset
+  if (!is.null(data1)&!is.null(data2)){
+    prt.data.ad <- data1%>%arrange(study,trt)%>% group_by(study,trt)%>%
+      do(r=sum(.$r),
+         n=nrow(.),
+         design=unique(.$design)
+      )%>%unnest(cols=c(r,n,design))%>%as.data.frame()
+
+
+    # prt.data.ad0 <- sapply(1:length(unique(data1$study)),
+    #                        function(i){
+    #                          with(data1,
+    #                               data.frame(
+    #                                 study=unique(data1$study)[i],
+    #                                 trt=unique(data1[data1$study==unique(data1$study)[i],]$trt),
+    #                                 r=sum(data1[data1$study==unique(data1$study)[i],]$r),
+    #                                 n =nrow(data1[data1$study==unique(data1$study)[i],]),
+    #                                 design=unique(data1[data1$study==unique(data1$study)[i],]$design)
+    #                               )
+    #                          )
+    #                        }, simplify = F)
+    # prt.data.ad <- do.call(rbind,prt.data.ad0)
+
+    # combine IPD and AD in a single dataset
     all.data.ad <- rbind(data2[c('study','trt','r','n','design')],prt.data.ad)
-  }
-  else if (!is.null(data1)) {
-    prt.data.ad0 <-
-      sapply(1:length(unique(data1$study)),
-             function(i) {
-               with(data1,
-                    data.frame(
-                      study = unique(data1$study)[i],
-                      trt = unique(data1[data1$study ==
-                                         unique(data1$study)[i], ]$trt),
-                      r = sum(data1[data1$study ==
-                                    unique(data1$study)[i], ]$r),
-                      n = nrow(data1[data1$study == unique(data1$study)[i], ]),
-                      design=unique(data1[data1$study ==
-                                          unique(data1$study)[i], ]$design),
-                      stringsAsFactors = FALSE
-                    )
-                    )
-             },
-             simplify = FALSE)
-    prt.data.ad <- do.call(rbind,prt.data.ad0)
+  } else if (!is.null(data1)){
+    prt.data.ad <- data1%>%arrange(study,trt)%>% group_by(study,trt)%>%
+      do(r=sum(.$r),
+         n=nrow(.),
+         design=unique(.$design)
+      )%>%unnest(cols=c(r,n,design))%>%as.data.frame()
+
     all.data.ad <- prt.data.ad
   }
   else if (!is.null(data2)) {

@@ -1,5 +1,6 @@
 crossnma.code <- function(ipd = TRUE,
                           ad = TRUE,
+                          #! sm="OR", # NULL
                           trt.effect = 'random',
                           prior.tau.trt = NULL,
                           ## -------- meta-regression
@@ -288,6 +289,7 @@ prec.betaw_", i, "<- pow(tau.bw_", i, ", -2)",
         if (regb.effect == 'independent' && regw.effect == 'independent') {
           beta.prior.ad0 <-
        paste0("\n\n# Random effect for beta (within=between)
+
     beta.t_", i, "[1] <- 0
     for (k in 1:nt) {
       betab.t_", i, "[k] <- beta.t_", i, "[k]
@@ -636,129 +638,228 @@ for (j in 1:(ns.ipd + ns.ad)) {
 a ~ dnorm(0, 1e-2)
 b ~ dnorm(0, 1e-2)")
       }
+    }else if(method.bias=="adjust2"){
+      if(is.null(bias.covariate)){ # assign priors for pi[bias_index[j]] based on design and RoB
+        if(trt.effect=="random"){
+          if(!is.null(v)){
+            theta.effect.ipd <- "
+        theta1[j,t.ipd[j,k]] ~dnorm(md[j,t.ipd[j,k]],precd[j,t.ipd[j,k]])
+        theta2[j,t.ipd[j,k]] ~dnorm(md[j,t.ipd[j,k]]+gamma[j],precd[j,t.ipd[j,k]]/q)
+        theta[j,t.ipd[j,k]] <- (1-pi[bias_index[j]])*theta1[j,t.ipd[j,k]]+pi[bias_index[j]]*theta2[j,t.ipd[j,k]]
+        # multi-arm correction
+      md[j,t.ipd[j,k]]<- mean[j,k] + sw[j,k]
+      w[j,k]<- (theta[j,t.ipd[j,k]]  - mean[j,k])
+      sw[j,k]<- sum(w[j,1:(k-1)])/(k-1)
+      precd[j,t.ipd[j,k]]<- prec *2*(k-1)/k
+        "
 
-    }
-    else if (method.bias == "adjust2") {
-      if (trt.effect == "random") {
-        if (!is.null(v)) {
-          theta.effect.ipd <- "\n    theta1[j, t.ipd[j, k]] ~ dnorm(md[j, t.ipd[j, k]], precd[j, t.ipd[j, k]])
-    theta2[j, t.ipd[j, k]] ~ dnorm(md[j, t.ipd[j, k]] + gamma[j], precd[j, t.ipd[j, k]] / q)
-    theta[j, t.ipd[j, k]] <- (1 - pi[bias_index[j]]) * theta1[j, t.ipd[j, k]] + pi[bias_index[j]] * theta2[j, t.ipd[j, k]]
-    # Multi-arm correction
-    md[j, t.ipd[j, k]] <- mean[j, k] + sw[j, k]
-    w[j, k] <- theta[j, t.ipd[j, k]]  - mean[j, k]
-    sw[j, k] <- sum(w[j, 1:(k - 1)]) / (k - 1)
-    precd[j, t.ipd[j, k]] <- prec * 2 * (k - 1) / k"
-          ##
-          theta.effect.ad <- "\n    theta1[j + ns.ipd, t.ad[j, k]] ~ dnorm(md.ad[j, t.ad[j, k]], precd.ad[j, t.ad[j, k]])
-    theta2[j + ns.ipd, t.ad[j, k]] ~ dnorm(md.ad[j, t.ad[j, k]] + gamma[j + ns.ipd], precd.ad[j, t.ad[j, k]] / q)
-    theta[j + ns.ipd, t.ad[j, k]] <- (1 - pi[bias_index[j]]) * theta1[j + ns.ipd, t.ad[j, k]] + pi[bias_index[j]] * theta2[j + ns.ipd, t.ad[j, k]]
-    # Multi-arm correction
-    md.ad[j, t.ad[j, k]] <- mean.ad[j, k] + sw.ad[j, k]
-    w.ad[j, k] <- (theta[j + ns.ipd, t.ad[j, k]]  - mean.ad[j, k])
-    sw.ad[j, k] <- sum(w.ad[j, 1:(k - 1)]) / (k - 1)
-    precd.ad[j, t.ad[j, k]] <- prec * 2 * (k - 1) / k"
-          ##
-          prior.tau.theta <-
-            paste0("\n\n# heterogeneity between theta's\ntau ~ ",
-                   prior.tau.trt, "\nprec <- pow(tau, -2)")
-          ##
-          q.prior <- paste0("q ~ dbeta(",v, ", 1)")
-        }
-        else {
-          ## theta[j, t.ipd[j, k]] ~ dnormmix(c(md[j, t.ipd[j, k]],md[j, t.ipd[j, k]] + gamma[j]),c(precd[j, t.ipd[j, k]], precd[j, t.ipd[j, k]] + prec.gamma), c(1 - pi[bias_index[j]], pi[bias_index[j]]))
-          ## theta[j + ns.ipd, t.ad[j, k]] ~ dnormmix(c(md.ad[j, t.ad[j, k]],md.ad[j, t.ad[j, k]] + gamma[j + ns.ipd]),c(precd.ad[j, t.ad[j, k]], precd.ad[j, t.ad[j, k]] + prec.gamma), c(1 - pi[bias_index[j]], pi[bias_index[j]]))
+            theta.effect.ad <- "
+        theta1[j+ns.ipd,t.ad[j,k]]~dnorm(md.ad[j,t.ad[j,k]],precd.ad[j,t.ad[j,k]])
+      theta2[j+ns.ipd,t.ad[j,k]]~dnorm(md.ad[j,t.ad[j,k]]+gamma[j+ns.ipd],precd.ad[j,t.ad[j,k]]/q)
+      theta[j+ns.ipd,t.ad[j,k]] <- (1-pi[bias_index[j]])*theta1[j+ns.ipd,t.ad[j,k]]+pi[bias_index[j]]*theta2[j+ns.ipd,t.ad[j,k]]
+        # multi-arm correction
+      md.ad[j,t.ad[j,k]]<- mean.ad[j,k] + sw.ad[j,k]
+      w.ad[j,k]<- (theta[j+ns.ipd,t.ad[j,k]]  - mean.ad[j,k])
+      sw.ad[j,k]<- sum(w.ad[j,1:(k-1)])/(k-1)
+      precd.ad[j,t.ad[j,k]]<- prec *2*(k-1)/k
+        "
+            prior.tau.theta <- paste0("# heterogeneity between theta's
+                                  tau ~",prior.tau.trt,
+                                      "\n prec<- pow(tau,-2)")
+            q.prior <- paste0("q~dbeta(",v,",1)")
+          } else{
 
-          theta.effect.ipd <- "\n    theta1[j, t.ipd[j, k]] ~ dnorm(md[j, t.ipd[j, k]], precd[j, t.ipd[j, k]])
-    theta2[j, t.ipd[j, k]] ~ dnorm(md[j, t.ipd[j, k]] + gamma[j], precd[j, t.ipd[j, k]] + (prec.gamma * 2 * (k - 1) / k))
-    theta[j, t.ipd[j, k]] <- (1 - pi[bias_index[j]]) * theta1[j, t.ipd[j, k]] + pi[bias_index[j]] * theta2[j, t.ipd[j, k]]
-    # Multi-arm correction
-    md[j, t.ipd[j, k]] <- mean[j, k] + sw[j, k]
-    w[j, k] <- theta[j, t.ipd[j, k]]  - mean[j, k]
-    sw[j, k] <- sum(w[j, 1:(k - 1)]) / (k - 1)
-    precd[j, t.ipd[j, k]] <- prec * 2 * (k - 1) / k"
-          ##
-          theta.effect.ad <- "\n    theta1[j + ns.ipd, t.ad[j, k]] ~ dnorm(md.ad[j, t.ad[j, k]], precd.ad[j, t.ad[j, k]])
-    theta2[j + ns.ipd, t.ad[j, k]] ~ dnorm(md.ad[j, t.ad[j, k]] + gamma[j + ns.ipd], precd.ad[j, t.ad[j, k]] + (prec.gamma * 2 * (k - 1) / k))
-    theta[j + ns.ipd, t.ad[j, k]] <- (1 - pi[bias_index[j]]) * theta1[j + ns.ipd, t.ad[j, k]] + pi[bias_index[j]] * theta2[j + ns.ipd, t.ad[j, k]]
-    # Multi-arm correction
-    md.ad[j, t.ad[j, k]] <- mean.ad[j, k] + sw.ad[j, k]
-    w.ad[j, k] <- (theta[j + ns.ipd, t.ad[j, k]]  - mean.ad[j, k])
-    sw.ad[j, k] <- sum(w.ad[j, 1:(k - 1)]) / (k - 1)
-    precd.ad[j, t.ad[j, k]] <- prec * 2 * (k - 1) / k"
-          ##
-          prior.tau.theta <-
-            paste0("\n\n# heterogeneity between theta's\ntau ~ ",
-                   prior.tau.trt, "\nprec <- pow(tau, -2)")
+
+            # theta[j,t.ipd[j,k]] ~ dnormmix(c(md[j,t.ipd[j,k]],md[j,t.ipd[j,k]]+gamma[j]),c(precd[j,t.ipd[j,k]],precd[j,t.ipd[j,k]]+prec.gamma), c(1-pi[bias_index[j]],pi[bias_index[j]]))
+            # theta[j+ns.ipd,t.ad[j,k]] ~ dnormmix(c(md.ad[j,t.ad[j,k]],md.ad[j,t.ad[j,k]]+gamma[j+ns.ipd]),c(precd.ad[j,t.ad[j,k]],precd.ad[j,t.ad[j,k]]+prec.gamma), c(1-pi[bias_index[j]],pi[bias_index[j]]))
+
+            theta.effect.ipd <- "
+        theta1[j,t.ipd[j,k]] ~dnorm(md[j,t.ipd[j,k]],precd[j,t.ipd[j,k]])
+        theta2[j,t.ipd[j,k]] ~dnorm(md[j,t.ipd[j,k]]+gamma[j],precd[j,t.ipd[j,k]]+(prec.gamma*2*(k-1)/k))
+        theta[j,t.ipd[j,k]] <- (1-pi[bias_index[j]])*theta1[j,t.ipd[j,k]]+pi[bias_index[j]]*theta2[j,t.ipd[j,k]]
+        # multi-arm correction
+      md[j,t.ipd[j,k]]<- mean[j,k] + sw[j,k]
+      w[j,k]<- (theta[j,t.ipd[j,k]]  - mean[j,k])
+      sw[j,k]<- sum(w[j,1:(k-1)])/(k-1)
+      precd[j,t.ipd[j,k]]<- prec *2*(k-1)/k
+        "
+
+            theta.effect.ad <- "
+        theta1[j+ns.ipd,t.ad[j,k]]~dnorm(md.ad[j,t.ad[j,k]],precd.ad[j,t.ad[j,k]])
+      theta2[j+ns.ipd,t.ad[j,k]]~dnorm(md.ad[j,t.ad[j,k]]+gamma[j+ns.ipd],precd.ad[j,t.ad[j,k]]+(prec.gamma*2*(k-1)/k))
+      theta[j+ns.ipd,t.ad[j,k]] <- (1-pi[bias_index[j]])*theta1[j+ns.ipd,t.ad[j,k]]+pi[bias_index[j]]*theta2[j+ns.ipd,t.ad[j,k]]
+        # multi-arm correction
+      md.ad[j,t.ad[j,k]]<- mean.ad[j,k] + sw.ad[j,k]
+      w.ad[j,k]<- (theta[j+ns.ipd,t.ad[j,k]]  - mean.ad[j,k])
+      sw.ad[j,k]<- sum(w.ad[j,1:(k-1)])/(k-1)
+      precd.ad[j,t.ad[j,k]]<- prec *2*(k-1)/k
+        "
+            prior.tau.theta <- paste0("# heterogeneity between theta's
+                                  tau ~",prior.tau.trt,
+                                      "\n prec<- pow(tau,-2)")
+          }
+        }else if(trt.effect=="common"){
+          theta.effect.ipd <- "theta[j,t.ipd[j,k]] <- md[j,t.ipd[j,k]]+(pi[bias_index[j]]*gamma[j])
+        md[j,t.ipd[j,k]]<- mean[j,k]"
+          theta.effect.ad <- "theta[j+ns.ipd,t.ad[j,k]] <- md.ad[j,t.ad[j,k]]+(pi[bias_index[j]]*gamma[j+ns.ipd])
+        md.ad[j,t.ad[j,k]]<- mean.ad[j,k]"
+          prior.tau.theta <- " "
+        }else{
+          stop("Please indicate the model of treatment effect as either 'random' or 'common' ")
+
         }
-      }
-      else if (trt.effect == "common") {
-        theta.effect.ipd <- "\n    theta[j, t.ipd[j, k]] <- md[j, t.ipd[j, k]] + (pi[bias_index[j]] * gamma[j])
-    md[j, t.ipd[j, k]] <- mean[j, k]"
-        theta.effect.ad <- "\n    theta[j + ns.ipd, t.ad[j, k]] <- md.ad[j, t.ad[j, k]] + (pi[bias_index[j]] * gamma[j + ns.ipd])
-    md.ad[j, t.ad[j, k]] <- mean.ad[j, k]"
-        prior.tau.theta <- " "
-      }
-      else
-        stop("Please indicate the model of treatment effect as either ",
-             "'random' or 'common' ")
-      
-      
-      if (!is.null(v)) { # with v
-        gamma.effect <-
-       paste0("\n\n# Common effect for gamma (bias effect)",
-              ifelse(add.std.in, "\nfor (j in std.in) {\n  gamma[j] <- g\n}", ""),
-              ifelse(add.std.act.no, "\nfor (j in std.act.no) {\n  gamma[j] <- 0\n}", ""),
-              ifelse(add.std.act.yes, "\nfor (j in std.act.yes) {\n  gamma[j] <- g.act\n}", ""),
-              ifelse(add.std.in, "\ng ~ dnorm(0, 0.01)", ""),
-              ifelse(add.std.act.yes, "\ng.act ~ dnorm(0, 0.01)", "")
-              )
-      }
-      else { # no v
-        if (bias.effect == 'random') {
-          gamma.effect <-
-       paste0("\n\n# Random effect for gamma (bias effect)",
-              ifelse(add.std.in, "\nfor (j in std.in) {\n  gamma[j] ~ dnorm(g, prec.gamma)\n}", ""),
-              ifelse(add.std.act.no, "\nfor (j in std.act.no) {\n  gamma[j] ~ dnorm(0, prec.gamma)\n}", ""),
-              ifelse(add.std.act.yes, "\nfor (j in std.act.yes) {\n  gamma[j] ~ dnorm(g.act, prec.gamma)\n}", ""),
-              ifelse(add.std.in, "\ng ~ dnorm(0, 0.01)", ""),
-              ifelse(add.std.act.yes, "\ng.act ~ dnorm(0, 0.01)", ""),
-              ifelse(is.null(v), paste0("tau.gamma ~ ", prior.tau.gamma, "\n  prec.gamma <- pow(tau.gamma, -2)"), "")
-              )
+
+        if(!is.null(v)){ # with v
+          gamma.effect <- paste0("# Common effect for gamma (bias effect)\n",
+                                 ifelse(add.std.in,"for (j in std.in) {gamma[j]<-g}\n",""),
+                                 ifelse(add.std.act.no,"for (j in std.act.no) {gamma[j]<-0}\n",""),
+                                 ifelse(add.std.act.yes,"for (j in std.act.yes) {gamma[j]<-g.act}\n",""),
+                                 ifelse(add.std.in,"g~dnorm(0, 0.01)\n",""),
+                                 ifelse(add.std.act.yes,"g.act~dnorm(0, 0.01)\n","")
+          )
+        } else{ # no v
+          if(bias.effect=='random'){
+            gamma.effect <- paste0("# Random effect for gamma (bias effect)\n",
+                                   ifelse(add.std.in,"for (j in std.in) {gamma[j]~dnorm(g,prec.gamma)}\n",""),
+                                   ifelse(add.std.act.no,"for (j in std.act.no) {gamma[j]~dnorm(0,prec.gamma)}\n",""),
+                                   ifelse(add.std.act.yes,"for (j in std.act.yes) {gamma[j]~dnorm(g.act,prec.gamma)}\n",""),
+                                   ifelse(add.std.in,"g~dnorm(0, 0.01)\n",""),
+                                   ifelse(add.std.act.yes,"g.act~dnorm(0, 0.01)\n",""),
+                                   ifelse(is.null(v),paste0("tau.gamma~",prior.tau.gamma,"\n prec.gamma <- pow(tau.gamma,-2)"),"")
+
+            )
+          }else{
+            gamma.effect <- paste0("# Common effect for gamma (bias effect)\n",
+                                   ifelse(add.std.in,"for (j in std.in) {gamma[j]<-g}\n",""),
+                                   ifelse(add.std.act.no,"for (j in std.act.no) {gamma[j]<-0}\n",""),
+                                   ifelse(add.std.act.yes,"for (j in std.act.yes) {gamma[j]<-g.act}\n",""),
+                                   ifelse(add.std.in,"g~dnorm(0, 0.01)\n",""),
+                                   ifelse(add.std.act.yes,"g.act~dnorm(0, 0.01)\n",""),
+                                   "prec.gamma <- 0"
+            )
+            warning("Bias effect is assumed common across studies")
+          }
         }
-        else {
-          gamma.effect <-
-       paste0("\n\n# Common effect for gamma (bias effect)",
-              ifelse(add.std.in, "\nfor (j in std.in) {\n  gamma[j] <- g\n}", ""),
-              ifelse(add.std.act.no, "\nfor (j in std.act.no) {\n  gamma[j] <- 0\n}", ""),
-              ifelse(add.std.act.yes, "\nfor (j in std.act.yes) {\n  gamma[j] <- g.act\n}", ""),
-              ifelse(add.std.in, "\ng ~ dnorm(0, 0.01)", ""),
-              ifelse(add.std.act.yes, "\ng.act ~ dnorm(0, 0.01)", ""),
-              "\nprec.gamma <- 0"
-              )
-          message("Bias effect is assumed common across studies")
+        adjust.prior <- paste0(gamma.effect,"
+                      # bias adjustment
+                      pi[1]~",prior.pi.high.rct,  # high RCT
+                               "
+                      pi[2]~",prior.pi.low.rct, # low RCT
+                               "
+                      pi[3]~",prior.pi.high.nrs, # high NRS
+                               "
+                      pi[4]~",prior.pi.low.nrs,  # low NRS
+                               "
+                      pi[5]~ dbeta(1,1)"
+        )# unclear RCT or NRS")
+      }else{ # estimate pi[j] through a logistic model using the bias covariates
+        if(trt.effect=="random"){
+          if(!is.null(v)){
+            theta.effect.ipd <- "
+        theta1[j,t.ipd[j,k]] ~dnorm(md[j,t.ipd[j,k]],precd[j,t.ipd[j,k]])
+        theta2[j,t.ipd[j,k]] ~dnorm(md[j,t.ipd[j,k]]+gamma[j],precd[j,t.ipd[j,k]]/q)
+        theta[j,t.ipd[j,k]] <- (1-pi[j])*theta1[j,t.ipd[j,k]]+pi[j]*theta2[j,t.ipd[j,k]]
+        # multi-arm correction
+      md[j,t.ipd[j,k]]<- mean[j,k] + sw[j,k]
+      w[j,k]<- (theta[j,t.ipd[j,k]]  - mean[j,k])
+      sw[j,k]<- sum(w[j,1:(k-1)])/(k-1)
+      precd[j,t.ipd[j,k]]<- prec *2*(k-1)/k
+        "
+
+            theta.effect.ad <- "
+        theta1[j+ns.ipd,t.ad[j,k]]~dnorm(md.ad[j,t.ad[j,k]],precd.ad[j,t.ad[j,k]])
+      theta2[j+ns.ipd,t.ad[j,k]]~dnorm(md.ad[j,t.ad[j,k]]+gamma[j+ns.ipd],precd.ad[j,t.ad[j,k]]/q)
+      theta[j+ns.ipd,t.ad[j,k]] <- (1-pi[j])*theta1[j+ns.ipd,t.ad[j,k]]+pi[j]*theta2[j+ns.ipd,t.ad[j,k]]
+        # multi-arm correction
+      md.ad[j,t.ad[j,k]]<- mean.ad[j,k] + sw.ad[j,k]
+      w.ad[j,k]<- (theta[j+ns.ipd,t.ad[j,k]]  - mean.ad[j,k])
+      sw.ad[j,k]<- sum(w.ad[j,1:(k-1)])/(k-1)
+      precd.ad[j,t.ad[j,k]]<- prec *2*(k-1)/k
+        "
+            prior.tau.theta <- paste0("# heterogeneity between theta's
+                                  tau ~",prior.tau.trt,
+                                      "\n prec<- pow(tau,-2)")
+            q.prior <- paste0("q~dbeta(",v,",1)")
+          } else{
+
+
+            # theta[j,t.ipd[j,k]] ~ dnormmix(c(md[j,t.ipd[j,k]],md[j,t.ipd[j,k]]+gamma[j]),c(precd[j,t.ipd[j,k]],precd[j,t.ipd[j,k]]+prec.gamma), c(1-pi[j],pi[j]))
+            # theta[j+ns.ipd,t.ad[j,k]] ~ dnormmix(c(md.ad[j,t.ad[j,k]],md.ad[j,t.ad[j,k]]+gamma[j+ns.ipd]),c(precd.ad[j,t.ad[j,k]],precd.ad[j,t.ad[j,k]]+prec.gamma), c(1-pi[j],pi[j]))
+
+            theta.effect.ipd <- "
+        theta1[j,t.ipd[j,k]] ~dnorm(md[j,t.ipd[j,k]],precd[j,t.ipd[j,k]])
+        theta2[j,t.ipd[j,k]] ~dnorm(md[j,t.ipd[j,k]]+gamma[j],precd[j,t.ipd[j,k]]+(prec.gamma*2*(k-1)/k))
+        theta[j,t.ipd[j,k]] <- (1-pi[j])*theta1[j,t.ipd[j,k]]+pi[j]*theta2[j,t.ipd[j,k]]
+        # multi-arm correction
+      md[j,t.ipd[j,k]]<- mean[j,k] + sw[j,k]
+      w[j,k]<- (theta[j,t.ipd[j,k]]  - mean[j,k])
+      sw[j,k]<- sum(w[j,1:(k-1)])/(k-1)
+      precd[j,t.ipd[j,k]]<- prec *2*(k-1)/k
+        "
+
+            theta.effect.ad <- "
+        theta1[j+ns.ipd,t.ad[j,k]]~dnorm(md.ad[j,t.ad[j,k]],precd.ad[j,t.ad[j,k]])
+      theta2[j+ns.ipd,t.ad[j,k]]~dnorm(md.ad[j,t.ad[j,k]]+gamma[j+ns.ipd],precd.ad[j,t.ad[j,k]]+(prec.gamma*2*(k-1)/k))
+      theta[j+ns.ipd,t.ad[j,k]] <- (1-pi[j])*theta1[j+ns.ipd,t.ad[j,k]]+pi[j]*theta2[j+ns.ipd,t.ad[j,k]]
+        # multi-arm correction
+      md.ad[j,t.ad[j,k]]<- mean.ad[j,k] + sw.ad[j,k]
+      w.ad[j,k]<- (theta[j+ns.ipd,t.ad[j,k]]  - mean.ad[j,k])
+      sw.ad[j,k]<- sum(w.ad[j,1:(k-1)])/(k-1)
+      precd.ad[j,t.ad[j,k]]<- prec *2*(k-1)/k
+        "
+            prior.tau.theta <- paste0("# heterogeneity between theta's
+                                  tau ~",prior.tau.trt,
+                                      "\n prec<- pow(tau,-2)")
+          }
+        }else if(trt.effect=="common"){
+          theta.effect.ipd <- "theta[j,t.ipd[j,k]] <- md[j,t.ipd[j,k]]+(pi[j]*gamma[j])
+        md[j,t.ipd[j,k]]<- mean[j,k]"
+          theta.effect.ad <- "theta[j+ns.ipd,t.ad[j,k]] <- md.ad[j,t.ad[j,k]]+(pi[j]*gamma[j+ns.ipd])
+        md.ad[j,t.ad[j,k]]<- mean.ad[j,k]"
+          prior.tau.theta <- " "
+        }else{
+          stop("Please indicate the model of treatment effect as either 'random' or 'common' ")
+
         }
-      }
-      if (is.null(bias.covariate)) {
-        adjust.prior <- paste0(gamma.effect, "\n\n# Bias adjustment
-pi[1] ~ ", prior.pi.high.rct,  # high RCT
-"
-pi[2] ~ ", prior.pi.low.rct, # low RCT
-"
-pi[3] ~ ", prior.pi.high.nrs, # high NRS
-"
-pi[4] ~ ", prior.pi.low.nrs,  # low NRS
-"
-pi[5] ~ dbeta(1, 1)") # unclear RCT or NRS")
-      }
-      else {
-        adjust.prior <- paste0(gamma.effect, "
-# bias adjustment
-for (j in 1:(ns.ipd + ns.ad)) {
-  logit(pi[j]) <- a + b * xbias[j]
-}
-a ~ dnorm(0, 1e-2)
-b ~ dnorm(0, 1e-2)")
+
+        if(!is.null(v)){ # with v
+          gamma.effect <- paste0("# Common effect for gamma (bias effect)\n",
+                                 ifelse(add.std.in,"for (j in std.in) {gamma[j]<-g}\n",""),
+                                 ifelse(add.std.act.no,"for (j in std.act.no) {gamma[j]<-0}\n",""),
+                                 ifelse(add.std.act.yes,"for (j in std.act.yes) {gamma[j]<-g.act}\n",""),
+                                 ifelse(add.std.in,"g~dnorm(0, 0.01)\n",""),
+                                 ifelse(add.std.act.yes,"g.act~dnorm(0, 0.01)\n","")
+          )
+        } else{ # no v
+          if(bias.effect=='random'){
+            gamma.effect <- paste0("# Random effect for gamma (bias effect)\n",
+                                   ifelse(add.std.in,"for (j in std.in) {gamma[j]~dnorm(g,prec.gamma)}\n",""),
+                                   ifelse(add.std.act.no,"for (j in std.act.no) {gamma[j]~dnorm(0,prec.gamma)}\n",""),
+                                   ifelse(add.std.act.yes,"for (j in std.act.yes) {gamma[j]~dnorm(g.act,prec.gamma)}\n",""),
+                                   ifelse(add.std.in,"g~dnorm(0, 0.01)\n",""),
+                                   ifelse(add.std.act.yes,"g.act~dnorm(0, 0.01)\n",""),
+                                   ifelse(is.null(v),paste0("tau.gamma~",prior.tau.gamma,"\n prec.gamma <- pow(tau.gamma,-2)"),"")
+
+            )
+          }else{
+            gamma.effect <- paste0("# Common effect for gamma (bias effect)\n",
+                                   ifelse(add.std.in,"for (j in std.in) {gamma[j]<-g}\n",""),
+                                   ifelse(add.std.act.no,"for (j in std.act.no) {gamma[j]<-0}\n",""),
+                                   ifelse(add.std.act.yes,"for (j in std.act.yes) {gamma[j]<-g.act}\n",""),
+                                   ifelse(add.std.in,"g~dnorm(0, 0.01)\n",""),
+                                   ifelse(add.std.act.yes,"g.act~dnorm(0, 0.01)\n",""),
+                                   "prec.gamma <- 0"
+            )
+            warning("Bias effect is assumed common across studies")
+          }
+        }
+
+        adjust.prior <- paste0(gamma.effect,"
+                      # bias adjustment
+                      for (j in 1:(ns.ipd+ns.ad)) {logit(pi[j]) <- a+b*xbias[j]}
+                               a~dnorm(0,1e-2)
+                               b~dnorm(0,1e-2)"
+        )
       }
     }
     else if (method.bias == "prior") {
@@ -771,7 +872,40 @@ b ~ dnorm(0, 1e-2)")
   }
   else
     message("The data is analyzed assuming the studies have the same design")
+
   
+  #! #-------------------------------------------------#
+  #------  Set up the likelihood and the link  ------#
+  #-------------------------------------------------#
+
+  #! if(sm=="OR"){
+  # like.str.ipd <- " y[i]~dbern(p[i]) # bernoulli likelihood"
+  # link.str.ipd <- "logit(p[i]) <- u[study[i]]+theta[study[i],trt[i]]"
+  # like.str.ad <- " r[j,k] ~ dbin(pa[j,t.ad[j,k]],n[j,k]) # binomial likelihood of number of events"
+  # link.ref.str.ad <- "logit(pa[j,t.ad[j,1]]) <- u[j+ns.ipd]   # Log odds at referent arm"
+  # link.str.ad <-"logit(pa[j,t.ad[j,k]]) <- u[j+ns.ipd]+(theta[j+ns.ipd,t.ad[j,k]])"
+  #
+  # } else if(sm=="MD") {
+  # like.str.ipd <- " y[i]~dnorm(delta[i],prec.delta.ipd[study[i],trt[i]]) # bernoulli likelihood"
+  # link.str.ipd <- "delta[i] <- u[study[i]]+(theta[study[i],trt[i]])
+  #prec.delta.ipd[study[i],trt[i]] <- pow(sd[study[i],trt[i]],-2)"
+  #
+  # like.str.ad <- " ybar[j,k] ~ dnorm(delta.ad[j,t.ad[j,k]],prec.delta.ad[j,k]) # binomial likelihood of number of events
+  # prec.delta.ad[j,k] <- pow(se[j,k],-2)"
+  # link.ref.str.ad <- "delta.ad[j,t.ad[j,k]] <- u[j+ns.ipd]   # link function at referent arm"
+  # link.str.ad <-"delta.ad[j,t.ad[j,k]] <- u[j+ns.ipd]+(theta[j+ns.ipd,t.ad[j,k]])"
+  #
+  # }else if(sm=="SMD") {
+  # like.str.ipd <- " y[i]~dnorm(phi[i],prec.delta.ad[study[i],trt[i]]) # bernoulli likelihood"
+  # link.str.ipd <- "phi[i] <- delta[i]*s.pool.ipd[study[i]]
+  # delta[i] <- u[study[i]]+theta[study[i],trt[i]]
+  #prec.delta.ad[study[i],trt[i]] <- pow(sd[study[i],trt[i]],-2)"
+  # like.str.ad <- " ybar[j,k] ~ dnorm(phi.ad[j,t.ad[j,k]],prec.delta.ad[j,k]) # binomial likelihood of number of events
+  # phi.ad[j,t.ad[j,k]] <- delta.ad[j,t.ad[j,k]]*s.pool.ad[j]
+  # prec.delta.ad[j,k] <- pow(se[j,k],-2)"
+  # link.ref.str.ad <- "delta.ad[j,t.ad[j,k]] <- u[j+ns.ipd]*s.pool.ad[j]   # link function at referent arm"
+  # link.str.ad <-"delta.ad[j,t.ad[j,k]] <- u[j+ns.ipd]+(theta[j+ns.ipd,t.ad[j,k]])"
+  # }
 
   ##
   ##
@@ -779,6 +913,11 @@ b ~ dnorm(0, 1e-2)")
   ##
   ##
   
+
+  #-------------------------------#
+  #------ IPD part
+
+
   ipd.code <- sprintf("
 #
 # (1) IPD part
