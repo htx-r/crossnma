@@ -1,6 +1,6 @@
 crossnma.code <- function(ipd = TRUE,
                           ad = TRUE,
-                          #! sm="OR", # NULL
+                          sm=NULL,
                           trt.effect = 'random',
                           prior.tau.trt = NULL,
                           ## -------- meta-regression
@@ -30,14 +30,14 @@ crossnma.code <- function(ipd = TRUE,
                           method.bias = NULL,
                           d.prior.nrs = NULL # required when method.bias='prior'
                           ) {
-  
-  
+
+
   ##
   ##
   ## User priors
   ##
   ##
-  
+
   prior.tau.trt <- replaceNULL(prior.tau.trt, 'dunif(0, 2)')
   prior.tau.reg0 <- replaceNULL(prior.tau.reg0, 'dunif(0, 2)')
   prior.tau.regb <- replaceNULL(prior.tau.regb, 'dunif(0, 2)')
@@ -48,13 +48,13 @@ crossnma.code <- function(ipd = TRUE,
   prior.pi.high.nrs <- replaceNULL(prior.pi.high.nrs, 'dbeta(30, 1)')
   prior.pi.low.nrs <- replaceNULL(prior.pi.low.nrs, 'dbeta(1, 30)')
 
-  
+
   ##
   ##
   ## Meta-regression
   ##
   ##
-  
+
   metareg.str.ipd <- ""
   betab.consis.ipd <- ""
   betaw.consis.ipd <- ""
@@ -92,7 +92,7 @@ crossnma.code <- function(ipd = TRUE,
         ##
         betaw.consis.ipd <- paste0(betaw.consis.ipd, "\n", betaw.consis.ipd0)
       }
-      
+
       ## beta0
       if (reg0.effect == 'random') {
         for (i in 1:length(covariate[[1]])) {
@@ -125,8 +125,8 @@ for (j in 1:(ns.ipd)) {
       else
         stop("The progonostic effect can be assumed either ",
              "'independent' or 'random' across studies")
-      
-      
+
+
       ## betab and betaw
 
       if (!split.regcoef) { # not splitted within and between- study covariate
@@ -226,7 +226,7 @@ bb_", i, " ~ dnorm(0, 1e-2)")
         else
           stop("The between-study covariate effect need to be assumed ",
                "'independent', 'random' or 'common' across studies")
-        
+
 
         ## within- study covariate
         if (regw.effect == 'independent') {
@@ -273,8 +273,8 @@ prec.betaw_", i, "<- pow(tau.bw_", i, ", -2)",
                "'independent', 'random' or 'common' across studies")
       }
     }
-    
-    
+
+
     if (ad) {
       for (i in 1:length(covariate[[1]])) {
         ## meta-regression terms - up to 3
@@ -298,7 +298,7 @@ prec.betaw_", i, "<- pow(tau.bw_", i, ", -2)",
       beta.t_", i, "[k] ~ dnorm(0, 1e-2)
     }")
           ##
-          beta.prior.ad <- paste0(beta.prior.ad, beta.prior.ipd0)
+          beta.prior.ad <- paste0(beta.prior.ad, beta.prior.ad0)
         }
         else if (regb.effect == 'random' && regw.effect == 'random') {
           for (i in 1:length(covariate[[1]])) {
@@ -375,7 +375,7 @@ prec.betaw_", i, "<- pow(tau.bw_", i, ", -2)",
             ##
             betab.prior <- paste0(betab.prior, betab.prior0)
           }
-          
+
         }
         else
           stop("The between-study covariate effect need to be assumed ",
@@ -392,8 +392,8 @@ prec.betaw_", i, "<- pow(tau.bw_", i, ", -2)",
   }
   else
     beta.prior <- ""
-  
-  
+
+
   ## treatment effect is zero for reference treatment
   ref.trt.effect.ipd <- ""
   ref.trt.effect.ad <- ""
@@ -425,8 +425,8 @@ prec.betaw_", i, "<- pow(tau.bw_", i, ", -2)",
       }
     }
   }
-  
-  
+
+
   ##
   ##
   ## Relative treatment effects
@@ -493,12 +493,12 @@ prec.betaw_", i, "<- pow(tau.bw_", i, ", -2)",
   else
     stop("Please indicate the treatment effect model as either ",
          "'random' or 'common' ")
-  ##  
+  ##
   d.prior <- "\n  for (k in 2:nt) {
     d[k] ~ dnorm(0, .01)
   }"
-  
-  
+
+
   ##
   ##
   ## Adjust for NRS
@@ -508,7 +508,7 @@ prec.betaw_", i, "<- pow(tau.bw_", i, ", -2)",
   adjust.str.ipd <- ""
   adjust.str.ad <- ""
   adjust.prior <- ""
-  
+
   if (!is.null(method.bias)) {
     if (method.bias == "adjust1") {
       if (bias.type == 'add') {
@@ -537,8 +537,8 @@ prec.betaw_", i, "<- pow(tau.bw_", i, ", -2)",
       }
       else
         stop("The bias type should be set as 'add', 'mult' or 'both'")
-      
-      
+
+
       if (bias.type == 'both') {
         gamma.effect <- ""
         if (bias.effect == 'random') {
@@ -607,7 +607,7 @@ prec.betaw_", i, "<- pow(tau.bw_", i, ", -2)",
                      ifelse(add.std.act.yes, "\ng.act ~ dnorm(0, 0.01)", ""),
                      "\nprec.gamma <- 0"
                      )
-            
+
             message("Bias effect is assumed common across studies")
           }
         }
@@ -873,46 +873,62 @@ b ~ dnorm(0, 1e-2)")
   else
     message("The data is analyzed assuming the studies have the same design")
 
-  
+  # prior for trial baseline
+if(sm=="RR"){
+  prior.u <- "for (j in 1:(ns.ipd + ns.ad)) {
+  u[j] <- log(p.b[j])
+  p.b[j] ~ dunif(0, 1)}"
+} else {
+  prior.u <-"for (j in 1:(ns.ipd + ns.ad)) {u[j] ~ dnorm(0, .01)}"
+}
+
+
   #! #-------------------------------------------------#
   #------  Set up the likelihood and the link  ------#
   #-------------------------------------------------#
+  if(sm=="OR"){
+  like.str.ipd <- " y[i]~dbern(p[i]) # bernoulli likelihood"
+  link.str.ipd <- "logit(p[i]) <- u[study[i]]+theta[study[i],trt[i]]"
+  like.str.ad <- " r[j,k] ~ dbin(pa[j,t.ad[j,k]],n[j,k]) # binomial likelihood of number of events"
+  link.str.ad.ref <- "logit(pa[j,t.ad[j,1]]) <- u[j+ns.ipd]   # Log odds at referent arm"
+  link.str.ad <-"logit(pa[j,t.ad[j,k]]) <- u[j+ns.ipd]+(theta[j+ns.ipd,t.ad[j,k]])"
 
-  #! if(sm=="OR"){
-  # like.str.ipd <- " y[i]~dbern(p[i]) # bernoulli likelihood"
-  # link.str.ipd <- "logit(p[i]) <- u[study[i]]+theta[study[i],trt[i]]"
-  # like.str.ad <- " r[j,k] ~ dbin(pa[j,t.ad[j,k]],n[j,k]) # binomial likelihood of number of events"
-  # link.ref.str.ad <- "logit(pa[j,t.ad[j,1]]) <- u[j+ns.ipd]   # Log odds at referent arm"
-  # link.str.ad <-"logit(pa[j,t.ad[j,k]]) <- u[j+ns.ipd]+(theta[j+ns.ipd,t.ad[j,k]])"
-  #
-  # } else if(sm=="MD") {
-  # like.str.ipd <- " y[i]~dnorm(delta[i],prec.delta.ipd[study[i],trt[i]]) # bernoulli likelihood"
-  # link.str.ipd <- "delta[i] <- u[study[i]]+(theta[study[i],trt[i]])
-  #prec.delta.ipd[study[i],trt[i]] <- pow(sd[study[i],trt[i]],-2)"
-  #
-  # like.str.ad <- " ybar[j,k] ~ dnorm(delta.ad[j,t.ad[j,k]],prec.delta.ad[j,k]) # binomial likelihood of number of events
-  # prec.delta.ad[j,k] <- pow(se[j,k],-2)"
-  # link.ref.str.ad <- "delta.ad[j,t.ad[j,k]] <- u[j+ns.ipd]   # link function at referent arm"
-  # link.str.ad <-"delta.ad[j,t.ad[j,k]] <- u[j+ns.ipd]+(theta[j+ns.ipd,t.ad[j,k]])"
-  #
-  # }else if(sm=="SMD") {
-  # like.str.ipd <- " y[i]~dnorm(phi[i],prec.delta.ad[study[i],trt[i]]) # bernoulli likelihood"
-  # link.str.ipd <- "phi[i] <- delta[i]*s.pool.ipd[study[i]]
-  # delta[i] <- u[study[i]]+theta[study[i],trt[i]]
-  #prec.delta.ad[study[i],trt[i]] <- pow(sd[study[i],trt[i]],-2)"
-  # like.str.ad <- " ybar[j,k] ~ dnorm(phi.ad[j,t.ad[j,k]],prec.delta.ad[j,k]) # binomial likelihood of number of events
-  # phi.ad[j,t.ad[j,k]] <- delta.ad[j,t.ad[j,k]]*s.pool.ad[j]
-  # prec.delta.ad[j,k] <- pow(se[j,k],-2)"
-  # link.ref.str.ad <- "delta.ad[j,t.ad[j,k]] <- u[j+ns.ipd]*s.pool.ad[j]   # link function at referent arm"
-  # link.str.ad <-"delta.ad[j,t.ad[j,k]] <- u[j+ns.ipd]+(theta[j+ns.ipd,t.ad[j,k]])"
-  # }
+  }  else if(sm=="RR"){
+    like.str.ipd <- " y[i]~dbern(p[i]) "
+    link.str.ipd <- "log(p[i]) <- u[study[i]]+theta[study[i],trt[i]]"
+    like.str.ad <- " r[j,k] ~ dbin(pa[j,t.ad[j,k]],n[j,k]) # binomial likelihood of number of events"
+    link.str.ad.ref <- "log(pa[j,t.ad[j,1]]) <- u[j+ns.ipd]   # Log odds at referent arm"
+    link.str.ad <-"log(pa[j,t.ad[j,k]]) <- u[j+ns.ipd]+(theta[j+ns.ipd,t.ad[j,k]])"
+
+  } else if(sm=="MD") {
+  like.str.ipd <- " y[i]~dnorm(delta[i],prec.delta.ipd[study[i],trt[i]]) "
+  link.str.ipd <- "delta[i] <- u[study[i]]+(theta[study[i],trt[i]])
+  prec.delta.ipd[study[i],trt[i]] <- pow(sd[study[i],trt[i]],-2)"
+
+  like.str.ad <- " ybar[j,k] ~ dnorm(delta.ad[j,t.ad[j,k]],prec.delta.ad[j,k])
+  prec.delta.ad[j,k] <- pow(se[j,k],-2)"
+  link.str.ad.ref <- "delta.ad[j,t.ad[j,1]] <- u[j+ns.ipd]"
+  link.str.ad <-"delta.ad[j,t.ad[j,k]] <- u[j+ns.ipd]+(theta[j+ns.ipd,t.ad[j,k]])"
+
+  }else if(sm=="SMD") {
+  like.str.ipd <- " y[i]~dnorm(phi[i],prec.delta.ad[study[i],trt[i]])"
+  link.str.ipd <- "phi[i] <- delta[i]*s.pool.ipd[study[i]]
+  delta[i] <- u[study[i]]+theta[study[i],trt[i]]
+  prec.delta.ad[study[i],trt[i]] <- pow(sd[study[i],trt[i]],-2)"
+
+  like.str.ad <- " ybar[j,k] ~ dnorm(phi.ad[j,t.ad[j,k]],prec.delta.ad[j,k])
+  phi.ad[j,t.ad[j,k]] <- delta.ad[j,t.ad[j,k]]*s.pool.ad[j]
+  prec.delta.ad[j,k] <- pow(se[j,k],-2)"
+  link.str.ad.ref <- "delta.ad[j,t.ad[j,1]] <- u[j+ns.ipd]*s.pool.ad[j] "
+  link.str.ad <-"delta.ad[j,t.ad[j,k]] <- u[j+ns.ipd]+(theta[j+ns.ipd,t.ad[j,k]])"
+  }
 
   ##
   ##
   ## Combine the code
   ##
   ##
-  
+
 
   #-------------------------------#
   #------ IPD part
@@ -925,10 +941,10 @@ b ~ dnorm(0, 1e-2)")
 
 # Loop through individuals
 for (i in 1:np) {
-  # Binomial likelihood
-  y[i] ~ dbern(p[i])
-  # Logistic transformation - to estimate Odds Ratio (OR)
-  logit(p[i]) <- u[study[i]] + theta[study[i], trt[i]]%s%s
+  #  likelihood
+  %s
+  # link function
+  %s %s %s
 }
 
 # Loop through IPD studies
@@ -939,13 +955,14 @@ for (j in 1:(ns.ipd)) {
   theta[j, t.ipd[j, 1]] <- 0%s
   # Loop through non-referent IPD arms
   for (k in 2:na.ipd[j]) {
-    # Synthesize relative treatment effects%s
+    # Synthesize relative treatment effects
+    %s
     # Consistency equation
     mean[j, k] <- d[t.ipd[j, k]] - d[t.ipd[j, 1]]%s%s
   }
-}", adjust.str.ipd, metareg.str.ipd, ref.trt.effect.ipd, theta.effect.ipd, betab.consis.ipd, betaw.consis.ipd)
-  
-  
+}",like.str.ipd, link.str.ipd,adjust.str.ipd, metareg.str.ipd, ref.trt.effect.ipd, theta.effect.ipd, betab.consis.ipd, betaw.consis.ipd)
+
+
   ad.code <- sprintf("
 
 #
@@ -960,48 +977,41 @@ for (j in 1:ns.ad) {
   theta[j + ns.ipd, t.ad[j, 1]] <- 0%s
   # Loop through AD arms
   for (k in 1:na.ad[j]) {
-    # Binomial likelihood of number of events
-    r[j, k] ~ dbin(pa[j, t.ad[j, k]], n[j, k])
+    # likelihood
+    %s
   }
-  # Log odds at referent arm
-  logit(pa[j, t.ad[j, 1]]) <- u[j + ns.ipd]
+  # effect in referent arm
+  %s
   # Loop through non-referent AD arms
   for (k in 2:na.ad[j]) {
-    # Logistic transformation Log Odds Ratio
-    logit(pa[j, t.ad[j, k]]) <- u[j + ns.ipd] + (theta[j + ns.ipd, t.ad[j, k]])%s%s
-    # Synthesize relative treatment effects%s
+    # link function
+    %s %s %s
+    # Synthesize relative treatment effects
+    %s
     # Consistency equations
     mean.ad[j, k] <- d[t.ad[j, k]] - d[t.ad[j, 1]]%s
   }
-}", ref.trt.effect.ad, adjust.str.ad,  metareg.str.ad, theta.effect.ad, betab.consis.ad)
-  
-  
+}",ref.trt.effect.ad,like.str.ad, link.str.ad.ref,link.str.ad, adjust.str.ad,  metareg.str.ad, theta.effect.ad, betab.consis.ad)
+
+
   prior.code <- sprintf("
 
 #
 # (3) Priors
 #
 
-for (j in 1:(ns.ipd + ns.ad)) {
-  # log-odds in referent arm
-  u[j] ~ dnorm(0, .01)
-}%s
+%s
+%s
 
-# Treatment effect is zero for reference treatment
+# effect is zero at network reference treatment
 d[1] <- 0%s
 
-# Compute OR for each comparison
-for (i in 1:(nt - 1)) {
-  for (j in (i + 1):nt) {
-    OR[j, i] <- exp(d[j] - d[i])
-    LOR[j, i] <- d[j] - d[i]
-  }
-}%s%s%s%s%s%s",
-prior.tau.theta, d.prior, beta0.prior.ipd, betab.prior, betaw.prior.ipd, beta.prior, adjust.prior, q.prior)
-  
+%s%s%s%s%s%s",
+prior.u,prior.tau.theta, d.prior, beta0.prior.ipd, betab.prior, betaw.prior.ipd, beta.prior, adjust.prior, q.prior)
+
   ad.code <- ifelse(ad, ad.code, "")
   ipd.code <- ifelse(ipd, ipd.code, "")
   code.str <- paste0('model {', ipd.code, ad.code, prior.code, '\n}\n')
-  
+
   return(code.str)
 }

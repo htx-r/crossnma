@@ -12,6 +12,8 @@
 #' @param outcome Outcome variable in prt.data and std.data.
 #' @param n Number of participants in std.data.
 #' @param design Design variable in prt.data and std.data.
+#' @param se Standard error variable in std.data
+#'  (required only for continuous outcome when sm="MD" or "SMD")
 #' @param cov1 Optional first covariate in prt.data and std.data to
 #'   conduct network meta-regression (see Details).
 #' @param cov2 Optional second covariate in prt.data and std.data to
@@ -55,6 +57,9 @@
 #'   study identification, outcome (number of events), sample size and
 #'   design. Additional columns might be required for certain
 #'   analyses.
+#' @param sm A character indicating the underlying summary measure.
+#'   Options are: Odds Ratio "OR", Risk Ratio "RR", Mean Difference "MD" or
+#'   Standardised Mean Difference "SMD".
 #' @param reference A character indicating the name of the reference
 #'   treatment. When the reference is not specified, the first
 #'   alphabetic treatment will be used as a reference in the analysis.
@@ -225,7 +230,7 @@
 #'
 #' # Create a JAGS model
 #' mod <- crossnma.model(treat, id, relapse, n, design,
-#'   prt.data = ipddata, std.data = stddata,
+#'   prt.data = ipddata, std.data = stddata,sm="OR",
 #'   reference = "A", trt.effect = "random", method.bias = "naive")
 #'
 #' # Fit JAGS model
@@ -246,6 +251,7 @@ crossnma.model <- function(trt,
                            outcome,
                            n,
                            design,
+                           se,
                            ##
                            cov1 = NULL,
                            cov2 = NULL,
@@ -259,8 +265,7 @@ crossnma.model <- function(trt,
                            prt.data = NULL,
                            std.data = NULL,
                            ##
-                           #! sm="OR" A character string indicating underlying summary measure, eg "OR", "MD" or "SMD"
-                           ##
+                           sm,
                            reference=NULL,
                            trt.effect = 'random',
                            ## ---------- meta regression ----------
@@ -294,10 +299,9 @@ crossnma.model <- function(trt,
                                         n.adapt = 2000,
                                         n.iter=10000,
                                         n.burnin = 4000,
-                                        thin=1,
-                                        n.chains=2),
-                           quiet = TRUE) {
-
+                                        thin=1,n.chains=2),
+                           quiet=TRUE
+                           ){
   ## Check and set variables
   ##
   if (missing(trt))
@@ -308,8 +312,8 @@ crossnma.model <- function(trt,
     stop("Mandatory argument 'outcome' missing.")
   if (missing(design))
     stop("Mandatory argument 'design' missing.")
-  #! if(sm %in% c("MD","SMD")& missing(sd))
-  #!  stop("Mandatory argument for continuous outcome 'sd' missing.")
+  if(sm %in% c("MD","SMD")& missing(se))
+    stop("Mandatory argument for continuous outcome 'se' missing.")
   ##
   trt.effect <- setchar(trt.effect, c("common", "random"))
   ##
@@ -401,13 +405,12 @@ crossnma.model <- function(trt,
       study <- as.character(study)
     ##
     outcome <- catch("outcome", mc, prt.data, sfsp)
-    if (!is.numeric(outcome) | any(!outcome %in% 0:1)) #! sm=="OR"& .. Binary outcome values ...
-      stop("Outcome values must be either 0 or 1 (IPD dataset).")
 
-    #! sd <- catch("sd", mc, prt.data, sfsp)
-    # if(sm%in% c("MD", "SMD")&&is.null(sd)|missing(sd))
-    # stop("Argument 'sd' must be provided for continuous outcome when",
-    # 'sm=\"MD\" or \"SMD\" (IPD dataset).')
+    if (sm%in%c("OR","RR")&!is.numeric(outcome))
+      stop("Binary outcome values must be either 0 or 1 (IPD dataset).")
+    if (sm%in%c("OR","RR")&any(!outcome %in% 0:1))
+      stop("Binary outcome values must be either 0 or 1 (IPD dataset).")
+
     ##
     design <- catch("design", mc, prt.data, sfsp)
     design <- as.character(design)
@@ -434,15 +437,6 @@ crossnma.model <- function(trt,
                          r = outcome,
                          design = design,
                          stringsAsFactors = FALSE)
-     #! Add sd for continuous outcome
-    # if(sm%in% c("MD", "SMD")) data11$sd <- sd
-    # trt is a charachter and data11$trt is factor! we should convert trt to charachter after we put it in a dataset, I do the same for all factors
-   # if (is.factor(data11$trt))
-    #  data11$trt <- as.character(data11$trt)
-    #if (is.factor(data11$study))
-    #  data11$study <- as.character(data11$study)
-    #if (is.factor(data11$design))
-    #  data11$design <- as.character(data11$design)
     ##
     if (!is.null(bias)) {
       bias <- as.character(bias)
@@ -481,7 +475,7 @@ crossnma.model <- function(trt,
     ## Delete NAs
     ##
     nam <-
-      c("trt", "study", "outcome", "design", "bias", "unfav", "bias.group") #! ,"sd"
+      c("trt", "study", "outcome", "design", "bias", "unfav", "bias.group")
 
     nam <- nam[nam %in% names(data11)]
     excl1 <- apply(is.na(data11[, nam]), 1, anyNA)
@@ -528,10 +522,6 @@ crossnma.model <- function(trt,
 
     if (missing(outcome))
       stop("Mandatory argument 'outcome' missing.")
-    #! sd <- catch("sd", mc, std.data, sfsp)
-    # if(sm%in% c("MD", "SMD")&&is.null(sd)|missing(sd))
-    # stop("Argument 'sd' must be provided for continuous outcome when",
-    # 'sm=\"MD\" or \"SMD\" (AD dataset).')
 
     trt <- catch("trt", mc, std.data, sfsp)
     if (is.factor(trt))
@@ -542,9 +532,13 @@ crossnma.model <- function(trt,
       study <- as.character(study)
     ##
     outcome <- catch("outcome", mc, std.data, sfsp)
-    if (!is.numeric(outcome) | any(outcome < 0) | any(!outcome %% 1 == 0))
-      stop("Outcome values must be integers greater than or equal to 0 ",
+    if (sm%in%c("OR","RR")&!is.numeric(outcome) )
+      stop("Binary outcome values must be integers greater than or equal to 0 ",
            "(study-level dataset).")
+    if (sm%in%c("OR","RR")& (any(outcome < 0) | any(!outcome %% 1 == 0)))
+      stop("Binary outcome values must be integers greater than or equal to 0 ",
+           "(study-level dataset).")
+
     ##
     n <- catch("n", mc, std.data, sfsp)
     if (!is.numeric(n) | any(n <= 0) | any(!n %% 1 == 0))
@@ -580,16 +574,16 @@ crossnma.model <- function(trt,
                          r = outcome, n = n,
                          design = design,
                          stringsAsFactors = FALSE)
-    #! Add sd for continuous outcome
-    # if(sm%in% c("MD", "SMD")) data22$sd <- sd
 
-    # (delete if not needed because stringsAsFactors is enough )
-    #if (is.factor(data22$trt))
-    #  data22$trt <- as.character(data22$trt)
-    #if (is.factor(data22$study))
-     # data22$study <- as.character(data22$study)
-
-
+    #** se (standard error) needed for continuous outcome
+    ##
+    if(sm%in% c("MD", "SMD")) {
+      if(is.null(se)|missing(se))
+        stop("Argument 'se' must be provided for continuous outcome when",
+             'sm=\"MD\" or \"SMD\" (AD dataset).')
+    se <- catch("se", mc, std.data, sfsp)
+     data22$se <- se
+    }
     ##
     if (!is.null(bias)) {
       bias <- as.character(bias)
@@ -628,7 +622,7 @@ crossnma.model <- function(trt,
     ##
     ## Delete NAs
     ##
-    nam <- c("trt", "study", "outcome", "n", "design", "bias", "unfav", #! ,"sd"
+    nam <- c("trt", "study", "outcome", "n", "design", "bias", "unfav","se",
              "bias.group")
 
     nam <- nam[nam %in% names(data22)]
@@ -1202,7 +1196,7 @@ crossnma.model <- function(trt,
       dd2 <- do.call(rbind, dd1)
       ## create a matrix with the treatment index
       suppressMessages(
-        jagsdata1$t.ipd <- dd2 %>%
+        jagsdata1$t.ipd <- dd2 %>% arrange(study.jags,trt.jags)%>%
           select(trt.jags,study.jags) %>% unique() %>%
           group_by(study.jags) %>%
           dplyr::mutate(arm = row_number()) %>% ungroup() %>%
@@ -1211,26 +1205,40 @@ crossnma.model <- function(trt,
           as.matrix())
 
       ## generate JAGS data object
-      jagstemp <- data1 %>%
+      jagstemp <- dd2 %>% arrange(study.jags,trt.jags)%>%
         select(-c(study, trt, design, bias.group, unfav, bias_index, bias))
       for (v in names(jagstemp)) {
         jagsdata1[[v]] <- jagstemp %>% pull(v)
       }
-      #! for continuous outcome, when sm="MD" or "SMD",
-      # 1. compute sd
-      #sd_jk <- data1%>%group_by(study.jags,trt.jags)%>%select(outcome) %>%
-      # summarise_all(stats::sd)
-      #  2. make it as a matrix with dim: study X treatment arm
-      # jagsdata1$sd <- sd_jk %>% arrange(study.jags) %>% group_by(study.jags) %>%
-      # dplyr::mutate(arm = row_number()) %>%  ungroup()%>%
-      #   dplyr::select(-c(trt.jags))  %>%
-      #   gather("variable", "value",-study.jags, -arm) %>% spread(arm, value)%>%
-      #   dplyr::select(-c(study.jags,variable))%>%
-      #   as.matrix()
+      #! Additionally for continuous outcome, when sm="MD" or "SMD",
+      if(sm%in%c("MD","SMD")){
+        # 1. compute sd
+        sd_jk <- dd2%>% arrange(study.jags,trt.jags)%>%group_by(study.jags,trt.jags)%>%select(r) %>%
+          summarise_all(stats::sd)
+        #  2. represent "sd" column as a matrix with dim: study X treatment arm
+        jagsdata1$sd <- sd_jk %>% arrange(study.jags,trt.jags) %>% group_by(study.jags) %>%
+        dplyr::mutate(arm = row_number()) %>%  ungroup()%>%
+          dplyr::select(-c(trt.jags))  %>%
+          gather("variable", "value",-study.jags, -arm) %>% spread(arm, value)%>%
+          dplyr::select(-c(study.jags,variable))%>%
+          as.matrix()
+      }
+      if(sm=="SMD"){
+      s_n_jk <- dd2%>% arrange(study.jags,trt.jags)%>%group_by(study.jags,trt.jags)%>%
+        do(sd=stats::sd(.$r),
+           n=summarize(.,n.arms = group_size(.))%>%pull(n.arms))%>%unnest(cols = c(sd,n))
+      # for continuous outcome (doesn't matter the order of treatments)
+      s.pool0.ipd <- dd2%>%arrange(study.jags,trt.jags) %>%group_by(study.jags)%>%
+      do(num=sum(.$sd^2 * .$n),
+         den=sum(.$n),
+         na= summarize(.,n.arms = group_size(.)) %>%pull(n.arms))%>%unnest(cols=c(num,den,na))
+      jagsdata1$s.pool.ipd <- with(s.pool0.ipd,num/(den-na))
+      }
+
     }
     else {
       suppressMessages(
-        jagsdata1$t.ipd <- data1 %>% group_by(study.jags, trt.jags) %>%
+        jagsdata1$t.ipd <- data1 %>% arrange(study.jags,trt.jags) %>% group_by(study.jags, trt.jags) %>%
           group_keys() %>%
           group_by(study.jags) %>%
           dplyr::mutate(arm = row_number()) %>% ungroup() %>%
@@ -1238,45 +1246,55 @@ crossnma.model <- function(trt,
           select(-study.jags) %>%
           as.matrix())
       ## generate JAGS data object
-      jagstemp <- data1 %>% select(-c(study, trt,design))
+      jagstemp <- data1 %>% arrange(study.jags,trt.jags) %>% select(-c(study, trt,design))
       for (v in names(jagstemp)){
         jagsdata1[[v]] <- jagstemp %>% pull(v)
     }
-
-    # if(sm=="SMD"){
-    # s_n_jk <- data1%>% arrange(study.jags,trt.jags)%>%group_by(study.jags,trt.jags)%>%
-    #   do(sd=stats::sd(.$outcome),
-    #      n=summarize(.,n.arms = group_size(.))%>%pull(n.arms))%>%unnest(cols = c(sd,n))
-    #! for continuous outcome (doesn't matter the order of treatments)
-    #! s.pool0.ipd <- data1%>%arrange(study.jags) %>%group_by(study.jags)%>%
-    # do(num=sum(.$sd^2 * .$n),
-    #    den=sum(.$n),
-    #    na= summarize(.,n.arms = group_size(.)) %>%pull(n.arms))%>%unnest(cols=c(num,den,na))
-    # jagsdata1$s.pool.ipd <- with(s.pool0.ipd,num/(den-na))
-    # }
-
+      #! Additionally for continuous outcome, when sm="MD" or "SMD",
+      if(sm%in%c("MD","SMD")){
+        # 1. compute sd
+        sd_jk <- data1%>% arrange(study.jags,trt.jags)%>%group_by(study.jags,trt.jags)%>%select(r) %>%
+          summarise_all(stats::sd)
+        #  represent "sd" column as a matrix with dim: study X treatment arm
+        jagsdata1$sd <- sd_jk %>% arrange(study.jags,trt.jags) %>% group_by(study.jags) %>%
+          dplyr::mutate(arm = row_number()) %>%  ungroup()%>%
+          dplyr::select(-c(trt.jags))  %>%
+          gather("variable", "value",-study.jags, -arm) %>% spread(arm, value)%>%
+          dplyr::select(-c(study.jags,variable))%>%
+          as.matrix()
+      }
+      if(sm=="SMD"){
+        s_n_jk <- data1%>% arrange(study.jags,trt.jags)%>%group_by(study.jags,trt.jags)%>%
+          do(sd=stats::sd(.$r),
+             n=summarize(.,n.arms = group_size(.))%>%pull(n.arms))%>%unnest(cols = c(sd,n))
+        # for continuous outcome (doesn't matter the order of treatments)
+        s.pool0.ipd <- data1%>%arrange(study.jags,trt.jags) %>%group_by(study.jags)%>%
+          do(num=sum(.$sd^2 * .$n),
+             den=sum(.$n),
+             na= summarize(.,n.arms = group_size(.)) %>%pull(n.arms))%>%unnest(cols=c(num,den,na))
+        jagsdata1$s.pool.ipd <- with(s.pool0.ipd,num/(den-na))
+      }
+    }
     # add number of treatments, studies, and arms to JAGS data object
     jagsdata1$nt <- trt.key %>% nrow()
     jagsdata1$ns.ipd <-
       if (!is.null(data1))
         data1$study %>% unique() %>% length()
-      else
-        0
+    else
+      0
     suppressMessages(
       jagsdata1$na.ipd <-
-        data1 %>% arrange(study.jags) %>% group_by(study.jags) %>%
+        data1 %>% arrange(study.jags,trt.jags) %>% group_by(study.jags) %>%
         group_map(~length(unique(.x$trt))) %>%
         unlist())
     jagsdata1$np <- data1 %>% nrow()
-    jagsdata1$x.bias <- NULL
 
     ## modify names in JAGS object
-
     names(jagsdata1)[names(jagsdata1) == "r"]  <- "y"
     names(jagsdata1)[names(jagsdata1) == "trt.jags"] <- "trt"
     names(jagsdata1)[names(jagsdata1) == "study.jags"] <- "study"
-  }
-  else {
+
+  } else {
     jagsdata1 <- list(ns.ipd = 0, nt = trt.key %>% nrow())
     xbias.ipd <- NULL
     bias_index.ipd <- NULL
@@ -1291,7 +1309,10 @@ crossnma.model <- function(trt,
       stop("Sample size must be an integer greater than 0.")
     if (!is.numeric(data2$r))
       stop("Outcome must be numeric.")
-
+   if(sm%in%c("MD","SMD")){
+     if (!is.numeric(data2$se))
+       stop("Standard error must be numeric.")
+   }
     ## add treatment mapping to data
     data2 %<>%
       mutate(trt.jags = mapvalues(trt,
@@ -1470,10 +1491,6 @@ crossnma.model <- function(trt,
 
     ## generate JAGS data object
 
-    #! For continuous outcome, compute the standard error
-   # if(sm%in%c("MD","SMD")){
-   # data2$se <- data2$sd/sqrt(data2$n)
-   # }
     # generate JAGS data object
 
     ## create the matrix of trt index following the values of unfav column (adjust 1 & 2)
@@ -1514,6 +1531,15 @@ crossnma.model <- function(trt,
                       select(-study.jags, -variable)))
 
       }
+        # for continuous outcome with SMD
+        if(sm=="SMD"){
+           s.pool0.ad <- dd2%>%arrange(study.jags) %>%group_by(study.jags)%>%
+          do(num=sum(.$se^2 * .$n),
+             den=sum(.$n),
+             na= summarize(.,n.arms = group_size(.)) %>%pull(n.arms))%>%unnest(cols=c(num,den,na))
+          jagsdata2$s.pool.ad <- with(s.pool0.ad,num/(den-na))
+        }
+
     }
     else {
       suppressMessages(
@@ -1530,13 +1556,15 @@ crossnma.model <- function(trt,
             as.matrix(jagstemp2 %>% filter(variable == v) %>%
                       select(-study.jags, -variable)))
       }
+      # calculate SMD for continuous outcome
+      if(sm=="SMD"){
+        s.pool0.ad <- data2%>%arrange(study.jags) %>%group_by(study.jags)%>%
+          do(num=sum(.$se^2 * .$n),
+             den=sum(.$n),
+             na= summarize(.,n.arms = group_size(.)) %>%pull(n.arms))%>%unnest(cols=c(num,den,na))
+        jagsdata2$s.pool.ad <- with(s.pool0.ad,num/(den-na))
+      }
     }
-     #! for continuous outcome (doesn't matter the order of treatments)
-    #! s.pool0.ad <- data2%>%arrange(study.jags) %>%group_by(study.jags)%>%
-    # do(num=sum(.$sd^2 * .$n),
-    #    den=sum(.$n),
-    #    na= summarize(.,n.arms = group_size(.)) %>%pull(n.arms))%>%unnest(cols=c(num,den,na))
-    # jagsdata2$s.pool1.ad <- with(s.pool0.ad,num/(den-na))
 
     ## add number of treatments, studies, and arms to JAGS data object
     suppressMessages(
@@ -1564,7 +1592,7 @@ crossnma.model <- function(trt,
 
     ## change names
     names(jagsdata2)[names(jagsdata2) == "trt.jags"] <- "t.ad"
-    #! if(sm%in%c("MD","SMD")) names(jagsdata2)[names(jagsdata2) == "r"] <- "ybar"
+    if(sm%in%c("MD","SMD")) names(jagsdata2)[names(jagsdata2) == "r"] <- "ybar"
   }
   else {
 
@@ -1676,9 +1704,33 @@ crossnma.model <- function(trt,
 
       ##generate JAGS data object
 
-      jagstemp.nrs1 <- data1.nrs %>% select(-c(study, trt,design))
+      jagstemp.nrs1 <- data1.nrs %>% arrange(study.jags,trt.jags) %>% select(-c(study, trt,design))
       for (v in names(jagstemp.nrs1)) {
         jagsdata1.nrs[[v]] <- jagstemp.nrs1 %>% pull(v) # %>% as.vector() # %>% select(-trial, -variable)
+      }
+      #! Additionally for continuous outcome, when sm="MD" or "SMD",
+      if(sm%in%c("MD","SMD")){
+        # 1. compute sd
+        sd_jk <- data1.nrs%>% arrange(study.jags,trt.jags)%>%group_by(study.jags,trt.jags)%>%select(outcome) %>%
+          summarise_all(stats::sd)
+        #  2. represent "sd" column as a matrix with dim: study X treatment arm
+        jagsdata1.nrs$sd <- sd_jk %>% arrange(study.jags,trt.jags) %>% group_by(study.jags) %>%
+          dplyr::mutate(arm = row_number()) %>%  ungroup()%>%
+          dplyr::select(-c(trt.jags))  %>%
+          gather("variable", "value",-study.jags, -arm) %>% spread(arm, value)%>%
+          dplyr::select(-c(study.jags,variable))%>%
+          as.matrix()
+      }
+      if(sm=="SMD"){
+        s_n_jk <- data1.nrs%>% arrange(study.jags,trt.jags)%>%group_by(study.jags,trt.jags)%>%
+          do(sd=stats::sd(.$outcome),
+             n=summarize(.,n.arms = group_size(.))%>%pull(n.arms))%>%unnest(cols = c(sd,n))
+        # for continuous outcome (doesn't matter the order of treatments)
+        s.pool0.ipd <- data1.nrs%>%arrange(study.jags,trt.jags) %>%group_by(study.jags)%>%
+          do(num=sum(.$sd^2 * .$n),
+             den=sum(.$n),
+             na= summarize(.,n.arms = group_size(.)) %>%pull(n.arms))%>%unnest(cols=c(num,den,na))
+        jagsdata1.nrs$s.pool.ipd <- with(s.pool0.ipd,num/(den-na))
       }
       ##modify BUGS object for the various family/link combinations
       names(jagsdata1.nrs)[names(jagsdata1.nrs) == "r"]  <- "y"
@@ -1716,7 +1768,7 @@ crossnma.model <- function(trt,
                                       warn_missing = FALSE) %>% as.integer))
 
       suppressMessages(
-        jagstemp.nrs2 <- data2.nrs %>% arrange(study.jags) %>%
+        jagstemp.nrs2 <- data2.nrs %>% arrange(study.jags,trt.jags) %>%
           group_by(study.jags) %>% dplyr::mutate(arm = row_number()) %>%
           ungroup() %>% select(-c(trt,design,study)) %>%
           gather("variable", "value", -study.jags, -arm) %>%
@@ -1729,7 +1781,18 @@ crossnma.model <- function(trt,
                       filter(variable == v) %>%
                       select(-study.jags, -variable)))
       }
+
+      # calculate pooled standard deviation for continuous outcome
+      if(sm=="SMD"){
+        s.pool0.ad <- data2.nrs%>%arrange(study.jags,trt.jags) %>%group_by(study.jags)%>%
+          do(num=sum(.$se^2 * .$n),
+             den=sum(.$n),
+             na= summarize(.,n.arms = group_size(.)) %>%pull(n.arms))%>%unnest(cols=c(num,den,na))
+        jagsdata2.nrs$s.pool.ad <- with(s.pool0.ad,num/(den-na))
+      }
+
       names(jagsdata2.nrs)[names(jagsdata2.nrs) == "trt.jags"] <- "t.ad"
+      if(sm%in%c("MD","SMD")) names(jagsdata2.nrs)[names(jagsdata2) == "r"] <- "ybar"
 
       ## add number of treatments, studies, and arms to JAGS data object
       jagsdata2.nrs$ns.ad <- data2.nrs$study %>% unique() %>% length()
@@ -1755,6 +1818,7 @@ crossnma.model <- function(trt,
     ## jags code NRS
     model.nrs <- crossnma.code(ipd = nrow(data1.nrs) > 0,
                                ad = nrow(data2.nrs) > 0,
+                               sm=sm,
                                trt.effect=trt.effect.nrs,
                                covariate=NULL,
                                split.regcoef=F,
@@ -1875,6 +1939,7 @@ crossnma.model <- function(trt,
   ##
   model <- crossnma.code(ipd = !is.null(prt.data),
                          ad = !is.null(std.data),
+                         sm=sm,
                          trt.effect = trt.effect,
                          covariate = covariates,
                          split.regcoef = split.regcoef,
@@ -1913,6 +1978,7 @@ crossnma.model <- function(trt,
 
   res <- list(model = model,
               data = jagsdata,
+              sm=sm,
               trt.key = trt.key,
               study.key = study.key,
               trt.effect = trt.effect,

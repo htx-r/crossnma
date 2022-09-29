@@ -1,10 +1,10 @@
 #' Run JAGS to fit cross NMA and NMR
-#' 
+#'
 #' @description
 #' This function takes the JAGS model from an object produced by
 #' \code{\link{crossnma.model}} and runs it using \code{jags.model} in
 #' rjags package.
-#' 
+#'
 #' @param x An object produced by \code{\link{crossnma.model}}.
 #' @param n.adapt Number of adaptations for the MCMC chains. Default
 #'   is 1000.
@@ -29,10 +29,10 @@
 #' \item{call}{Function call.}
 #' \item{version}{Version of R package \bold{crossnma} used to create
 #'   object.}
-#' 
+#'
 #' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch}, Guido
 #'   Schwarzer \email{sc@@imbi.uni-freiburg.de}
-#' 
+#'
 #' @seealso \code{\link{crossnma.model}},
 #'   \code{\link[rjags]{jags.model}}
 #'
@@ -46,7 +46,7 @@
 #'
 #' # Create a JAGS model
 #' mod <- crossnma.model(treat, id, relapse, n, design,
-#'   prt.data = ipddata, std.data = stddata,
+#'   prt.data = ipddata, std.data = stddata,sm="OR",
 #'   reference = "A", trt.effect = "random", method.bias = "naive")
 #'
 #' # Fit JAGS model
@@ -58,7 +58,7 @@
 #' # Display the output
 #' summary(fit)
 #' plot(fit)
-#' 
+#'
 #' @export
 
 
@@ -71,7 +71,7 @@ crossnma <- function(x,
                      quiet = TRUE,
                      monitor = NULL
                      ) {
-  
+
   chkclass(x, "crossnma.model")
   ##
   chknumeric(n.adapt, min = 1, length = 1)
@@ -80,14 +80,14 @@ crossnma <- function(x,
   chknumeric(thin, min = 1, length = 1)
   chknumeric(n.chains, min = 1, length = 1)
   chklogical(quiet)
-  
-  
+
+
   seeds <- sample(.Machine$integer.max, n.chains, replace = FALSE)
   inits <- list()
   for (i in 1:n.chains)
     inits[[i]] <- list(.RNG.seed = seeds[i],
                        .RNG.name = "base::Mersenne-Twister")
-  
+
 
   suppressWarnings(jagsfit <-
                      jags.model(textConnection(x$model),
@@ -96,14 +96,14 @@ crossnma <- function(x,
                                 n.adapt = n.adapt,
                                 inits = inits,
                                 quiet = quiet))
-  
-  
+
+
   ## runjags.options(silent.jags = TRUE, silent.runjags = TRUE)
   ##
   if (n.burnin != 0)
     update(jagsfit, n.burnin)
 
-  ## 
+  ##
   ## Monitor (basics)
   ##
   monitor <- c("d", monitor)
@@ -185,8 +185,8 @@ crossnma <- function(x,
     }
     monitor <- c(monitor, monitor.bias)
   }
-  
-  
+
+
   res <- list(samples = coda.samples(jagsfit,
                                      variable.names = monitor,
                                      n.iter = n.iter, thin = thin),
