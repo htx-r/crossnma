@@ -5,7 +5,15 @@ Date: 2022-04-11
 Depends: 
     R (>= 3.5), netmeta
 Imports: 
-    rjags, coda, dplyr, plyr, rlang, magrittr, tidyr, ggplot2
+    rjags,
+    coda,
+    dplyr,
+    plyr,
+    rlang,
+    magrittr,
+    tidyr,
+    ggplot2,
+    purrr
 Suggests: 
     rmarkdown, knitr
 URL: https://github.com/htx-r/crossnma 
