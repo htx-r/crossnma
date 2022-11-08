@@ -55,7 +55,7 @@
 #' participant level data.
 #' \emph{Statistics in Medicine},
 #' \bold{10;31(28)}, 3516-36
-#' 
+#'
 #' Dias, Sofia, N. J. Welton, V. C. C. Marinho, G. Salanti, J.P.T
 #' Higgins, and A. E. Ades (2010):
 #' Estimation and Adjustment of Bias in Randomized Evidence by Using
@@ -94,6 +94,7 @@
 #' @import tidyr
 #' @import coda
 #' @import netmeta
+#' @import purrr
 
 
 NULL

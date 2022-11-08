@@ -63,7 +63,7 @@ head(stddata) # study-level data
 
 # Create a JAGS model
 mod <- crossnma.model(treat, id, relapse, n, design,
-  prt.data = ipddata, std.data = stddata,
+  prt.data = ipddata, std.data = stddata,sm="OR",
   reference = "A", trt.effect = "random", method.bias = "naive")
 
 # Fit JAGS model

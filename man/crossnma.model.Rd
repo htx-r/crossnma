@@ -11,6 +11,7 @@ crossnma.model(
   outcome,
   n,
   design,
+  se = NULL,
   cov1 = NULL,
   cov2 = NULL,
   cov3 = NULL,
@@ -20,6 +21,7 @@ crossnma.model(
   bias.group = NULL,
   prt.data = NULL,
   std.data = NULL,
+  sm,
   reference = NULL,
   trt.effect = "random",
   cov1.ref = NULL,
@@ -52,6 +54,9 @@ crossnma.model(
 
 \item{design}{Design variable in prt.data and std.data.}
 
+\item{se}{Standard error variable in std.data
+(required only for continuous outcome when sm="MD" or "SMD")}
+
 \item{cov1}{Optional first covariate in prt.data and std.data to
 conduct network meta-regression (see Details).}
 
@@ -61,23 +66,23 @@ conduct network meta-regression (see Details).}
 \item{cov3}{Optional third covariate in prt.data and std.data to
 conduct network meta-regression (see Details).}
 
-\item{bias}{Variable with information on risk of bias in prt.data
-and std.data (can be provided when method.bias = 'adjust1' or
+\item{bias}{An optional variable with information on risk of bias in prt.data
+and std.data (should be provided when method.bias = 'adjust1' or
 'adjust2'). Possible values of this variable are 'low', 'high' or
 'unclear' (can be abbreviated). These values must be identical
 for all participants from the same study.}
 
-\item{unfav}{Variable in prt.data and std.data indicating the
-unfavored treatment in each study (can be provided when
+\item{unfav}{An optional variable in prt.data and std.data indicating the
+unfavored treatment in each study (should be provided when
 method.bias = 'adjust1' or 'adjust2'). The entries of this
 variable are either 0 (unfavored treatment) or 1 (favorable
 treatment or treatments). Each study should include only one 0
 entry. The values need to be repeated for participants who take
 the same treatment.}
 
-\item{bias.covariate}{Variable in prt.data and std.data used to
-estimate the probability of bias (can be provided when
-method.bias = 'adjust1' or 'adjust2').}
+\item{bias.covariate}{An optional variable in prt.data and std.data indicate
+the covariate  used to estimate the probability of bias (can be provided
+when method.bias = 'adjust1' or 'adjust2').}
 
 \item{bias.group}{An optional variable in prt.data and std.data
 that indicates the bias effect in each study (can be provided
@@ -104,6 +109,10 @@ study identification, outcome (number of events), sample size and
 design. Additional columns might be required for certain
 analyses.}
 
+\item{sm}{A character indicating the underlying summary measure.
+Options are: Odds Ratio "OR", Risk Ratio "RR", Mean Difference "MD" or
+Standardised Mean Difference "SMD".}
+
 \item{reference}{A character indicating the name of the reference
 treatment. When the reference is not specified, the first
 alphabetic treatment will be used as a reference in the analysis.}
@@ -127,21 +136,21 @@ which is only useful for a continuous covariate. Dichotomous
 covariates should be given NA value. The default is the overall
 minimum covariate value from all studies.}
 
-\item{reg0.effect}{An optional character (needed when at least
+\item{reg0.effect}{An optional character (can by provided when at least
 \code{cov1} is not NULL) indicating the relationship across
 studies for the prognostic effects expressed by the regression
 coefficient, (\eqn{\beta_0}), in a study \eqn{j}.  Options are
 'independent' or 'random'. We recommend using 'independent'
 (default).}
 
-\item{regb.effect}{An optional character (needed when at least
+\item{regb.effect}{An optional character (can by provided when at least
 \code{cov1} is not NULL) indicating the relationship across
 treatments for the between-study regression coefficient
 (\eqn{\beta^B}). This parameter quantifies the treatment-mean
 covariate interaction.  Options are 'independent', 'random' or
 'common'. Default is 'random'.}
 
-\item{regw.effect}{An optional character (needed when at least
+\item{regw.effect}{An optional character (can by provided when at least
 \code{cov1} is not NULL) indicating the relationship across
 treatments for the within-study regression coefficient
 (\eqn{\beta^W}). This parameter quantifies the
@@ -169,15 +178,15 @@ available (either rct or nrs), this argument needs also to be
 specified to indicate whether unadjusted (naive) or bias-adjusted
 analysis (adjust1 or adjust2) should be applied.}
 
-\item{bias.type}{An optional character defining of bias on the
-treatment effect (required when method.bias='adjust1').  Three
+\item{bias.type}{An optional character defining the relationship between
+the bias effect and the treatment effect (required when method.bias='adjust1').  Three
 options are possible: 'add' to add the additive bias
 effect,'mult' for multiplicative bias effect and 'both' includes
 both an additive and a multiplicative terms.}
 
 \item{bias.effect}{An optional character indicating the
 relationship for the bias coefficients across studies.  Options
-are 'random' or 'common' (default). It is required when
+are 'random' or 'common' (default). It can be provided when
 method.bias='adjust1' or 'adjust2'.}
 
 \item{down.wgt}{An optional numeric indicating the percent to which
@@ -190,7 +199,7 @@ parameters in JAGS model. When effects are set as 'random', we
 can set the heterogeneity parameters for: tau.trt for the
 treatment effects, tau.reg0 for the effect of prognostic
 covariates, tau.regb and tau.regw for within- and between-study
-covariate effect, respectively.  and tau.gamma for bias
+covariate effect, respectively and tau.gamma for bias
 effect. The default of all heterogeneity parameters is
 'dunif(0,2)'. Currently only the uniform distribution is
 supported.  When the method.bias= 'adjust1' or 'adjust2', the
@@ -201,7 +210,7 @@ following default values: RCT with low
 bias, NRS with low (pi.low.rct='dbeta(1,30)') / high
 (pi.high.rct='dbeta(30,1)') bias (pi.low.nrs, pi.high.nrs).}
 
-\item{run.nrs}{An optional list is needed when the NRS used as a
+\item{run.nrs}{An optional list can be provided when the NRS used as a
 prior (method.bias='prior').  The list consists of the following:
 (\code{var.infl}) controls the common inflation of the variance
 of NRS estimates (\eqn{w}) and its values range between 0 (NRS
@@ -290,7 +299,7 @@ head(stddata) # study-level data
 
 # Create a JAGS model
 mod <- crossnma.model(treat, id, relapse, n, design,
-  prt.data = ipddata, std.data = stddata,
+  prt.data = ipddata, std.data = stddata,sm="OR",
   reference = "A", trt.effect = "random", method.bias = "naive")
 
 # Fit JAGS model
