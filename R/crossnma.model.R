@@ -251,7 +251,7 @@ crossnma.model <- function(trt,
                            outcome,
                            n,
                            design,
-                           se,
+                           se=NULL,
                            ##
                            cov1 = NULL,
                            cov2 = NULL,
@@ -312,8 +312,8 @@ crossnma.model <- function(trt,
     stop("Mandatory argument 'outcome' missing.")
   if (missing(design))
     stop("Mandatory argument 'design' missing.")
-  if(sm %in% c("MD","SMD")& missing(se))
-    stop("Mandatory argument for continuous outcome 'se' missing.")
+  if (missing(sm))
+    stop("Mandatory argument 'sm' missing.")
   ##
   trt.effect <- setchar(trt.effect, c("common", "random"))
   ##
@@ -434,7 +434,7 @@ crossnma.model <- function(trt,
            "method.bias = \"adjust1\" or \"adjust2\" (IPD dataset).")
     ##
     data11 <- data.frame(trt = trt, study = study,
-                         r = outcome,
+                         outcome = outcome,
                          design = design,
                          stringsAsFactors = FALSE)
     ##
@@ -478,7 +478,8 @@ crossnma.model <- function(trt,
       c("trt", "study", "outcome", "design", "bias", "unfav", "bias.group")
 
     nam <- nam[nam %in% names(data11)]
-    excl1 <- apply(is.na(data11[, nam]), 1, anyNA)
+    #excl1 <- apply(is.na(data11[, nam]), 1, anyNA)
+    excl1 <- apply(data11[, nam], 1, anyNA)
     if (any(excl1))
       data11 <- data11[!excl1, ]
     ##
@@ -544,7 +545,7 @@ crossnma.model <- function(trt,
     if (!is.numeric(n) | any(n <= 0) | any(!n %% 1 == 0))
       stop("Sample sizes must be integers greater than 0 ",
            "(study-level dataset).")
-    if (any(outcome > n))
+    if (sm%in%c("OR","RR")&any(outcome > n))
       stop("Sample sizes must be larger than number of events ",
            "(study-level dataset).")
     ##
@@ -571,19 +572,21 @@ crossnma.model <- function(trt,
 
     ##
     data22 <- data.frame(trt = trt, study = study,
-                         r = outcome, n = n,
+                         outcome = outcome, n = n,
                          design = design,
                          stringsAsFactors = FALSE)
 
     #** se (standard error) needed for continuous outcome
     ##
-    if(sm%in% c("MD", "SMD")) {
-      if(is.null(se)|missing(se))
+    if(sm%in% c("MD","SMD")){
+      if(missing(se))
         stop("Argument 'se' must be provided for continuous outcome when",
-             'sm=\"MD\" or \"SMD\" (AD dataset).')
-    se <- catch("se", mc, std.data, sfsp)
-     data22$se <- se
+             ' sm=\"MD\" or \"SMD\" (AD dataset).')
+      se <- catch("se", mc, std.data, sfsp)
+      #data22$se <- se
+      data22$prec.delta.ad <- se^-2
     }
+
     ##
     if (!is.null(bias)) {
       bias <- as.character(bias)
@@ -622,11 +625,12 @@ crossnma.model <- function(trt,
     ##
     ## Delete NAs
     ##
-    nam <- c("trt", "study", "outcome", "n", "design", "bias", "unfav","se",
+    nam <- c("trt", "study", "outcome", "n", "design", "bias", "unfav","prec.delta.ad",
              "bias.group")
 
     nam <- nam[nam %in% names(data22)]
-    excl2 <- apply(is.na(data22[, nam]), 1, anyNA)
+   # excl2 <- apply(is.na(data22[, nam]), 1, anyNA)
+    excl2 <- apply(data22[, nam], 1, anyNA)
     if (any(excl2))
       data22 <- data22[!excl2, ]
     ##
@@ -701,7 +705,6 @@ crossnma.model <- function(trt,
       data2.nrs <- data22[data22$design == 'nrs', ]
     }
   }
-
 
   cov.ref <- NULL
   ##
@@ -894,70 +897,6 @@ crossnma.model <- function(trt,
   } else{
     stop("Either the individual participant dataset (prt.data) or the study-level dataset (std.data) should be provided")
   }
-  # if (isCol(data1, "x1")|isCol(data2, "x1")) {
-  #   if (missing(cov1.ref)) {
-  #     if (is.numeric(data1$x1) & is.numeric(data2$x1))
-  #       cov1.ref <- min(c(min(data1$x1, na.rm = TRUE),
-  #                         min(data2$x1, na.rm = TRUE)))
-  #     else
-  #       cov1.ref <- NA
-  #   }
-  #   else {
-  #     if (length(cov1.ref) != 1)
-  #       stop("Argument 'cov1.ref' must be of length 1.")
-  #     ##
-  #     if (!(is.numeric(data1$x1) & is.numeric(data2$x1)) & !is.na(cov1.ref)) {
-  #       warning("Argument 'cov1.ref' set to NA as first covariate ",
-  #               "is not continuous.")
-  #       cov1.ref <- NA
-  #     }
-  #   }
-  #   cov.ref <- cov1.ref
-  #   ##
-  #   if (isCol(data1, "x2")|isCol(data2, "x2")) {
-  #     if (missing(cov2.ref)) {
-  #       if (is.numeric(data1$x2) & is.numeric(data2$x2))
-  #         cov2.ref <- min(c(min(data1$x2, na.rm = TRUE),
-  #                           min(data2$x2, na.rm = TRUE)))
-  #       else
-  #         cov2.ref <- NA
-  #     }
-  #     else {
-  #       if (length(cov2.ref) != 1)
-  #         stop("Argument 'cov2.ref' must be of length 1.")
-  #       ##
-  #       if (!(is.numeric(data1$x2) & is.numeric(data2$x2)) & !is.na(cov2.ref)) {
-  #         warning("Argument 'cov2.ref' set to NA as first covariate ",
-  #                 "is not continuous.")
-  #         cov2.ref <- NA
-  #       }
-  #     }
-  #     cov.ref <- c(cov.ref, cov2.ref)
-  #     ##
-  #     if (isCol(data1, "x3")|isCol(data2, "x3")) {
-  #       if (missing(cov3.ref)) {
-  #         if (is.numeric(data1$x3) & is.numeric(data2$x3))
-  #           cov3.ref <- min(c(min(data1$x3, na.rm = TRUE),
-  #                             min(data2$x3, na.rm = TRUE)))
-  #         else
-  #           cov3.ref <- NA
-  #       }
-  #       else {
-  #         if (length(cov3.ref) != 1)
-  #           stop("Argument 'cov3.ref' must be of length 1.")
-  #         ##
-  #         if (!(is.numeric(data1$x3) & is.numeric(data2$x3)) &
-  #             !is.na(cov3.ref)) {
-  #           warning("Argument 'cov3.ref' set to NA as first covariate ",
-  #                   "is not continuous.")
-  #           cov3.ref <- NA
-  #         }
-  #       }
-  #     }
-  #     cov.ref <- c(cov.ref, cov3.ref)
-  #   }
-  # }
-  ##
   cov1.labels <- NULL
   cov2.labels <- NULL
   cov3.labels <- NULL
@@ -1018,7 +957,7 @@ crossnma.model <- function(trt,
                           design == 'nrs' & bias == 'low'~ 4,
                           bias == 'unclear'~ 5
                         ))
-      bias_index.ipd<- data1 %>% group_by(study,bias_index) %>%
+      bias_index.ipd<- data1%>% arrange(study.jags,trt.jags) %>% group_by(study.jags,bias_index) %>%
         group_keys() %>% select('bias_index')
       if (!is.null(bias.covariate)) {
         ## continuous
@@ -1026,7 +965,7 @@ crossnma.model <- function(trt,
           ## mean covariate if continuous
           suppressMessages(
             xbias.ipd <-
-              data1 %>%
+              data1 %>% arrange(study.jags,trt.jags)%>%
               group_by(study.jags) %>%
               group_map(~mean(.x$x.bias, na.rm = TRUE)) %>% unlist())
           ## Factor with 2 levels
@@ -1042,9 +981,9 @@ crossnma.model <- function(trt,
             data1$x.bias <- as.factor(data1$x.bias)
           data1$x.bias <- as.numeric(data1$x.bias != levels(data1$x.bias)[1])
           suppressMessages(
-            data1 <- data1 %>%
+            xbias.ipd <- data1 %>% arrange(study.jags,trt.jags)%>%
               group_by(study.jags) %>%
-              dplyr::mutate(x.bias = mean(x.bias, na.rm = TRUE)))
+              group_map(~mean(.x$x.bias, na.rm = TRUE)) %>% unlist())
         }
         else
           stop("Invalid datatype for bias covariate.")
@@ -1213,26 +1152,29 @@ crossnma.model <- function(trt,
       #! Additionally for continuous outcome, when sm="MD" or "SMD",
       if(sm%in%c("MD","SMD")){
         # 1. compute sd
-        sd_jk <- dd2%>% arrange(study.jags,trt.jags)%>%group_by(study.jags,trt.jags)%>%select(r) %>%
-          summarise_all(stats::sd)
+        sd_jk <- dd2%>% arrange(study.jags,trt.jags)%>%group_by(study.jags,trt.jags)%>%
+          do(prec=1/var(.$outcome))%>%unnest(cols=prec)
         #  2. represent "sd" column as a matrix with dim: study X treatment arm
-        jagsdata1$sd <- sd_jk %>% arrange(study.jags,trt.jags) %>% group_by(study.jags) %>%
+        jagsdata1$prec.delta.ipd <- sd_jk %>% arrange(study.jags,trt.jags) %>% group_by(study.jags) %>%
         dplyr::mutate(arm = row_number()) %>%  ungroup()%>%
           dplyr::select(-c(trt.jags))  %>%
           gather("variable", "value",-study.jags, -arm) %>% spread(arm, value)%>%
           dplyr::select(-c(study.jags,variable))%>%
           as.matrix()
+        # 3. create a vector with treatment index (to be used for the precision matrix)
+        jagsdata1$trt.index <- dd2 %>% arrange(study.jags,trt.jags) %>% group_by(study.jags)%>%
+          mutate(index = cumsum(!duplicated(trt.jags)))%>%pull(index)
       }
       if(sm=="SMD"){
       s_n_jk <- dd2%>% arrange(study.jags,trt.jags)%>%group_by(study.jags,trt.jags)%>%
-        do(sd=stats::sd(.$r),
+        do(sd=stats::sd(.$outcome),
            n=summarize(.,n.arms = group_size(.))%>%pull(n.arms))%>%unnest(cols = c(sd,n))
       # for continuous outcome (doesn't matter the order of treatments)
       s.pool0.ipd <- dd2%>%arrange(study.jags,trt.jags) %>%group_by(study.jags)%>%
-      do(num=sum(.$sd^2 * .$n),
+      do(num=sum(.$sd^2 * (.$n-1)),
          den=sum(.$n),
          na= summarize(.,n.arms = group_size(.)) %>%pull(n.arms))%>%unnest(cols=c(num,den,na))
-      jagsdata1$s.pool.ipd <- with(s.pool0.ipd,num/(den-na))
+      jagsdata1$s.pool.ipd <- with(s.pool0.ipd,sqrt(num/(den-na)))
       }
 
     }
@@ -1253,26 +1195,29 @@ crossnma.model <- function(trt,
       #! Additionally for continuous outcome, when sm="MD" or "SMD",
       if(sm%in%c("MD","SMD")){
         # 1. compute sd
-        sd_jk <- data1%>% arrange(study.jags,trt.jags)%>%group_by(study.jags,trt.jags)%>%select(r) %>%
-          summarise_all(stats::sd)
+        sd_jk <- data1%>% arrange(study.jags,trt.jags)%>%group_by(study.jags,trt.jags)%>%
+          do(prec=1/var(.$outcome))%>%unnest(cols=prec)
         #  represent "sd" column as a matrix with dim: study X treatment arm
-        jagsdata1$sd <- sd_jk %>% arrange(study.jags,trt.jags) %>% group_by(study.jags) %>%
+        jagsdata1$prec.delta.ipd <- sd_jk %>% arrange(study.jags,trt.jags) %>% group_by(study.jags) %>%
           dplyr::mutate(arm = row_number()) %>%  ungroup()%>%
           dplyr::select(-c(trt.jags))  %>%
           gather("variable", "value",-study.jags, -arm) %>% spread(arm, value)%>%
           dplyr::select(-c(study.jags,variable))%>%
           as.matrix()
+        # 3. create a vector with treatment index (to be used for the precision matrix)
+        jagsdata1$trt.index <- data1 %>% arrange(study.jags,trt.jags) %>% group_by(study.jags)%>%
+          mutate(index = cumsum(!duplicated(trt.jags)))%>%pull(index)
       }
       if(sm=="SMD"){
         s_n_jk <- data1%>% arrange(study.jags,trt.jags)%>%group_by(study.jags,trt.jags)%>%
-          do(sd=stats::sd(.$r),
+          do(sd=stats::sd(.$outcome),
              n=summarize(.,n.arms = group_size(.))%>%pull(n.arms))%>%unnest(cols = c(sd,n))
         # for continuous outcome (doesn't matter the order of treatments)
         s.pool0.ipd <- data1%>%arrange(study.jags,trt.jags) %>%group_by(study.jags)%>%
-          do(num=sum(.$sd^2 * .$n),
+          do(num=sum(.$sd^2 * (.$n-1)),
              den=sum(.$n),
              na= summarize(.,n.arms = group_size(.)) %>%pull(n.arms))%>%unnest(cols=c(num,den,na))
-        jagsdata1$s.pool.ipd <- with(s.pool0.ipd,num/(den-na))
+        jagsdata1$s.pool.ipd <- with(s.pool0.ipd,sqrt(num/(den-na)))
       }
     }
     # add number of treatments, studies, and arms to JAGS data object
@@ -1290,7 +1235,7 @@ crossnma.model <- function(trt,
     jagsdata1$np <- data1 %>% nrow()
 
     ## modify names in JAGS object
-    names(jagsdata1)[names(jagsdata1) == "r"]  <- "y"
+    names(jagsdata1)[names(jagsdata1) == "outcome"]  <- "y"
     names(jagsdata1)[names(jagsdata1) == "trt.jags"] <- "trt"
     names(jagsdata1)[names(jagsdata1) == "study.jags"] <- "study"
 
@@ -1307,10 +1252,10 @@ crossnma.model <- function(trt,
       stop("Sample size must be an integer greater than 0.")
     if (any(floor(data2$n) != data2$n | data2$n < 1))
       stop("Sample size must be an integer greater than 0.")
-    if (!is.numeric(data2$r))
+    if (!is.numeric(data2$outcome))
       stop("Outcome must be numeric.")
    if(sm%in%c("MD","SMD")){
-     if (!is.numeric(data2$se))
+     if (!is.numeric(data2$prec.delta.ad))
        stop("Standard error must be numeric.")
    }
     ## add treatment mapping to data
@@ -1338,7 +1283,7 @@ crossnma.model <- function(trt,
                         bias == 'unclear'~ 5
                       ))
       suppressMessages(
-        bias_index.ad<- data2 %>% arrange(study.jags) %>%
+        bias_index.ad<- data2 %>% arrange(study.jags,trt.jags) %>%
           group_by(study.jags,bias_index) %>% group_keys() %>%
           select('bias_index'))
       if (!is.null(bias.covariate)) {
@@ -1347,11 +1292,11 @@ crossnma.model <- function(trt,
           ## mean covariate if continuous
           suppressMessages(
             xbias.ad <- data2 %>%
-              arrange(study.jags) %>%
+              arrange(study.jags,trt.jags) %>%
               group_by(study.jags) %>%
               group_map(~mean(.x$x.bias, na.rm = TRUE)) %>% unlist())
-          ## Factor with 2 levels
-        }
+
+        }## Factor with 2 levels
         else if (is.factor(data2$x.bias) || is.character(data2$x.bias)) {
           ## check that covariate has fewer than 3 levels and convert
           ## strings and factors to binary covariates
@@ -1359,14 +1304,15 @@ crossnma.model <- function(trt,
             stop(error.biascat, call. = FALSE)
           if (length(unique(data2$x.bias)) == 1)
             stop("Covariate should have more than one unique value.")
-          if (is.character(data2$x.bias))
+          if (is.character(data2$x.bias)){
             data2$x.bias <- as.factor(data2$x.bias)
           data2$x.bias <- as.numeric(data2$x.bias != levels(data2$x.bias)[1])
           suppressMessages(
-            data2 <- data2 %>%
-              arrange(study.jags) %>%
+            xbias.ad <- data2 %>%
+              arrange(study.jags,trt.jags) %>%
               group_by(study.jags) %>%
-              dplyr::mutate(x.bias = mean(x.bias, na.rm = TRUE)))
+              group_map(~mean(.x$x.bias, na.rm = TRUE)) %>% unlist())
+          }
         }
         else
           stop("Invalid datatype for bias covariate.")
@@ -1385,14 +1331,20 @@ crossnma.model <- function(trt,
       ## continuous
       if (is.numeric(data2$x1)) {
         ## mean covariate
+        # suppressMessages(
+        #   data2 <- data2 %>%
+        #     arrange(study.jags,trt.jags) %>%
+        #     group_by(study.jags) %>%
+        #     dplyr::mutate(xm1.ad = mean(x1, na.rm = TRUE)))
         suppressMessages(
-          data2 <- data2 %>%
-            arrange(study.jags) %>%
+          xm1.ad <-  data2 %>%
+            arrange(study.jags,trt.jags) %>%
             group_by(study.jags) %>%
-            dplyr::mutate(xm1.ad = mean(x1, na.rm = TRUE)))
+            dplyr::summarize(xm1.ad = mean(x1, na.rm = TRUE)) %>%pull(xm1.ad)- cov1.ref)
+
         ## Center the mean covariate
         ## cov1.ref if specified
-        data2$xm1.ad <- data2$xm1.ad - cov1.ref
+        #data2$xm1.ad <- data2$xm1.ad - cov1.ref
       }
       else if (is.factor(data2$x1) || is.character(data2$x1)) {
         ## check that covariate has fewer than 3 levels and convert
@@ -1404,11 +1356,17 @@ crossnma.model <- function(trt,
         if (is.character(data2$x1))
           data2$x1 <- as.factor(data2$x1)
         data2$x1 <- as.numeric(data2$x1 != levels(data2$x1)[1])
+        # suppressMessages(
+        #   data2 <- data2 %>%
+        #     arrange(study.jags,trt.jags) %>%
+        #     group_by(study.jags) %>%
+        #     dplyr::mutate(xm1.ad = mean(x1, na.rm = TRUE)))
         suppressMessages(
-          data2 <- data2 %>%
-            arrange(study.jags) %>%
+          xm1.ad <-  data2 %>%
+            arrange(study.jags,trt.jags) %>%
             group_by(study.jags) %>%
-            dplyr::mutate(xm1.ad = mean(x1, na.rm = TRUE)))
+            dplyr::summarize(xm1.ad = mean(x1, na.rm = TRUE)) %>%pull(xm1.ad))
+
       }
       else
         stop("Invalid datatype for covariate.")
@@ -1419,12 +1377,18 @@ crossnma.model <- function(trt,
         if (is.numeric(data2$x2)) {
           ## mean covariate
           suppressMessages(
-            data2 <- data2 %>%
-              arrange(study.jags) %>%
+            xm2.ad <-  data2 %>%
+              arrange(study.jags,trt.jags) %>%
               group_by(study.jags) %>%
-              dplyr::mutate(xm2.ad = mean(x2, na.rm = TRUE)))
-          ## Center the covariate
-          data2$xm2.ad <- data2$xm2.ad - cov2.ref
+              dplyr::summarize(xm2.ad = mean(x2, na.rm = TRUE)) %>%pull(xm2.ad)- cov2.ref)
+
+          # suppressMessages(
+          #   data2 <- data2 %>%
+          #     arrange(study.jags,trt.jags) %>%
+          #     group_by(study.jags) %>%
+          #     dplyr::mutate(xm2.ad = mean(x2, na.rm = TRUE)))
+          # ## Center the covariate
+          # data2$xm2.ad <- data2$xm2.ad - cov2.ref
         }
         else if (is.factor(data2$x2) || is.character(data2$x2)) {
           ## check that covariate has fewer than 3 levels and convert
@@ -1437,10 +1401,16 @@ crossnma.model <- function(trt,
             data2$x2 <- as.factor(data2$x2)
           data2$x2 <- as.numeric(data2$x2 != levels(data2$x2)[1])
           suppressMessages(
-            data2 <- data2 %>%
-              arrange(study.jags) %>%
+            xm2.ad <-  data2 %>%
+              arrange(study.jags,trt.jags) %>%
               group_by(study.jags) %>%
-              dplyr::mutate(xm2.ad = mean(x2, na.rm = TRUE)))
+              dplyr::summarize(xm2.ad = mean(x2, na.rm = TRUE)) %>%pull(xm2.ad))
+
+          # suppressMessages(
+          #   data2 <- data2 %>%
+          #     arrange(study.jags,trt.jags) %>%
+          #     group_by(study.jags) %>%
+          #     dplyr::mutate(xm2.ad = mean(x2, na.rm = TRUE)))
         }
         else
           stop("Invalid datatype for second covariate.")
@@ -1453,12 +1423,18 @@ crossnma.model <- function(trt,
         if (is.numeric(data2$x3)) {
           ## mean covariate
           suppressMessages(
-            data2 <- data2 %>%
-              arrange(study.jags) %>%
+            xm3.ad <-  data2 %>%
+              arrange(study.jags,trt.jags) %>%
               group_by(study.jags) %>%
-              dplyr::mutate(xm3.ad = mean(x3, na.rm = TRUE)))
-          ## Center the mean covariate
-          data2$xm3.ad <- data2$xm3.ad - cov3.ref
+              dplyr::summarize(xm3.ad = mean(x3, na.rm = TRUE)) %>%pull(xm3.ad)- cov3.ref)
+
+          # suppressMessages(
+          #   data2 <- data2 %>%
+          #     arrange(study.jags,trt.jags) %>%
+          #     group_by(study.jags) %>%
+          #     dplyr::mutate(xm3.ad = mean(x3, na.rm = TRUE)))
+          # ## Center the mean covariate
+          # data2$xm3.ad <- data2$xm3.ad - cov3.ref
         }
         else if (is.factor(data2$x3) || is.character(data2$x3)) {
           ## check that covariate has fewer than 3 levels and convert
@@ -1471,10 +1447,16 @@ crossnma.model <- function(trt,
             data2$x3 <- as.factor(data2$x3)
           data2$x3 <- as.numeric(data2$x3 != levels(data2$x3)[1])
           suppressMessages(
-            data2 <- data2 %>%
-              arrange(study.jags) %>%
+            xm3.ad <-  data2 %>%
+              arrange(study.jags,trt.jags) %>%
               group_by(study.jags) %>%
-              dplyr::mutate(xm3.ad = mean(x3, na.rm = TRUE)))
+              dplyr::summarize(xm3.ad = mean(x3, na.rm = TRUE)) %>%pull(xm3.ad))
+
+          # suppressMessages(
+          #   data2 <- data2 %>%
+          #     arrange(study.jags,trt.jags) %>%
+          #     group_by(study.jags) %>%
+          #     dplyr::mutate(xm3.ad = mean(x3, na.rm = TRUE)))
         }
         else
           stop("Invalid datatype for third covariate.")
@@ -1490,9 +1472,6 @@ crossnma.model <- function(trt,
 
 
     ## generate JAGS data object
-
-    # generate JAGS data object
-
     ## create the matrix of trt index following the values of unfav column (adjust 1 & 2)
     if (method.bias %in% c("adjust1", "adjust2")) {
       if (is.null(bias.group))
@@ -1501,7 +1480,7 @@ crossnma.model <- function(trt,
       ## From the unfav column create new ref treatment per study
       suppressMessages(
         dd0 <- data2 %>%
-          arrange(study.jags) %>%
+          arrange(study.jags,trt.jags) %>%
           group_by(study.jags) %>%
           dplyr::mutate(ref.trt.std=.data[["trt"]][unfav == 0]))
       ## For each study, arrange treatments by the new ref
@@ -1516,7 +1495,7 @@ crossnma.model <- function(trt,
 
       ## create a matrix with the treatment index
       suppressMessages(
-        jagstemp2 <- dd2 %>% arrange(study.jags) %>%
+        jagstemp2 <- dd2 %>% arrange(study.jags,trt.jags) %>%
           group_by(study.jags) %>% dplyr::mutate(arm = row_number()) %>%
           ungroup() %>%
           dplyr::select(-c(trt,design,bias,ref.trt.std,unfav,bias.group,bias_index,study))  %>%
@@ -1533,11 +1512,11 @@ crossnma.model <- function(trt,
       }
         # for continuous outcome with SMD
         if(sm=="SMD"){
-           s.pool0.ad <- dd2%>%arrange(study.jags) %>%group_by(study.jags)%>%
-          do(num=sum(.$se^2 * .$n),
+           s.pool0.ad <- dd2%>%arrange(study.jags,trt.jags) %>%group_by(study.jags)%>%
+          do(num=sum((1/.$prec.delta.ad) *(.$n-1)),#num=sum(.$se^2 * .$n),
              den=sum(.$n),
              na= summarize(.,n.arms = group_size(.)) %>%pull(n.arms))%>%unnest(cols=c(num,den,na))
-          jagsdata2$s.pool.ad <- with(s.pool0.ad,num/(den-na))
+          jagsdata2$s.pool.ad <- with(s.pool0.ad,sqrt(num/(den-na)))
         }
 
     }
@@ -1558,11 +1537,11 @@ crossnma.model <- function(trt,
       }
       # calculate SMD for continuous outcome
       if(sm=="SMD"){
-        s.pool0.ad <- data2%>%arrange(study.jags) %>%group_by(study.jags)%>%
-          do(num=sum(.$se^2 * .$n),
+        s.pool0.ad <- data2%>%arrange(study.jags,trt.jags) %>%group_by(study.jags)%>%
+          do(num=sum((1/.$prec.delta.ad) * (.$n-1)),
              den=sum(.$n),
              na= summarize(.,n.arms = group_size(.)) %>%pull(n.arms))%>%unnest(cols=c(num,den,na))
-        jagsdata2$s.pool.ad <- with(s.pool0.ad,num/(den-na))
+        jagsdata2$s.pool.ad <- with(s.pool0.ad,sqrt(num/(den-na)))
       }
     }
 
@@ -1576,23 +1555,24 @@ crossnma.model <- function(trt,
     ##
     suppressMessages(
       jagsdata2$na.ad <-
-        data2 %>% arrange(study.jags) %>% group_by(study.jags) %>%
+        data2 %>% arrange(study.jags,trt.jags) %>% group_by(study.jags) %>%
         dplyr::summarize(n.arms = n()) %>%
         ungroup() %>% select(n.arms) %>% t() %>% as.vector)
     ## add covariate
 
    jagsdata2$x1 <- jagsdata2$x2 <- jagsdata2$x3 <- NULL
-    if (isCol(data2, "xm1.ad"))
-      jagsdata2$xm1.ad <- unique(data2$xm1.ad)
-    if (isCol(data2, "xm2.ad"))
-      jagsdata2$xm2.ad <- unique(data2$xm2.ad)
-    if (isCol(data2, "xm3.ad"))
-      jagsdata2$xm3.ad <- unique(data2$xm3.ad)
-    jagsdata2$x.bias <- NULL
+    if (isCol(data2, "x1"))
+      jagsdata2$xm1.ad <- xm1.ad
+    if (isCol(data2, "x2"))
+      jagsdata2$xm2.ad <- xm2.ad
+    if (isCol(data2, "x3"))
+      jagsdata2$xm3.ad <- xm3.ad
+    #jagsdata2$x.bias <- NULL
 
     ## change names
+    if(sm%in%c("OR","RR")) names(jagsdata2)[names(jagsdata2) == "outcome"]  <- "r"
     names(jagsdata2)[names(jagsdata2) == "trt.jags"] <- "t.ad"
-    if(sm%in%c("MD","SMD")) names(jagsdata2)[names(jagsdata2) == "r"] <- "ybar"
+    if(sm%in%c("MD","SMD")) names(jagsdata2)[names(jagsdata2) == "outcome"] <- "ybar"
   }
   else {
 
@@ -1618,7 +1598,7 @@ crossnma.model <- function(trt,
     if (!is.null(data1))
       suppressMessages(
         list(data1 %>%
-             arrange(study.jags) %>%
+             arrange(study.jags,trt.jags) %>%
              group_by(study.jags) %>%
              select(bias.group) %>% unique() %>% select(bias.group))[[1]])
     else
@@ -1626,7 +1606,7 @@ crossnma.model <- function(trt,
     if (!is.null(data2))
       suppressMessages(
         list(data2 %>%
-             arrange(study.jags) %>%
+             arrange(study.jags,trt.jags) %>%
              group_by(study.jags) %>% select(bias.group) %>% unique())[[1]])
     else
       NULL
@@ -1640,6 +1620,116 @@ crossnma.model <- function(trt,
     jagsdata$std.act.yes <- bmat$study.jags[bmat$bias.group == 2]
   }
 
+  ##
+  ## data to be used in netgraph.crossnma() to plot the network
+  ##
+  ## aggregate IPD dataset
+  if (!is.null(data1)&!is.null(data2)){
+
+    # prt.data.ad0 <- sapply(1:length(unique(data1$study)),
+    #                        function(i){
+    #                          with(data1,
+    #                               data.frame(
+    #                                 study=unique(data1$study)[i],
+    #                                 trt=unique(data1[data1$study==unique(data1$study)[i],]$trt),
+    #                                 outcome=sum(data1[data1$study==unique(data1$study)[i],]$outcome),
+    #                                 n =nrow(data1[data1$study==unique(data1$study)[i],]),
+    #                                 design=unique(data1[data1$study==unique(data1$study)[i],]$design)
+    #                               )
+    #                          )
+    #                        }, simplify = F)
+    # prt.data.ad <- do.call(rbind,prt.data.ad0)
+
+    if(sm%in%c("MD","SMD")){ # sm=="SMD"
+      prt.data.ad <- data1%>%arrange(study,trt)%>% group_by(study,trt)%>%
+        do(outcome=mean(.$outcome),
+           n=nrow(.),
+           design=unique(.$design),
+           se=stats::sd(.$outcome)
+        )%>%unnest(cols=c(outcome,n,design,se))%>%as.data.frame()
+      # combine IPD and AD in a single dataset
+      data2.ad <- data2
+      data2.ad[,"se"] <- 1/sqrt(data2.ad[,"prec.delta.ad"])
+      all.data.ad <- rbind(data2.ad[c('study','trt','outcome','n','design',"se")],prt.data.ad)
+      # calculate s.pooled
+      s.pooled <- all.data.ad %>%group_by(study) %>%
+        do(s.pooled=sqrt(sum(.$se^2 * (.$n-1))/(sum(.$n)-summarize(.,n.arms = group_size(.)) %>%pull(n.arms))) )%>%
+        unnest(cols=c(s.pooled))
+
+      # add s.pooled per study to the dataset
+      all.data.ad %<>%
+        mutate(s.pooled = mapvalues(study,
+                                    from = s.pooled$study,
+                                    to = s.pooled$s.pooled,
+                                    warn_missing = FALSE) )#%>%select(-se)
+    } else{
+      prt.data.ad <- data1%>%arrange(study,trt)%>% group_by(study,trt)%>%
+        do(outcome=sum(.$outcome),
+           n=nrow(.),
+           design=unique(.$design)
+        )%>%unnest(cols=c(outcome,n,design))%>%as.data.frame()
+      # combine IPD and AD in a single dataset
+      all.data.ad <- rbind(data2[c('study','trt','outcome','n','design')],prt.data.ad)
+    }
+
+  } else if (!is.null(data1)){
+    if(sm%in%c("MD","SMD")){
+      prt.data.ad <- data1%>%arrange(study,trt)%>% group_by(study,trt)%>%
+        do(outcome=mean(.$outcome),
+           n=nrow(.),
+           design=unique(.$design),
+           se=stats::sd(.$outcome)
+        )%>%unnest(cols=c(outcome,n,design))%>%as.data.frame()
+
+      all.data.ad <- prt.data.ad
+      # calculate s.pooled
+      s.pooled <- all.data.ad %>%group_by(study) %>%
+        do(s.pooled=sqrt(sum(.$se^2 * (.$n-1))/(sum(.$n)-summarize(.,n.arms = group_size(.)) %>%pull(n.arms))) )%>%
+        unnest(cols=c(s.pooled))
+
+      # add s.pooled per study to the dataset
+      all.data.ad %<>%
+        mutate(s.pooled = mapvalues(study,
+                                    from = s.pooled$study,
+                                    to = s.pooled$s.pooled,
+                                    warn_missing = FALSE) )#%>%select(-se)
+    } else{
+      prt.data.ad <- data1%>%arrange(study,trt)%>% group_by(study,trt)%>%
+        do(outcome=sum(.$outcome),
+           n=nrow(.),
+           design=unique(.$design)
+        )%>%unnest(cols=c(outcome,n,design))%>%as.data.frame()
+
+      all.data.ad <- prt.data.ad
+    }
+
+  }
+  else if (!is.null(data2)) {
+    if(sm%in%c("MD","SMD")){
+      data2.ad <- data2
+      data2.ad[,"se"] <- 1/sqrt(data2.ad[,"prec.delta.ad"])
+      all.data.ad <- data2.ad[c('study','trt','outcome','n','design','se')]
+      # calculate s.pooled
+      s.pooled <- all.data.ad %>%group_by(study) %>%
+        do(s.pooled=sqrt(sum(.$se^2 * (.$n-1))/(sum(.$n)-summarize(.,n.arms = group_size(.)) %>%pull(n.arms))) )%>%
+        unnest(cols=c(s.pooled))
+
+      # add s.pooled per study to the dataset
+      all.data.ad %<>%
+        mutate(s.pooled = mapvalues(study,
+                                    from = s.pooled$study,
+                                    to = s.pooled$s.pooled,
+                                    warn_missing = FALSE) )#%>%select(-se)
+    } else{
+      all.data.ad <- data2[c('study','trt','outcome','n','design')]
+    }
+
+  }
+  ##
+  ## construct default priors
+  ##
+
+  max.d <- paste0(max_TE(all.data.ad,sm=sm))
 
   ##
   ## use NRS as prior, jags need to be run for only NRS
@@ -1694,7 +1784,7 @@ crossnma.model <- function(trt,
 
       suppressMessages(
         jagsdata1.nrs$t.ipd <- data1.nrs %>%
-          arrange(study.jags) %>%
+          arrange(study.jags,trt.jags) %>%
           group_by(study.jags, trt.jags) %>% group_keys() %>%
           group_by(study.jags) %>%
           dplyr::mutate(arm = row_number()) %>% ungroup() %>%
@@ -1727,13 +1817,13 @@ crossnma.model <- function(trt,
              n=summarize(.,n.arms = group_size(.))%>%pull(n.arms))%>%unnest(cols = c(sd,n))
         # for continuous outcome (doesn't matter the order of treatments)
         s.pool0.ipd <- data1.nrs%>%arrange(study.jags,trt.jags) %>%group_by(study.jags)%>%
-          do(num=sum(.$sd^2 * .$n),
+          do(num=sum(.$sd^2 * (.$n-1)),
              den=sum(.$n),
              na= summarize(.,n.arms = group_size(.)) %>%pull(n.arms))%>%unnest(cols=c(num,den,na))
-        jagsdata1.nrs$s.pool.ipd <- with(s.pool0.ipd,num/(den-na))
+        jagsdata1.nrs$s.pool.ipd <- with(s.pool0.ipd,sqrt(num/(den-na)))
       }
       ##modify BUGS object for the various family/link combinations
-      names(jagsdata1.nrs)[names(jagsdata1.nrs) == "r"]  <- "y"
+      names(jagsdata1.nrs)[names(jagsdata1.nrs) == "outcome"]  <- "y"
       names(jagsdata1.nrs)[names(jagsdata1.nrs) == "trt.jags"] <- "trt"
       names(jagsdata1.nrs)[names(jagsdata1.nrs) == "study.jags"] <- "study"
 
@@ -1741,7 +1831,7 @@ crossnma.model <- function(trt,
       jagsdata1.nrs$nt <- trt.key.nrs %>% nrow()
       jagsdata1.nrs$ns.ipd <- data1.nrs$study %>% unique() %>% length()
       suppressMessages(
-        jagsdata1.nrs$na.ipd <- data1.nrs %>% arrange(study.jags) %>%
+        jagsdata1.nrs$na.ipd <- data1.nrs %>% arrange(study.jags,trt.jags) %>%
           group_by(study.jags) %>% group_map(~length(unique(.x$trt))) %>%
           unlist())
       jagsdata1.nrs$np <- data1.nrs %>% nrow()
@@ -1785,19 +1875,19 @@ crossnma.model <- function(trt,
       # calculate pooled standard deviation for continuous outcome
       if(sm=="SMD"){
         s.pool0.ad <- data2.nrs%>%arrange(study.jags,trt.jags) %>%group_by(study.jags)%>%
-          do(num=sum(.$se^2 * .$n),
+          do(num=sum((1/.$prec.delta.ad) * (.$n-1)),#num=sum(.$se^2 * .$n),
              den=sum(.$n),
              na= summarize(.,n.arms = group_size(.)) %>%pull(n.arms))%>%unnest(cols=c(num,den,na))
-        jagsdata2.nrs$s.pool.ad <- with(s.pool0.ad,num/(den-na))
+        jagsdata2.nrs$s.pool.ad <- with(s.pool0.ad,sqrt(num/(den-na)))
       }
-
+      if(sm%in%c("OR","RR")) names(jagsdata2.nrs)[names(jagsdata2.nrs) == "outcome"]  <- "r"
       names(jagsdata2.nrs)[names(jagsdata2.nrs) == "trt.jags"] <- "t.ad"
-      if(sm%in%c("MD","SMD")) names(jagsdata2.nrs)[names(jagsdata2) == "r"] <- "ybar"
+      if(sm%in%c("MD","SMD")) names(jagsdata2.nrs)[names(jagsdata2) == "outcome"] <- "ybar"
 
       ## add number of treatments, studies, and arms to JAGS data object
       jagsdata2.nrs$ns.ad <- data2.nrs$study %>% unique() %>% length()
       suppressMessages(
-        jagsdata2.nrs$na.ad <- data2.nrs %>% arrange(study.jags) %>%
+        jagsdata2.nrs$na.ad <- data2.nrs %>% arrange(study.jags,trt.jags) %>%
           group_by(study.jags) %>% dplyr::summarize(n.arms = n()) %>%
           ungroup() %>% select(n.arms) %>% t() %>% as.vector)
     }
@@ -1816,9 +1906,11 @@ crossnma.model <- function(trt,
     thin.nrs <- replaceNULL(run.nrs[["thin"]], 1)
     n.burnin.nrs <- replaceNULL(run.nrs[["n.burnin"]], 4000)
     ## jags code NRS
-    model.nrs <- crossnma.code(ipd = nrow(data1.nrs) > 0,
-                               ad = nrow(data2.nrs) > 0,
+
+    model.nrs <- crossnma.code(ipd = !is.null(data1.nrs),
+                               ad = !is.null(data2.nrs),
                                sm=sm,
+                               max.d=max.d,
                                trt.effect=trt.effect.nrs,
                                covariate=NULL,
                                split.regcoef=F,
@@ -1891,7 +1983,7 @@ crossnma.model <- function(trt,
                ",",
                ifelse(is.na(prec.nrs[trt.key2$trt.jags.nrs[i]]) |
                       prec.nrs[trt.key2$trt.jags.nrs[i]] == Inf,
-                      10^-2,
+                      (max.d*15)^(-2),
                       prec.nrs[trt.key2$trt.jags.nrs[i]]),
                ")", if (i < nrow(trt.key2)) "\n" else "")
       d.prior.nrs <- paste0(d.prior.nrs, d.prior0)
@@ -1901,45 +1993,15 @@ crossnma.model <- function(trt,
     d.prior.nrs <- NULL
 
 
-  ##
-  ## data to be used in netgraph.crossnma() to plot the network
-  ##
-  ## aggregate IPD dataset
-  if (!is.null(data1)&!is.null(data2)){
-    prt.data.ad0 <- sapply(1:length(unique(data1$study)),
-                           function(i){
-                             with(data1,
-                                  data.frame(
-                                    study=unique(data1$study)[i],
-                                    trt=unique(data1[data1$study==unique(data1$study)[i],]$trt),
-                                    r=sum(data1[data1$study==unique(data1$study)[i],]$r),
-                                    n =nrow(data1[data1$study==unique(data1$study)[i],]),
-                                    design=unique(data1[data1$study==unique(data1$study)[i],]$design)
-                                  )
-                             )
-                           }, simplify = F)
-    prt.data.ad <- do.call(rbind,prt.data.ad0)
 
-    # combine IPD and AD in a single dataset
-    all.data.ad <- rbind(data2[c('study','trt','r','n','design')],prt.data.ad)
-  } else if (!is.null(data1)){
-    prt.data.ad <- data1%>%arrange(study,trt)%>% group_by(study,trt)%>%
-      do(r=sum(.$r),
-         n=nrow(.),
-         design=unique(.$design)
-      )%>%unnest(cols=c(r,n,design))%>%as.data.frame()
 
-    all.data.ad <- prt.data.ad
-  }
-  else if (!is.null(data2)) {
-    all.data.ad <- data2[c('study','trt','r','n','design')]
-  }
   ##
   ## jags code
   ##
   model <- crossnma.code(ipd = !is.null(prt.data),
                          ad = !is.null(std.data),
                          sm=sm,
+                         max.d=max.d,
                          trt.effect = trt.effect,
                          covariate = covariates,
                          split.regcoef = split.regcoef,

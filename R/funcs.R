@@ -39,7 +39,7 @@ setseq <- function(seq, levs, text, equal.length = TRUE) {
   else
     stop("Argument '", name, "' must be either a numeric or character vector.",
          call. = FALSE)
-  
+
   res
 }
 
@@ -219,8 +219,8 @@ setref <- function(reference.group, levs, length = 1,
                          substring(error.text, 2))
     text.within <- error.text
   }
-  
-  
+
+
   if (length && length(reference.group) != length)
     stop(text.start,
          if (length == 1)
@@ -269,7 +269,7 @@ setref <- function(reference.group, levs, length = 1,
            call. = FALSE)
     res <- levs[idx]
   }
-  
+
   res
 }
 
