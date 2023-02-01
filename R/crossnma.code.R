@@ -115,7 +115,7 @@ crossnma.code <- function(ipd = TRUE,
             paste0("\n# Random effect for beta0
 for (j in 1:(ns.ipd)) {beta0_", i, "[j] ~ dnorm(b0_", i,", prec.beta0_", i, ")}
 b0_", i, sprintf("~ dnorm(0, (%s*15)^(-2))",max.d),
-"prec.beta0_", i, " <- pow(tau.b0_", i, ", -2)
+"\n prec.beta0_", i, " <- pow(tau.b0_", i, ", -2)
 tau.b0_", i, " ~ ", prior.tau.reg0
 )
           ##
@@ -128,7 +128,7 @@ tau.b0_", i, " ~ ", prior.tau.reg0
             paste0("\n# Independent effect for beta0
 for (j in 1:(ns.ipd)) {
 beta0_", i, "[j] <- b0_", i, "[j]
-b0_", i, sprintf("~ dnorm(0, (%s*15)^(-2))",max.d),
+b0_", i,"[j]", sprintf("~ dnorm(0, (%s*15)^(-2))",max.d),
 "}")
           ##
           beta0.prior.ipd <- paste0(beta0.prior.ipd, beta0.prior.ipd0)
@@ -144,7 +144,7 @@ b0_", i, sprintf("~ dnorm(0, (%s*15)^(-2))",max.d),
       if (!split.regcoef) { # not splitted within and between- study covariate
         if (regb.effect == 'independent' || regw.effect == 'independent') {
           beta.prior.ipd0 <-
-       paste0("\n# Random effect for beta (within=between)
+       paste0("\n# Independent effect for beta (within=between)
 beta.t_", i, "[1] <- 0
 for (k in 1:nt) {
   betab.t_", i, "[k] <- beta.t_", i, "[k]
@@ -165,7 +165,7 @@ for (k in 1:nt) {
 }
 for (k in 2:nt) {beta.t_", i, "[k] ~ dnorm(b_", i, ", prec.beta_", i, ")}
 b_", i, sprintf("~ dnorm(0, (%s*15)^(-2))",max.d),
-"tau.b_", i, " ~ ", prior.tau.regw,
+"\n tau.b_", i, " ~ ", prior.tau.regw,
 "\n prec.beta_", i, " <- pow(tau.b_", i, ", -2)")
             ##
             beta.prior.ipd <- paste0(beta.prior.ipd, beta.prior.ipd0)
@@ -208,7 +208,7 @@ for (k in 2:nt) {betab.t_", i, "[k]", sprintf("~ dnorm(0, (%s*15)^(-2))",max.d),
 betab.t_", i, "[1] <- 0
 for (k in 2:nt) {betab.t_", i, "[k] ~ dnorm(bb_", i, ", prec.betab_", i, ")}
 bb_", i, sprintf("~ dnorm(0, (%s*15)^(-2))",max.d),
-"tau.bb_", i, " ~ ", prior.tau.regb,
+"\n tau.bb_", i, " ~ ", prior.tau.regb,
 "\n prec.betab_", i, " <- pow(tau.bb_", i, ", -2)")
             ##
             betab.prior <- paste0(betab.prior, betab.prior0)
@@ -246,7 +246,7 @@ for (k in 2:nt) {betaw.t_", i, "[k]", sprintf("~ dnorm(0, (%s*15)^(-2))",max.d))
 betaw.t_", i, "[1] <- 0
 for (k in 2:nt) {betaw.t_", i, "[k] ~ dnorm(bw_", i, ", prec.betaw_", i, ")}
 bw_", i, sprintf("~ dnorm(0, (%s*15)^(-2))",max.d),
-"prec.betaw_", i, "<- pow(tau.bw_", i, ", -2)",
+"\n prec.betaw_", i, "<- pow(tau.bw_", i, ", -2)",
 "\n tau.bw_", i, " ~ ", prior.tau.regw)
             ##
           betaw.prior.ipd <- paste0(betaw.prior.ipd, betaw.prior.ipd0)
@@ -298,7 +298,7 @@ beta.t_", i, "[1] <- 0
 for (k in 1:nt) {betab.t_", i, "[k] <- beta.t_", i, "[k]}
 for (k in 2:nt) {beta.t_", i, "[k] ~ dnorm(b_", i, ", prec.beta_", i, ")}
 b_", i, sprintf("~ dnorm(0, (%s*15)^(-2))",max.d),
-"tau.b_", i, " ~ ", prior.tau.regb,
+"\n tau.b_", i, " ~ ", prior.tau.regb,
 "\n prec.beta_", i, " <- pow(tau.b_", i, ", -2)")
             ##
             beta.prior.ad <- paste0(beta.prior.ad, beta.prior.ad0)
@@ -336,7 +336,7 @@ for (k in 2:nt) {betab.t_", i, "[k]", sprintf("~ dnorm(0, (%s*15)^(-2))",max.d),
 betab.t_", i, "[1] <- 0
 for (k in 2:nt) {betab.t_", i, "[k] ~ dnorm(bb_", i, ", prec.betab_", i, ")}
 bb_", i, sprintf("~ dnorm(0, (%s*15)^(-2))",max.d),
-"tau.bb_", i, " ~ ", prior.tau.regb,
+"\n tau.bb_", i, " ~ ", prior.tau.regb,
 "\n prec.betab_", i, " <- pow(tau.bb_", i, ", -2)")
             ##
             betab.prior <- paste0(betab.prior, betab.prior0)
@@ -568,7 +568,7 @@ bb_", i, sprintf("~ dnorm(0, (%s*15)^(-2))",max.d))
                      ifelse(add.std.act.yes, "\nfor (j in std.act.yes) {\n  gamma[j] ~ dnorm(g.act, prec.gamma)\n}", ""),
                      ifelse(add.std.in, paste0("\ng",sprintf("~ dnorm(0, (%s*15)^(-2))",max.d)), ""),
                      ifelse(add.std.act.yes, paste0("\ng.act" ,sprintf("~ dnorm(0, (%s*15)^(-2))",max.d)), ""),
-                     ifelse(is.null(v), paste0("tau.gamma ~ ", prior.tau.gamma, "\n  prec.gamma <- pow(tau.gamma, -2)"), "")
+                     ifelse(is.null(v), paste0("\n tau.gamma ~ ", prior.tau.gamma, "\n  prec.gamma <- pow(tau.gamma, -2)"), "")
                      )
           }
           else {
@@ -607,8 +607,8 @@ for (j in 1:(ns.ipd + ns.ad)) {
   R[j] ~ dbern(pi[j])
   logit(pi[j]) <- a + b * xbias[j]
 }",
-"a", sprintf("~ dnorm(0, (%s*15)^(-2))",max.d),
-"b", sprintf("~ dnorm(0, (%s*15)^(-2))",max.d))
+"\n a", sprintf("~ dnorm(0, (%s*15)^(-2))",max.d),
+"\n b", sprintf("~ dnorm(0, (%s*15)^(-2))",max.d))
       }
     }else if(method.bias=="adjust2"){
       if(is.null(bias.covariate)){ # assign priors for pi[bias_index[j]] based on design and RoB of the study
@@ -700,7 +700,7 @@ for (j in 1:(ns.ipd + ns.ad)) {
                                    ifelse(add.std.in,"for (j in std.in) {gamma[j]<-g}\n",""),
                                    ifelse(add.std.act.no,"for (j in std.act.no) {gamma[j]<-0}\n",""),
                                    ifelse(add.std.act.yes,"for (j in std.act.yes) {gamma[j]<-g.act}\n",""),
-                                   ifelse(add.std.in,paste0("g",~sprintf("~ dnorm(0, (%s*15)^(-2))",max.d),"\n"),""),
+                                   ifelse(add.std.in,paste0("g",sprintf("~ dnorm(0, (%s*15)^(-2))",max.d),"\n"),""),
                                    ifelse(add.std.act.yes,paste0("g.act",sprintf("~ dnorm(0, (%s*15)^(-2))",max.d),"\n"),""),
                                    "prec.gamma <- 0"
             )
@@ -816,8 +816,8 @@ for (j in 1:(ns.ipd + ns.ad)) {
         adjust.prior <- paste0(gamma.effect,"
         # Bias adjustment
 for (j in 1:(ns.ipd+ns.ad)) {logit(pi[j]) <- a+b*xbias[j]}
-a",sprintf("~ dnorm(0, (%s*15)^(-2))",max.d),
-"b",sprintf("~ dnorm(0, (%s*15)^(-2))",max.d)
+                               a",sprintf("~ dnorm(0, (%s*15)^(-2))",max.d),
+"\n b",sprintf("~ dnorm(0, (%s*15)^(-2))",max.d)
 )
       }
     }
@@ -960,7 +960,8 @@ prior.u,prior.tau.theta, d.prior, beta0.prior.ipd, betab.prior, betaw.prior.ipd,
 
   ad.code <- ifelse(ad, ad.code, "")
   ipd.code <- ifelse(ipd, ipd.code, "")
-  code.str <- paste0('model {', ipd.code, ad.code, prior.code, '\n}\n')
+  #code.str <- paste0('model {', ipd.code, ad.code, prior.code, '\n}\n')
+  eval(parse(text = paste("code.str <- function(){ ",ipd.code,ad.code,prior.code,"}", sep='')))
 
   return(code.str)
 }

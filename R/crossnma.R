@@ -2,25 +2,27 @@
 #'
 #' @description
 #' This function takes the JAGS model from an object produced by
-#' \code{\link{crossnma.model}} and runs it using \code{jags.model} in
-#' rjags package.
+#' \code{\link{crossnma.model}} and runs it using \code{jags.parallel} in
+#' R2jags package.
 #'
 #' @param x An object produced by \code{\link{crossnma.model}}.
-#' @param n.adapt Number of adaptations for the MCMC chains. Default
-#'   is 1000.
-#' @param n.burnin Number of burnin iterations for the MCMC chains.
-#' @param n.iter Number of iterations for the MCMC chains.
-#' @param thin Number of thinning for the MCMC chains. Default is 1.
+#' @param inits A list with n.chains elements; each element is itself a list of initial values for each model parameter,
+#' or a function that generates starting values. Default is NULL where jags.parallel() function
+#' will internally generate starting values for each parameter.
+#' @param n.burnin Number of burnin iterations for the MCMC chains. Default is n.iter/2 which discards the first half of the iterations.
+#' @param n.iter Number of iterations to run each MCMC chain. Default is 2000.
+#' @param n.thin Number of thinning for the MCMC chains. Default is max(1, floor((n.iter - n.burnin) / 1000)),
+#' that is only thinning if there are more than 2000 iterations.
 #' @param n.chains Number of MCMC chains. Default is 2.
-#' @param quiet A logical passed on to
-#'   \code{\link[rjags]{jags.model}}.
-#' @param monitor A vector of additional parameters to
-#'   monitor. Default is NULL.
+#' @param monitor A character vector of the names of the parameters to
+#'   be monitored. Basic parameters (depends on the analysis) will be automatically monitored
+#'   and only additional parameters need to be specified.
+#'   Default is NULL.
 #'
 #' @return
 #' An object of class \code{crossnma} which is a list containing the
 #' following components:
-#' \item{samples}{The MCMC samples produced by running the JAGS
+#' \item{jagsfit}{ An rjags-class object produced when R2jags package used to run the JAGS
 #'   model.}
 #' \item{model}{The \code{crossnma.model} object obtained from
 #'   \code{\link{crossnma.model}} which was used to run JAGS.}
@@ -34,7 +36,7 @@
 #'   Schwarzer \email{sc@@imbi.uni-freiburg.de}
 #'
 #' @seealso \code{\link{crossnma.model}},
-#'   \code{\link[rjags]{jags.model}}
+#'   \code{\link[R2jags]{jags.parallel}}
 #'
 #' @examples
 #' # We conduct a network meta-analysis assuming a random-effects
@@ -50,10 +52,8 @@
 #'   reference = "A", trt.effect = "random", method.bias = "naive")
 #'
 #' # Fit JAGS model
-#' # (suppress warning 'Adaptation incomplete' due to n.adapt = 20)
-#' fit <-
-#'   suppressWarnings(crossnma(mod, n.adapt = 20,
-#'     n.iter = 50, thin = 1, n.chains = 3))
+#' fit <-crossnma(mod,
+#' n.burnin =10,n.iter = 50, n.thin = 1, n.chains = 3)
 #'
 #' # Display the output
 #' summary(fit)
@@ -63,45 +63,45 @@
 
 
 crossnma <- function(x,
-                     n.adapt = 1000,
+                     inits=NULL,
+                     #n.adapt = 1000,
                      n.burnin = floor(n.iter / 2),
-                     n.iter = 10000,
-                     thin = 1,
+                     n.iter = 2000,
+                     n.thin = max(1, floor((n.iter - n.burnin)/1000)),
                      n.chains = 2,
-                     quiet = TRUE,
+                     #quiet = TRUE,
                      monitor = NULL
                      ) {
 
   chkclass(x, "crossnma.model")
   ##
-  chknumeric(n.adapt, min = 1, length = 1)
+  #chknumeric(n.adapt, min = 1, length = 1)
   chknumeric(n.burnin, min = 1, length = 1)
   chknumeric(n.iter, min = 1, length = 1)
-  chknumeric(thin, min = 1, length = 1)
+  chknumeric(n.thin, min = 1, length = 1)
   chknumeric(n.chains, min = 1, length = 1)
-  chklogical(quiet)
+  #chklogical(quiet)
 
 
-  seeds <- sample(.Machine$integer.max, n.chains, replace = FALSE)
-  inits <- list()
-  for (i in 1:n.chains)
-    inits[[i]] <- list(.RNG.seed = seeds[i],
-                       .RNG.name = "base::Mersenne-Twister")
+  # inits <- list()
+  # for (i in 1:n.chains) inits[[i]] <- seeds[i]
+    # inits[[i]] <- list(.RNG.seed = seeds[i],
+    #                    .RNG.name = "base::Mersenne-Twister")
 
 
-  suppressWarnings(jagsfit <-
-                     jags.model(textConnection(x$model),
-                                x$data,
-                                n.chains = n.chains,
-                                n.adapt = n.adapt,
-                                inits = inits,
-                                quiet = quiet))
+  # suppressWarnings(jagsfit <-
+  #                    jags.model(textConnection(x$model),
+  #                               x$data,
+  #                               n.chains = n.chains,
+  #                               n.adapt = n.adapt,
+  #                               inits = inits,
+  #                               quiet = quiet))
 
 
   ## runjags.options(silent.jags = TRUE, silent.runjags = TRUE)
   ##
-  if (n.burnin != 0)
-    update(jagsfit, n.burnin)
+  # if (n.burnin != 0)
+  #   update(jagsfit, n.burnin)
 
   ##
   ## Monitor (basics)
@@ -186,10 +186,24 @@ crossnma <- function(x,
     monitor <- c(monitor, monitor.bias)
   }
 
-
-  res <- list(samples = coda.samples(jagsfit,
-                                     variable.names = monitor,
-                                     n.iter = n.iter, thin = thin),
+  # random seed for JAGS model (to produce identical results)
+  seeds <- sample(.Machine$integer.max, n.chains, replace = FALSE)
+  # Run JAGS model
+  jmodel <- x$model
+  jagsfit <- jags.parallel(data=x$data,
+                inits = inits,
+                parameters.to.save = monitor,
+                model.file=jmodel,
+                n.chains = n.chains,
+                n.iter = n.iter,
+                n.burnin = n.burnin,
+                n.thin = n.thin,
+                jags.seed=seeds,
+                DIC=FALSE)
+  res <- list(# samples = coda.samples(jagsfit,
+    #                                  variable.names = monitor,
+    #                                  n.iter = n.iter, thin = thin),
+              jagsfit=jagsfit,
               model = x,
               trt.key = x$trt.key,
               call = match.call(),

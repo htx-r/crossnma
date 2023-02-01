@@ -32,14 +32,12 @@ head(stddata) # study-level data
 
 # Create a JAGS model
 mod <- crossnma.model(treat, id, relapse, n, design,
-  prt.data = ipddata, std.data = stddata,
+  prt.data = ipddata, std.data = stddata,sm="OR",
   reference = "A", trt.effect = "random", method.bias = "naive")
 
 # Fit JAGS model
-# (suppress warning 'Adaptation incomplete' due to n.adapt = 20)
-fit <-
-  suppressWarnings(crossnma(mod, n.adapt = 20,
-    n.iter = 50, thin = 1, n.chains = 3))
+fit <-crossnma(mod,
+n.burnin =10,n.iter = 50, n.thin = 1, n.chains = 3)
 
 # Display the output (with 5 digits)
 print(summary(fit), digits = 5)

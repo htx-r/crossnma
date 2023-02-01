@@ -33,7 +33,7 @@ Imports:
     magrittr,
     plyr,
     purrr,
-    rjags,
+    R2jags,
     rlang,
     tidyr
 Suggests: 

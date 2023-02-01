@@ -1,10 +1,10 @@
 #' Heat Plot
-#' 
+#'
 #' @description
 #' Produces a heat plot that contain point estimates of relative
 #' effects for all possible pairs of treatments along with 95\%
 #' credible intervals obtained with the quantile method.
-#' 
+#'
 #' @param x An object created with \code{\link{crossnma}}.
 #' @param median A logical indicating whether to use the median
 #'   (default) or mean to measure relative treatment effects.
@@ -44,8 +44,8 @@
 #'
 #' @return
 #' League heat plot, where a color scale is used to represent the
-#' relative treatment effects.
-#' 
+#' values of relative treatment effects.
+#'
 #' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch}
 #'
 #' @seealso \code{\link{crossnma}}
@@ -60,18 +60,16 @@
 #'
 #' # Create a JAGS model
 #' mod <- crossnma.model(treat, id, relapse, n, design,
-#'   prt.data = ipddata, std.data = stddata,
+#'   prt.data = ipddata, std.data = stddata,sm="OR",
 #'   reference = "A", trt.effect = "random", method.bias = "naive")
 #'
 #' # Fit JAGS model
-#' # (suppress warning 'Adaptation incomplete' due to n.adapt = 20)
-#' fit <-
-#'   suppressWarnings(crossnma(mod, n.adapt = 20,
-#'     n.iter = 50, thin = 1, n.chains = 3))
+#' fit <-crossnma(mod,
+#' n.burnin =10,n.iter = 50, n.thin = 1, n.chains = 3)
 #'
 #' # Create a heat plot
 #' heatplot(fit)
-#' 
+#'
 #' @method heatplot crossnma
 #' @export
 
@@ -91,7 +89,7 @@ heatplot.crossnma <- function(x,
                               size.axis = 12,
                               digits = 2,
                               ...) {
-  
+
   chkclass(x, "crossnma")
   ##
   chklogical(median)
@@ -107,27 +105,27 @@ heatplot.crossnma <- function(x,
   chknumeric(size.trt, min = 0, length = 1)
   ##
   chknumeric(digits, min = 0, length = 1)
-  
-  
+
+
   if (!is.null(x$model$covariate) & is.null(cov1.value))
     stop("cov1.value must be specified for network meta-regression")
-  
-  
+
+
   ## Bind variables to function
   trt <- Treatment <- Comparator <- cov.ref <- ct.stat <- lci <- uci <- NULL
-  
-  
+  samples <- as.mcmc(x$jagsfit)
+
   dmat <-
-    do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("d."))
+    do.call(rbind, samples) %>% data.frame() %>% select(starts_with("d."))
   trt.names <- x$trt.key$trt.ini
   colnames(dmat) <- trt.names
-  ## 
+  ##
   if (is.null(order))
     order <- trt.names
   else
     order <- setseq(order, trt.names)
-  
-  
+
+
   ##
   ##
   ## In the case of network meta-regression
@@ -150,7 +148,7 @@ heatplot.crossnma <- function(x,
       if (x$model$split.regcoef) {
         ## betaw
         if (x$model$regw.effect == "independent") {
-          bwmat <- do.call(rbind, x$samples) %>% data.frame() %>%
+          bwmat <- do.call(rbind, samples) %>% data.frame() %>%
             select(starts_with("betaw.t_"))
           ## split bwmat by nt_column to generate bwmat.cov for each covariate
           ##
@@ -182,7 +180,7 @@ heatplot.crossnma <- function(x,
           dmat <- dmat + bwmat.cov1 + bwmat.cov2 + bwmat.cov3
         }
         else {
-          bwmat <- do.call(rbind, x$samples) %>% data.frame() %>%
+          bwmat <- do.call(rbind, samples) %>% data.frame() %>%
             select(starts_with("bw_"))
           bwmat.cov1 <-
             sweep(cbind(bwmat[, 1]), MARGIN = 2,
@@ -225,7 +223,7 @@ heatplot.crossnma <- function(x,
         }
         ## betab
         if (x$model$regb.effect == "independent") {
-          bbmat <- do.call(rbind, x$samples) %>% data.frame() %>%
+          bbmat <- do.call(rbind, samples) %>% data.frame() %>%
             select(starts_with("betab.t_"))
           ## split bbmat by nt_column to generate bbmat.cov for each
           ## covariate
@@ -264,7 +262,7 @@ heatplot.crossnma <- function(x,
               mean(c(x$model$data$xm2.ad, x$model$data$xm2.ipd),na.rm = TRUE),
               mean(c(x$model$data$xm3.ad, x$model$data$xm3.ipd),na.rm = TRUE))
           ##
-          bbmat <- do.call(rbind, x$samples) %>% data.frame() %>%
+          bbmat <- do.call(rbind, samples) %>% data.frame() %>%
             select(starts_with("bb_"))
           ##
           bbmat.cov1 <-
@@ -304,12 +302,12 @@ heatplot.crossnma <- function(x,
           }
           ##
           dmat <- dmat + bbmat.cov1 + bbmat.cov2 + bbmat.cov3
-        }       
+        }
       }
       else {
         if (x$model$regb.effect == "independent" &&
             x$model$regw.effect == "independent") {
-          bmat <- do.call(rbind, x$samples) %>% data.frame() %>%
+          bmat <- do.call(rbind, samples) %>% data.frame() %>%
             select(starts_with("beta.t_"))
           ## For factor covariate, multiply by 0 or 1 depends on what
           ## value the user indicate in cov1.value
@@ -340,7 +338,7 @@ heatplot.crossnma <- function(x,
           dmat <- dmat + bmat.cov1 + bmat.cov2 + bmat.cov3
         }
         else {
-          bmat <- do.call(rbind, x$samples) %>% data.frame() %>%
+          bmat <- do.call(rbind, samples) %>% data.frame() %>%
             select(starts_with("b_"))
           bmat.cov1 <-
             sweep(cbind(bmat[, 1]), MARGIN = 2,
@@ -390,7 +388,7 @@ heatplot.crossnma <- function(x,
       bbmat.cov2 <- bbmat.cov3 <- 0
       ##
       if (x$model$regb.effect == "independent") {
-        bbmat <- do.call(rbind, x$samples) %>% data.frame() %>%
+        bbmat <- do.call(rbind, samples) %>% data.frame() %>%
           select(starts_with("beta.t_"))
         ## split bbmat by nt_column to generate bbmat.cov for each
         ## covariate
@@ -425,7 +423,7 @@ heatplot.crossnma <- function(x,
       else {
         stds.mean <-
           c(x$model$data$xm1.ad, x$model$data$xm2.ad, x$model$data$xm3.ad)
-        bbmat <- do.call(rbind, x$samples) %>% data.frame() %>%
+        bbmat <- do.call(rbind, samples) %>% data.frame() %>%
           select(starts_with("b_"))
         bbmat.cov1 <-
           sweep(cbind(bbmat[, 1]), MARGIN = 2,
@@ -463,12 +461,12 @@ heatplot.crossnma <- function(x,
         dmat <- dmat + bbmat.cov1 + bbmat.cov2 + bbmat.cov3
       }
     }
-  } 
-  ##  
+  }
+  ##
   dmat %<>% select(order)
   trt.names <- order
-  
-  
+
+
   ## Useful functions to compute some statistics
   ##
   calc.report <- function(x, fct = "identity", arg = NULL,
@@ -496,9 +494,9 @@ heatplot.crossnma <- function(x,
   colvals <- function(dmat, b.col=1, paste = TRUE) {
     ## Bind variables to function
     key <- value <- trt <- estimate <- lci <- uci <- result <- NULL
-    
+
     base <- colnames(dmat)[b.col]
-    
+
     dmat2 <- dmat
     new.vars <- paste0(colnames(dmat2), "-", b.col)
     for (i in 1:ncol(dmat)) {
@@ -559,8 +557,8 @@ heatplot.crossnma <- function(x,
       ##
       null.value <- 0
     }
-    
-    
+
+
     ## create C-style formatting string from the digits parameter
     fmt <- paste0("%.", digits, "f")
 
@@ -583,11 +581,11 @@ heatplot.crossnma <- function(x,
         left_join(tmp.uci, by = "trt")
       colnames(tmp1)[2] <- central.tdcy
     }
-    
+
     tmp1
   }
 
-  
+
   ## Long layout
   ##
   tmp2.list <- list()
@@ -605,8 +603,8 @@ heatplot.crossnma <- function(x,
   names(league.tmp)[names(league.tmp) == central.tdcy] <- "ct.stat"
   ## Create C-style formatting string from the digits parameter
   fmt <- paste0("%.", digits, "f")
-  
-  
+
+
   ##
   ##
   ## Create heat plot

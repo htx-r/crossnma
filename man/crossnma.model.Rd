@@ -38,8 +38,8 @@ crossnma.model(
   prior = list(tau.trt = NULL, tau.reg0 = NULL, tau.regb = NULL, tau.regw = NULL,
     tau.gamma = NULL, pi.high.rct = NULL, pi.low.rct = NULL, pi.high.nrs = NULL,
     pi.low.nrs = NULL),
-  run.nrs = list(var.infl = 1, mean.shift = 0, trt.effect = "common", n.adapt = 2000,
-    n.iter = 10000, n.burnin = 4000, thin = 1, n.chains = 2),
+  run.nrs = list(var.infl = 1, mean.shift = 0, trt.effect = "common", n.iter = 10000,
+    n.burnin = 4000, n.thin = 1, n.chains = 2),
   quiet = TRUE
 )
 }
@@ -68,7 +68,7 @@ conduct network meta-regression (see Details).}
 
 \item{bias}{An optional variable with information on risk of bias in prt.data
 and std.data (should be provided when method.bias = 'adjust1' or
-'adjust2'). Possible values of this variable are 'low', 'high' or
+'adjust2'). Possible values for this variable are 'low', 'high' or
 'unclear' (can be abbreviated). These values must be identical
 for all participants from the same study.}
 
@@ -223,9 +223,8 @@ the log-scale) from NRS network (0 is the default).
 treatment effects across NRS studies .Options are 'random' or
 'common' (default).  Here you can also specify the arguments to
 control the MCMC chains with default value is in the parentheses:
-the number of adaptions n.adapt (500), number of iterations
-n.iter(10000), number of burn in n.burnin (4000), number of
-thinning thin (1) and number of chains n.chains
+the number of iterations n.iter(10000), number of burn in n.burnin (4000), number of
+thinning n.thin (1) and number of chains n.chains
 (2). \code{\link[rjags]{jags.model}} from rjags package describes
 these arguments.}
 
@@ -238,7 +237,7 @@ the JAGS model, which is a list containing the following
 components:
 
 \item{model}{A long character string containing JAGS code that
-  will be run in \code{\link[rjags]{jags.model}}.}
+  will be run in \code{\link[R2jags]{jags.parallel}}.}
 \item{data}{The data to be used to run JAGS model.}
 \item{trt.key}{A table of the treatments and its mapped integer
   number (as used in JAGS model).}
@@ -246,8 +245,8 @@ components:
   number (as used in JAGS model).}
 \item{trt.effect}{A character defining the model for the
   study-specific treatment effects.}
-\item{method.bias}{A character for defining the method to combine
-  randomized clinical trials (RCT) and non-randomized studies
+\item{method.bias}{A character for defining the method to analyse combine
+  randomized clinical trials (RCT) or\/and non-randomized studies
   (NRS).}
 \item{covariate}{A vector of the the names of the covariates
   (\code{cov1, cov2 and cov3}) in prt.data and std.data used in
@@ -277,8 +276,7 @@ components:
 \description{
 This function creates a JAGS model and the needed data for
 cross-design and cross-format network meta-analysis or
-meta-regression of a binary outcome with the odds ratio as effect
-measure.
+meta-regression for different types of outcome
 }
 \details{
 This function creates a JAGS model and the needed data. The JAGS
@@ -303,10 +301,8 @@ mod <- crossnma.model(treat, id, relapse, n, design,
   reference = "A", trt.effect = "random", method.bias = "naive")
 
 # Fit JAGS model
-# (suppress warning 'Adaptation incomplete' due to n.adapt = 20)
-fit <-
-  suppressWarnings(crossnma(mod, n.adapt = 20,
-    n.iter = 50, thin = 1, n.chains = 3))
+fit <-crossnma(mod,
+n.burnin =10,n.iter = 50, n.thin = 1, n.chains = 3)
 
 # Display the output
 summary(fit)

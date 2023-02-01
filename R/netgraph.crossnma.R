@@ -1,5 +1,5 @@
 #' Produce a network plot
-#' 
+#'
 #' @description
 #' Create a network plot of the cross network meta-analysis or
 #' meta-regression
@@ -24,7 +24,7 @@
 #'   plots).}
 #'
 #' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch}
-#' 
+#'
 #' @seealso \code{\link[netmeta]{netgraph.netmeta}}
 #'
 #' @examples
@@ -34,17 +34,15 @@
 #' # non-randomized studies (combined naively)
 #' head(ipddata) # participant-level data
 #' head(stddata) # study-level data
-#' 
+#'
 #' # Create a JAGS model
 #' mod <- crossnma.model(treat, id, relapse, n, design,
-#'   prt.data = ipddata, std.data = stddata,
+#'   prt.data = ipddata, std.data = stddata,sm="OR",
 #'   reference = "A", trt.effect = "random", method.bias = "naive")
 #'
 #' # Fit JAGS model
-#' # (suppress warning 'Adaptation incomplete' due to n.adapt = 20)
-#' fit <-
-#'   suppressWarnings(crossnma(mod, n.adapt = 20,
-#'     n.iter = 50, thin = 1, n.chains = 3))
+#' fit <-crossnma(mod,
+#' n.burnin =10,n.iter = 50, n.thin = 1, n.chains = 3)
 #'
 #' # Create network plot
 #' netgraph(fit)
@@ -58,12 +56,22 @@ netgraph.crossnma <- function(x, ...) {
   chkclass(x, "crossnma")
   ##
   ## Bind variables to function
-  trt <- r <- study <- NULL
+  trt <- n <-outcome <- study <- se <- NULL
   ##
-  dat <-
-    suppressWarnings(pairwise(treat = trt, event = r, n = n, studlab = study,
-                              data = x$model$all.data.ad,
-                              sm = "OR", warn = FALSE))
+  if(x$sm%in%c("OR","RR")){
+    dat <-
+      suppressWarnings(pairwise(treat = trt, event = outcome, n = n, studlab = study,
+                                data = x$all.data.ad,
+                                sm = x$sm, warn = FALSE))
+    ##
+  }
+  if(x$sm%in%c("MD","SMD")){
+    dat <-
+      suppressWarnings(pairwise(treat = trt, mean = outcome, n = n, sd=se,studlab = study,
+                                data = x$all.data.ad,
+                                sm = x$sm, warn = FALSE))
+
+  }
   ##
   netgraph(suppressWarnings(netmeta(dat, warn = FALSE)), ...)
 }

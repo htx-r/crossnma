@@ -4,8 +4,7 @@
 #' @description
 #' This function creates a JAGS model and the needed data for
 #' cross-design and cross-format network meta-analysis or
-#' meta-regression of a binary outcome with the odds ratio as effect
-#' measure.
+#' meta-regression for different types of outcome
 #'
 #' @param trt Treatment variable in prt.data and std.data.
 #' @param study Study variable in prt.data and std.data.
@@ -20,11 +19,11 @@
 #'   conduct network meta-regression (see Details).
 #' @param cov3 Optional third covariate in prt.data and std.data to
 #'   conduct network meta-regression (see Details).
-#' @param bias An optional variable with information on risk of bias in prt.data
-#'   and std.data (should be provided when method.bias = 'adjust1' or
-#'   'adjust2'). Possible values of this variable are 'low', 'high' or
+#' @param bias Optional variable with information on risk of bias in prt.data
+#'   and std.data. Possible values for this variable are 'low', 'high' or
 #'   'unclear' (can be abbreviated). These values must be identical
-#'   for all participants from the same study.
+#'   for all participants from the same study. Either this variable or bias.covariate variable should be
+#'   provided when method.bias = 'adjust1' or 'adjust2'.
 #' @param unfav An optional variable in prt.data and std.data indicating the
 #'   unfavored treatment in each study (should be provided when
 #'   method.bias = 'adjust1' or 'adjust2'). The entries of this
@@ -33,8 +32,8 @@
 #'   entry. The values need to be repeated for participants who take
 #'   the same treatment.
 #' @param bias.covariate An optional variable in prt.data and std.data indicate
-#'   the covariate  used to estimate the probability of bias (can be provided
-#'   when method.bias = 'adjust1' or 'adjust2').
+#'   the covariate  used to estimate the probability of bias. Either this variable or bias variable should be
+#'   provided when method.bias = 'adjust1' or 'adjust2'.
 #' @param bias.group An optional variable in prt.data and std.data
 #'   that indicates the bias effect in each study (can be provided
 #'   when method.bias = 'adjust1' or 'adjust2'). The entries of these
@@ -58,7 +57,7 @@
 #'   design. Additional columns might be required for certain
 #'   analyses.
 #' @param sm A character indicating the underlying summary measure.
-#'   Options are: Odds Ratio "OR", Risk Ratio "RR", Mean Difference "MD" or
+#'   Options are: Odds Ratio "OR" (default), Risk Ratio "RR", Mean Difference "MD" or
 #'   Standardised Mean Difference "SMD".
 #' @param reference A character indicating the name of the reference
 #'   treatment. When the reference is not specified, the first
@@ -128,42 +127,49 @@
 #'   studies at high risk of bias will be downweighted on average. The
 #'   value ranges between 0 and 1. It can be provided when
 #'   method.bias='adjust1' or 'adjust2'.
-#' @param prior An optional list to control the prior for various
-#'   parameters in JAGS model. When effects are set as 'random', we
-#'   can set the heterogeneity parameters for: tau.trt for the
-#'   treatment effects, tau.reg0 for the effect of prognostic
-#'   covariates, tau.regb and tau.regw for within- and between-study
-#'   covariate effect, respectively and tau.gamma for bias
-#'   effect. The default of all heterogeneity parameters is
-#'   'dunif(0,2)'. Currently only the uniform distribution is
-#'   supported.  When the method.bias= 'adjust1' or 'adjust2', the
-#'   user may provide priors to control the bias probability.  For the
-#'   bias probabilities, beta distributions are assumed with the
-#'   following default values: RCT with low
-#'   (pi.low.rct='dbeta(1,10)'), high (pi.high.rct='dbeta(10,1)')
-#'   bias, NRS with low (pi.low.rct='dbeta(1,30)') / high
-#'   (pi.high.rct='dbeta(30,1)') bias (pi.low.nrs, pi.high.nrs).
-#' @param run.nrs An optional list can be provided when the NRS used as a
-#'   prior (method.bias='prior').  The list consists of the following:
-#'   (\code{var.infl}) controls the common inflation of the variance
-#'   of NRS estimates (\eqn{w}) and its values range between 0 (NRS
-#'   does not contribute at all and the prior is vague) and 1 (the NRS
-#'   evidence is used at face value, default approach).  The parameter
-#'   (\code{mean.shift}) is the bias shift (\eqn{\zeta}) to be
-#'   added/subtracted from the estimated mean treatment effects (on
-#'   the log-scale) from NRS network (0 is the default).
-#'   \code{trt.effect} is a character indicates how to combine
-#'   treatment effects across NRS studies .Options are 'random' or
-#'   'common' (default).  Here you can also specify the arguments to
-#'   control the MCMC chains with default value is in the parentheses:
-#'   the number of adaptions n.adapt (500), number of iterations
-#'   n.iter(10000), number of burn in n.burnin (4000), number of
-#'   thinning thin (1) and number of chains n.chains
-#'   (2). \code{\link[rjags]{jags.model}} from rjags package describes
-#'   these arguments.
-#' @param quiet A logical passed on to
-#'   \code{\link[rjags]{jags.model}}.
-#'
+#' @param prior.tau.trt Optional string to specify the prior for the between-study heterogeneity in
+#'   treatment effects in JAGS model (when trt.effect='random').
+#'   The default prior is constructed from the data (see Details).
+#' @param prior.tau.reg0 Optional string to specify the prior for the between-study heterogeneity in
+#'   prognostic effects in JAGS model (when reg0.effect='random').
+#'   The default prior is constructed from the data (see Details).
+#' @param prior.tau.regb Optional string to specify the prior for the between-study heterogeneity in
+#'   between-study covariate effects in JAGS model (when regb.effect='random').
+#'   The default prior is constructed from the data (see Details).
+#' @param prior.tau.regw Optional string to specify the prior for the between-study heterogeneity in
+#'   within-study covariate effects in JAGS model (when regw.effect='random').
+#'   The default prior is constructed from the data (see Details).
+#' @param prior.tau.bias Optional string to specify the prior for the between-study heterogeneity in
+#'   bias effects in JAGS model (when bias.effect='random').
+#' @param prior.pi.low.rct Optional string to provide the prior for the bias probability of
+#'   randomised clinical trials (RCT) with low risk of bias in JAGS model (when the method.bias= 'adjust1' or 'adjust2' and the variable 'bias' is provided).
+#'   The default is the beta distribution 'dbeta(1,10)'.
+#' @param prior.pi.high.rct Optional string to provide the prior for the bias probability of
+#'   randomised clinical trials (RCT) with high risk of bias in JAGS model (when the method.bias= 'adjust1' or 'adjust2' and the variable 'bias' is provided).
+#'   The default is the beta distribution 'dbeta(10,1)'.
+#' @param prior.pi.low.nrs Optional string to provide the prior for the bias probability of
+#'   non-randomised studies (NRS) with low risk of bias in JAGS model (when the method.bias= 'adjust1' or 'adjust2' and the variable 'bias' is provided).
+#'   The default is the beta distribution 'dbeta(1,30)'.
+#' @param prior.pi.high.nrs Optional string to provide the prior for the bias probability of
+#'   non-randomised studies (NRS) with high risk of bias in JAGS model (when the method.bias= 'adjust1' or 'adjust2' and the variable 'bias' is provided).
+#'   The default is the beta distribution 'dbeta(30,1)'.
+#' @param run.nrs.var.infl Optional numeric controls the common inflation of the variance of NRS estimates (\eqn{w})
+#'   and its values range between 0 (NRS does not contribute at all and the prior is vague) and 1 (the NRS
+#'   evidence is used at face value, default approach). This argument can be provided when the NRS used as a prior (method.bias='prior').
+#' @param run.nrs.mean.shift Optional numeric controls the bias shift (\eqn{\zeta}) to be added/subtracted from the estimated mean
+#' treatment effects (on the log-scale when sm='OR' or 'RR') from NRS network (0 is the default).
+#' This argument can be provided when the NRS used as a prior (method.bias='prior').
+#' @param run.nrs.trt.effect Optional character indicates how to combine treatment effects
+#' across NRS studies. Options are 'random' or 'common' (default).
+#' This argument can be provided when the NRS used as a prior (method.bias='prior').
+#' @param run.nrs.n.iter Optional numeric specifies the number of iterations to run MCMC chains for NRS network.
+#' Default is 10000. This argument can be provided when the NRS used as a prior (method.bias='prior').
+#' @param run.nrs.n.burnin Optional numeric specifies the number of burn-in to run MCMC chains for NRS network.
+#' Default is 4000. This argument can be provided when the NRS used as a prior (method.bias='prior').
+#' @param run.nrs.n.thin Optional numeric specifies the number of thinning to run MCMC chains for NRS network.
+#' Default is 1. This argument can be provided when the NRS used as a prior (method.bias='prior').
+#' @param run.nrs.n.chains Optional numeric specifies the number of chains to run MCMC chains for NRS network.
+#' Default is 2. This argument can be provided when the NRS used as a prior (method.bias='prior').
 #' @details
 #' This function creates a JAGS model and the needed data. The JAGS
 #' code is created from the internal function \code{crossnma.code}.
@@ -173,13 +179,18 @@
 #' provided as factor or character) variables. By default, no
 #' covariate adjustment is applied (network meta-analysis).
 #'
+#' The default prior for the between-study heterogeneity parameters
+#' (prior.tau.trt, prior.tau.reg0, prior.tau.regb, prior.tau.regw and prior.tau.bias)
+#' is a uniform distribution over the range 0 to ML, where ML is the largest maximum likelihood
+#' estimates of all relative treatment effects in all studies.
+#'
 #' @return
 #' An object of class \code{crossnma.model} containing information on
 #' the JAGS model, which is a list containing the following
 #' components:
 #'
 #' \item{model}{A long character string containing JAGS code that
-#'   will be run in \code{\link[rjags]{jags.model}}.}
+#'   will be run in \code{\link[R2jags]{jags.parallel}}.}
 #' \item{data}{The data to be used to run JAGS model.}
 #' \item{trt.key}{A table of the treatments and its mapped integer
 #'   number (as used in JAGS model).}
@@ -187,8 +198,8 @@
 #'   number (as used in JAGS model).}
 #' \item{trt.effect}{A character defining the model for the
 #'   study-specific treatment effects.}
-#' \item{method.bias}{A character for defining the method to combine
-#'   randomized clinical trials (RCT) and non-randomized studies
+#' \item{method.bias}{A character for defining the method to analyse combine
+#'   randomized clinical trials (RCT) or\/and non-randomized studies
 #'   (NRS).}
 #' \item{covariate}{A vector of the the names of the covariates
 #'   (\code{cov1, cov2 and cov3}) in prt.data and std.data used in
@@ -218,7 +229,7 @@
 #' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch}, Guido
 #'   Schwarzer \email{sc@@imbi.uni-freiburg.de}
 #'
-#' @seealso \code{\link{crossnma}}, \code{\link[rjags]{jags.model}}
+#' @seealso \code{\link{crossnma}}, \code{\link[R2jags]{jags.parallel}}
 #'
 #' @examples
 #' # We conduct a network meta-analysis assuming a random-effects
@@ -234,10 +245,8 @@
 #'   reference = "A", trt.effect = "random", method.bias = "naive")
 #'
 #' # Fit JAGS model
-#' # (suppress warning 'Adaptation incomplete' due to n.adapt = 20)
-#' fit <-
-#'   suppressWarnings(crossnma(mod, n.adapt = 20,
-#'     n.iter = 50, thin = 1, n.chains = 3))
+#' fit <-crossnma(mod,
+#' n.burnin =10,n.iter = 50, n.thin = 1, n.chains = 3)
 #'
 #' # Display the output
 #' summary(fit)
@@ -265,7 +274,7 @@ crossnma.model <- function(trt,
                            prt.data = NULL,
                            std.data = NULL,
                            ##
-                           sm,
+                           sm="OR",
                            reference=NULL,
                            trt.effect = 'random',
                            ## ---------- meta regression ----------
@@ -282,25 +291,23 @@ crossnma.model <- function(trt,
                            bias.effect = 'common',
                            down.wgt = NULL,
                            ## ---------- prior ----------
-                           prior=list(tau.trt=NULL,
-                                      tau.reg0=NULL,
-                                      tau.regb=NULL,
-                                      tau.regw=NULL,
-                                      tau.gamma=NULL,
-                                      pi.high.rct=NULL,
-                                      pi.low.rct=NULL,
-                                      pi.high.nrs=NULL,
-                                      pi.low.nrs=NULL
-                                      ),
+                           prior.tau.trt=NULL,
+                           prior.tau.reg0=NULL,
+                           prior.tau.regb=NULL,
+                           prior.tau.regw=NULL,
+                           prior.tau.bias=NULL,
+                           prior.pi.high.rct=NULL,
+                           prior.pi.low.rct=NULL,
+                           prior.pi.high.nrs=NULL,
+                           prior.pi.low.nrs=NULL,
                            ## ---------- when method.bias='prior' ----------
-                           run.nrs=list(var.infl=1,
-                                        mean.shift=0,
-                                        trt.effect="common",
-                                        n.adapt = 2000,
-                                        n.iter=10000,
-                                        n.burnin = 4000,
-                                        thin=1,n.chains=2),
-                           quiet=TRUE
+                           run.nrs.var.infl=1,
+                           run.nrs.mean.shift=0,
+                           run.nrs.trt.effect="common",
+                           run.nrs.n.iter=10000,
+                           run.nrs.n.burnin = 4000,
+                           run.nrs.n.thin=1,
+                           run.nrs.n.chains=2
                            ){
   ## Check and set variables
   ##
@@ -312,8 +319,8 @@ crossnma.model <- function(trt,
     stop("Mandatory argument 'outcome' missing.")
   if (missing(design))
     stop("Mandatory argument 'design' missing.")
-  if (missing(sm))
-    stop("Mandatory argument 'sm' missing.")
+  # if (missing(sm))
+  #   stop("Mandatory argument 'sm' missing.")
   ##
   trt.effect <- setchar(trt.effect, c("common", "random"))
   ##
@@ -322,7 +329,6 @@ crossnma.model <- function(trt,
   regw.effect <- setchar(regw.effect, c("common", "independent", "random"))
   ##
   chklogical(split.regcoef)
-  chklogical(quiet)
   ##
   if (!is.null(method.bias))
     method.bias <-
@@ -344,27 +350,24 @@ crossnma.model <- function(trt,
            "method.bias = 'adjust1' or 'adjust2'")
   }
   ##
-  if (!is.null(prior)) {
-    if (trt.effect == 'common' & !is.null(prior$tau.trt))
-      warning("The prior of the heterogeneity between ",
+    if (trt.effect == 'common' & !is.null(prior.tau.trt))
+      warning("The prior of the heterogeneity between",
               "relative treatments parameters is ignored")
-    if (reg0.effect == 'common' & !is.null(prior$tau.reg0))
+    if (reg0.effect == 'common' & !is.null(prior.tau.reg0))
       warning("The prior of the heterogeneity between ",
               "progonostic parameters is ignored")
-    if (regw.effect == 'common' & !is.null(prior$tau.regw))
+    if (regw.effect == 'common' & !is.null(prior.tau.regw))
       warning("The prior of the heterogeneity between ",
               "within-study interaction parameters is ignored")
-    if (regb.effect == 'common' & !is.null(prior$tau.regb))
+    if (regb.effect == 'common' & !is.null(prior.tau.regb))
       warning("The prior of the heterogeneity between ",
               "between-study interaction parameters is ignored")
-    if (bias.effect == 'common' & !is.null(prior$tau.gamma))
+    if (bias.effect == 'common' & !is.null(prior.tau.bias))
       warning("The prior of the heterogeneity between ",
               "bias effect parameters is ignored")
-    if (!is.null(down.wgt) & !is.null(prior$tau.gamma))
+    if (!is.null(down.wgt) & !is.null(prior.tau.bias))
       message("The assigned prior for the heterogeneity parameters of ",
               "bias effect is ignored when 'down.wgt' is provided")
-  }
-
 
   ## Bind variables to function
   ##
@@ -420,12 +423,13 @@ crossnma.model <- function(trt,
                                    "(IPD dataset)"))
     ##
     bias <- catch("bias", mc, prt.data, sfsp)
-    if (is.null(bias) && !is.null(method.bias) &&
+    bias.covariate <- catch("bias.covariate", mc, prt.data, sfsp)
+
+    if (is.null(bias) && is.null(bias.covariate) && !is.null(method.bias) &&
         method.bias %in% c("adjust1", "adjust2"))
-      stop("Argument 'bias' must be provided if ",
+      stop("Argument 'bias' or 'bias.covariate' must be provided if ",
            "method.bias = \"adjust1\" or \"adjust2\" (IPD dataset).")
     ##
-    bias.covariate <- catch("bias.covariate", mc, prt.data, sfsp)
     bias.group <- catch("bias.group", mc, prt.data, sfsp)
     unfav <- catch("unfav", mc, prt.data, sfsp)
     if (is.null(unfav) && !is.null(method.bias) &&
@@ -557,12 +561,13 @@ crossnma.model <- function(trt,
                                    "(study-level dataset)"))
     ##
     bias <- catch("bias", mc, std.data, sfsp)
-    if (is.null(bias) && !is.null(method.bias) &&
+
+    bias.covariate <- catch("bias.covariate", mc, std.data, sfsp)
+    if (is.null(bias) && is.null(bias.covariate) && !is.null(method.bias) &&
         method.bias %in% c("adjust1", "adjust2"))
-      stop("Argument 'bias' must be provided if ",
+      stop("Argument 'bias' or 'bias.covariate' must be provided if ",
            "method.bias = \"adjust1\" or \"adjust2\" (study-level dataset).")
     ##
-    bias.covariate <- catch("bias.covariate", mc, std.data, sfsp)
     bias.group <- catch("bias.group", mc, std.data, sfsp)
     unfav <- catch("unfav", mc, std.data, sfsp)
     if (is.null(unfav) && !is.null(method.bias) &&
@@ -1144,9 +1149,16 @@ crossnma.model <- function(trt,
           as.matrix())
 
       ## generate JAGS data object
-      jagstemp <- dd2 %>% arrange(study.jags,trt.jags)%>%
-        select(-c(study, trt, design, bias.group, unfav, bias_index, bias))
-      for (v in names(jagstemp)) {
+      if(!is.null(bias)){ #  bias not needed and bias_index added later on study-level
+        jagstemp <- dd2 %>% arrange(study.jags,trt.jags)%>%
+          select(-c(study, trt, design, bias.group, unfav, bias_index, bias))
+
+      } else{ # added later on study-level (no need on participant-level)
+        jagstemp <- dd2 %>% arrange(study.jags,trt.jags)%>%
+          select(-c(study, trt, design, bias.group, unfav,x.bias))
+
+      }
+            for (v in names(jagstemp)) {
         jagsdata1[[v]] <- jagstemp %>% pull(v)
       }
       #! Additionally for continuous outcome, when sm="MD" or "SMD",
@@ -1154,6 +1166,7 @@ crossnma.model <- function(trt,
         # 1. compute sd
         sd_jk <- dd2%>% arrange(study.jags,trt.jags)%>%group_by(study.jags,trt.jags)%>%
           do(prec=1/var(.$outcome))%>%unnest(cols=prec)
+
         #  2. represent "sd" column as a matrix with dim: study X treatment arm
         jagsdata1$prec.delta.ipd <- sd_jk %>% arrange(study.jags,trt.jags) %>% group_by(study.jags) %>%
         dplyr::mutate(arm = row_number()) %>%  ungroup()%>%
@@ -1238,7 +1251,7 @@ crossnma.model <- function(trt,
     names(jagsdata1)[names(jagsdata1) == "outcome"]  <- "y"
     names(jagsdata1)[names(jagsdata1) == "trt.jags"] <- "trt"
     names(jagsdata1)[names(jagsdata1) == "study.jags"] <- "study"
-
+    jagsdata1$x.bias <- NULL
   } else {
     jagsdata1 <- list(ns.ipd = 0, nt = trt.key %>% nrow())
     xbias.ipd <- NULL
@@ -1494,6 +1507,7 @@ crossnma.model <- function(trt,
       dd2 <- do.call(rbind,dd1)
 
       ## create a matrix with the treatment index
+      if(!is.null(bias)){ # bias not needed, bias_index added later as bias_index.ad as it needs to be combined with bias_index.ipd
       suppressMessages(
         jagstemp2 <- dd2 %>% arrange(study.jags,trt.jags) %>%
           group_by(study.jags) %>% dplyr::mutate(arm = row_number()) %>%
@@ -1501,6 +1515,15 @@ crossnma.model <- function(trt,
           dplyr::select(-c(trt,design,bias,ref.trt.std,unfav,bias.group,bias_index,study))  %>%
           gather("variable", "value",-study.jags, -arm) %>%
           spread(arm, value))
+      } else{ # x.bias added later as xbias.ad as it needs to be combined with xbias.ipd
+        suppressMessages(
+          jagstemp2 <- dd2 %>% arrange(study.jags,trt.jags) %>%
+            group_by(study.jags) %>% dplyr::mutate(arm = row_number()) %>%
+            ungroup() %>%
+            dplyr::select(-c(trt,design,ref.trt.std,unfav,bias.group,x.bias,study))  %>%
+            gather("variable", "value",-study.jags, -arm) %>%
+            spread(arm, value))
+      }
         jagsdata2 <- list()
       ##
       for (v in unique(jagstemp2$variable)) {
@@ -1567,7 +1590,7 @@ crossnma.model <- function(trt,
       jagsdata2$xm2.ad <- xm2.ad
     if (isCol(data2, "x3"))
       jagsdata2$xm3.ad <- xm3.ad
-    #jagsdata2$x.bias <- NULL
+    jagsdata2$x.bias <- NULL
 
     ## change names
     if(sm%in%c("OR","RR")) names(jagsdata2)[names(jagsdata2) == "outcome"]  <- "r"
@@ -1624,7 +1647,7 @@ crossnma.model <- function(trt,
   ## data to be used in netgraph.crossnma() to plot the network
   ##
   ## aggregate IPD dataset
-  if (!is.null(data1)&!is.null(data2)){
+  if (!is.null(data1)&!is.null(data2)){ # When IPD & AD provided
 
     # prt.data.ad0 <- sapply(1:length(unique(data1$study)),
     #                        function(i){
@@ -1640,18 +1663,18 @@ crossnma.model <- function(trt,
     #                        }, simplify = F)
     # prt.data.ad <- do.call(rbind,prt.data.ad0)
 
-    if(sm%in%c("MD","SMD")){ # sm=="SMD"
+    if(sm%in%c("MD","SMD")){ # for continuous outcome
       prt.data.ad <- data1%>%arrange(study,trt)%>% group_by(study,trt)%>%
         do(outcome=mean(.$outcome),
            n=nrow(.),
-           design=unique(.$design),
-           se=stats::sd(.$outcome)
-        )%>%unnest(cols=c(outcome,n,design,se))%>%as.data.frame()
+           se=stats::sd(.$outcome),
+           design=unique(.$design)
+        )%>%unnest(cols=c(outcome,n,se,design))%>%as.data.frame()
       # combine IPD and AD in a single dataset
       data2.ad <- data2
       data2.ad[,"se"] <- 1/sqrt(data2.ad[,"prec.delta.ad"])
-      all.data.ad <- rbind(data2.ad[c('study','trt','outcome','n','design',"se")],prt.data.ad)
-      # calculate s.pooled
+      all.data.ad <- rbind(data2.ad[c('study','trt','outcome','n','se','design')],prt.data.ad)
+      if(sm=="SMD"){ # calculate s.pooled for SMD
       s.pooled <- all.data.ad %>%group_by(study) %>%
         do(s.pooled=sqrt(sum(.$se^2 * (.$n-1))/(sum(.$n)-summarize(.,n.arms = group_size(.)) %>%pull(n.arms))) )%>%
         unnest(cols=c(s.pooled))
@@ -1662,7 +1685,8 @@ crossnma.model <- function(trt,
                                     from = s.pooled$study,
                                     to = s.pooled$s.pooled,
                                     warn_missing = FALSE) )#%>%select(-se)
-    } else{
+      }
+      } else{ # IPD & AD with binary outcome
       prt.data.ad <- data1%>%arrange(study,trt)%>% group_by(study,trt)%>%
         do(outcome=sum(.$outcome),
            n=nrow(.),
@@ -1672,17 +1696,17 @@ crossnma.model <- function(trt,
       all.data.ad <- rbind(data2[c('study','trt','outcome','n','design')],prt.data.ad)
     }
 
-  } else if (!is.null(data1)){
-    if(sm%in%c("MD","SMD")){
+  } else if (!is.null(data1)){ # onl IPD provided
+    if(sm%in%c("MD","SMD")){ # continuous outcome
       prt.data.ad <- data1%>%arrange(study,trt)%>% group_by(study,trt)%>%
         do(outcome=mean(.$outcome),
            n=nrow(.),
-           design=unique(.$design),
-           se=stats::sd(.$outcome)
-        )%>%unnest(cols=c(outcome,n,design))%>%as.data.frame()
+           se=stats::sd(.$outcome),
+           design=unique(.$design)
+        )%>%unnest(cols=c(outcome,n,se,design))%>%as.data.frame()
 
       all.data.ad <- prt.data.ad
-      # calculate s.pooled
+      if(sm=="SMD"){# calculate s.pooled for SMD
       s.pooled <- all.data.ad %>%group_by(study) %>%
         do(s.pooled=sqrt(sum(.$se^2 * (.$n-1))/(sum(.$n)-summarize(.,n.arms = group_size(.)) %>%pull(n.arms))) )%>%
         unnest(cols=c(s.pooled))
@@ -1693,7 +1717,8 @@ crossnma.model <- function(trt,
                                     from = s.pooled$study,
                                     to = s.pooled$s.pooled,
                                     warn_missing = FALSE) )#%>%select(-se)
-    } else{
+      }
+    } else{ # binary outcome
       prt.data.ad <- data1%>%arrange(study,trt)%>% group_by(study,trt)%>%
         do(outcome=sum(.$outcome),
            n=nrow(.),
@@ -1704,12 +1729,12 @@ crossnma.model <- function(trt,
     }
 
   }
-  else if (!is.null(data2)) {
-    if(sm%in%c("MD","SMD")){
+  else if (!is.null(data2)) {# only AD provided
+    if(sm%in%c("MD","SMD")){ # continuous outcome
       data2.ad <- data2
       data2.ad[,"se"] <- 1/sqrt(data2.ad[,"prec.delta.ad"])
-      all.data.ad <- data2.ad[c('study','trt','outcome','n','design','se')]
-      # calculate s.pooled
+      all.data.ad <- data2.ad[c('study','trt','outcome','n','se','design')]
+      if(sm=="SMD"){ # calculate s.pooled for SMD
       s.pooled <- all.data.ad %>%group_by(study) %>%
         do(s.pooled=sqrt(sum(.$se^2 * (.$n-1))/(sum(.$n)-summarize(.,n.arms = group_size(.)) %>%pull(n.arms))) )%>%
         unnest(cols=c(s.pooled))
@@ -1720,7 +1745,8 @@ crossnma.model <- function(trt,
                                     from = s.pooled$study,
                                     to = s.pooled$s.pooled,
                                     warn_missing = FALSE) )#%>%select(-se)
-    } else{
+      }
+    } else{ # binary data
       all.data.ad <- data2[c('study','trt','outcome','n','design')]
     }
 
@@ -1729,7 +1755,8 @@ crossnma.model <- function(trt,
   ## construct default priors
   ##
 
-  max.d <- paste0(max_TE(all.data.ad,sm=sm))
+  max.d <- max_TE(all.data.ad,sm=sm)
+  #max.d <- paste0(max_TE(all.data.ad,sm=sm))
 
   ##
   ## use NRS as prior, jags need to be run for only NRS
@@ -1897,14 +1924,13 @@ crossnma.model <- function(trt,
     ## combine jagsdata of IPD and AD
     jagsdata.nrs <- c(jagsdata1.nrs,jagsdata2.nrs)
     ## set default values to the list in run.nrs
-    var.infl.nrs <- replaceNULL(run.nrs[["var.infl"]], 1)
-    mean.shift.nrs <- replaceNULL(run.nrs[["mean.shift"]], 0)
-    trt.effect.nrs <- replaceNULL(run.nrs[["trt.effect"]], "common")
-    n.chains.nrs <- replaceNULL(run.nrs[["n.chains"]], 2)
-    n.adapt.nrs <- replaceNULL(run.nrs[["n.adapt"]], 500)
-    n.iter.nrs <- replaceNULL(run.nrs[["n.iter"]], 10000)
-    thin.nrs <- replaceNULL(run.nrs[["thin"]], 1)
-    n.burnin.nrs <- replaceNULL(run.nrs[["n.burnin"]], 4000)
+    var.infl.nrs <- replaceNULL(run.nrs.var.infl, 1)
+    mean.shift.nrs <- replaceNULL(run.nrs.mean.shift, 0)
+    trt.effect.nrs <- replaceNULL(run.nrs.trt.effect, "common")
+    n.chains.nrs <- replaceNULL(run.nrs.n.chains, 2)
+    n.iter.nrs <- replaceNULL(run.nrs.n.iter, 10000)
+    n.thin.nrs <- replaceNULL(run.nrs.n.thin, 1)
+    n.burnin.nrs <- replaceNULL(run.nrs.n.burnin, 4000)
     ## jags code NRS
 
     model.nrs <- crossnma.code(ipd = !is.null(data1.nrs),
@@ -1931,26 +1957,33 @@ crossnma.model <- function(trt,
                                method.bias = NULL,
                                d.prior.nrs=NULL)
     ## jags run NRS
+    seeds <- sample(.Machine$integer.max, n.chains.nrs, replace = FALSE)
+    jmodel <- model.nrs
+    jagsmodel.nrs <- jags.parallel(data=jagsdata.nrs,
+                             inits = NULL,
+                             parameters.to.save = "d",
+                             model.file=jmodel,
+                             n.chains = n.chains.nrs,
+                             n.iter = n.iter.nrs,
+                             n.burnin = n.burnin.nrs,
+                             n.thin = n.thin.nrs,
+                             jags.seed=seeds,
+                             DIC=FALSE)
 
-    seeds <- sample(.Machine$integer.max, n.chains.nrs , replace = FALSE)
-    inits <- list()
-    for (i in 1:n.chains.nrs)
-      inits[[i]] <- list(.RNG.seed = seeds[i], .RNG.name = "base::Mersenne-Twister")
-
-    jagsmodel.nrs <-
-      suppressWarnings(jags.model(textConnection(model.nrs),
-                                  jagsdata.nrs,
-                                  n.chains = n.chains.nrs,
-                                  n.adapt = n.adapt.nrs,
-                                  inits = inits,
-                                  quiet = quiet))
-    ##
-    if (n.burnin.nrs != 0)
-      suppressWarnings(update(jagsmodel.nrs, n.burnin.nrs))
-
-    jagssamples.nrs <-
-      coda.samples(jagsmodel.nrs, variable.names = "d",
-                   n.iter = n.iter.nrs, thin = thin.nrs)
+    # jagsmodel.nrs <-
+    #   suppressWarnings(jags.model(textConnection(model.nrs),
+    #                               jagsdata.nrs,
+    #                               n.chains = n.chains.nrs,
+    #                               n.adapt = n.adapt.nrs,
+    #                               inits = inits,
+    #                               quiet = quiet))
+    # ##
+    # if (n.burnin.nrs != 0)
+    #   suppressWarnings(update(jagsmodel.nrs, n.burnin.nrs))
+    #
+    # jagssamples.nrs <-
+    #   coda.samples(jagsmodel.nrs, variable.names = "d",
+    #                n.iter = n.iter.nrs, thin = thin.nrs)
 
     ## Output: prior for d's
     ##
@@ -1964,13 +1997,13 @@ crossnma.model <- function(trt,
                                         to = trt.key.nrs$trt.jags,
                                         warn_missing = FALSE) %>%
                  as.integer)
-    d.nrs <- summary(jagssamples.nrs)[[1]][,'Mean']+mean.shift.nrs
+    d.nrs <- summary(as.mcmc(jagsmodel.nrs))[[1]][,'Mean']+mean.shift.nrs
     prec.nrs <-
       if (!is.null(var.infl.nrs))
         var.infl.nrs
       else
         1
-    prec.nrs <- prec.nrs / (summary(jagssamples.nrs)[[1]][,'SD']^2)
+    prec.nrs <- prec.nrs / (summary(as.mcmc(jagsmodel.nrs))[[1]][,'SD']^2)
     ##
     d.prior.nrs <- "\n"
     for (i in 2:nrow(trt.key2)) {
@@ -2020,19 +2053,19 @@ crossnma.model <- function(trt,
                          add.std.act.yes =
                            method.bias %in% c("adjust1", "adjust2") &&
                            length(jagsdata$std.act.yes) > 0,
-                         prior.tau.trt = prior[['tau.trt']],
-                         prior.tau.reg0 = prior[['tau.reg0']],
-                         prior.tau.regb = prior[['tau.regb']],
-                         prior.tau.regw = prior[['tau.regw']],
-                         prior.tau.gamma = prior[['tau.gamma']],
+                         prior.tau.trt = prior.tau.trt,
+                         prior.tau.reg0 = prior.tau.reg0,
+                         prior.tau.regb = prior.tau.regb,
+                         prior.tau.regw = prior.tau.regw,
+                         prior.tau.gamma = prior.tau.bias,
                          v = if (!is.null(down.wgt))
                                list(down.wgt/(1-down.wgt))[[1]]
                              else
                                NULL,
-                         prior.pi.high.rct = prior[['pi.high.rct']],
-                         prior.pi.low.rct = prior[['pi.low.rct']],
-                         prior.pi.high.nrs = prior[['pi.high.nrs']],
-                         prior.pi.low.nrs = prior[['pi.low.nrs']],
+                         prior.pi.high.rct = prior.pi.high.rct,
+                         prior.pi.low.rct = prior.pi.low.rct,
+                         prior.pi.high.nrs = prior.pi.high.nrs,
+                         prior.pi.low.nrs = prior.pi.low.nrs,
                          method.bias = method.bias,
                          d.prior.nrs = d.prior.nrs
                          )

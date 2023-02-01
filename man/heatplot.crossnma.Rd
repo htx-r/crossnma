@@ -79,7 +79,7 @@ results.}
 }
 \value{
 League heat plot, where a color scale is used to represent the
-relative treatment effects.
+values of relative treatment effects.
 }
 \description{
 Produces a heat plot that contain point estimates of relative
@@ -96,14 +96,12 @@ head(stddata) # study-level data
 
 # Create a JAGS model
 mod <- crossnma.model(treat, id, relapse, n, design,
-  prt.data = ipddata, std.data = stddata,
+  prt.data = ipddata, std.data = stddata,sm="OR",
   reference = "A", trt.effect = "random", method.bias = "naive")
 
 # Fit JAGS model
-# (suppress warning 'Adaptation incomplete' due to n.adapt = 20)
-fit <-
-  suppressWarnings(crossnma(mod, n.adapt = 20,
-    n.iter = 50, thin = 1, n.chains = 3))
+fit <-crossnma(mod,
+n.burnin =10,n.iter = 50, n.thin = 1, n.chains = 3)
 
 # Create a heat plot
 heatplot(fit)

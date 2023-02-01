@@ -90,7 +90,7 @@
 #' @importFrom utils packageDescription
 #' @import dplyr
 #' @import ggplot2
-#' @import rjags
+#' @import R2jags
 #' @import tidyr
 #' @import coda
 #' @import netmeta
