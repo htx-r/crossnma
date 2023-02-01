@@ -188,7 +188,7 @@ crossnma <- function(x,
   seeds <- sample(.Machine$integer.max, n.chains, replace = FALSE)
   # Run JAGS model
   jmodel <- x$model
-  jagsfit <- R2jags::jags.parallel(data=x$data,
+  jagsfit <- do.call(jags.parallel(data=x$data,
                 inits = inits,
                 parameters.to.save = monitor,
                 model.file=jmodel,
@@ -197,7 +197,7 @@ crossnma <- function(x,
                 n.burnin = n.burnin,
                 n.thin = n.thin,
                 jags.seed=seeds,
-                DIC=FALSE)
+                DIC=FALSE))
   res <- list(# samples = coda.samples(jagsfit,
     #                                  variable.names = monitor,
     #                                  n.iter = n.iter, thin = thin),
