@@ -64,12 +64,10 @@
 
 crossnma <- function(x,
                      inits=NULL,
-                     #n.adapt = 1000,
                      n.burnin = floor(n.iter / 2),
                      n.iter = 2000,
                      n.thin = max(1, floor((n.iter - n.burnin)/1000)),
                      n.chains = 2,
-                     #quiet = TRUE,
                      monitor = NULL
                      ) {
 
@@ -190,7 +188,7 @@ crossnma <- function(x,
   seeds <- sample(.Machine$integer.max, n.chains, replace = FALSE)
   # Run JAGS model
   jmodel <- x$model
-  jagsfit <- jags.parallel(data=x$data,
+  jagsfit <- R2jags::jags.parallel(data=x$data,
                 inits = inits,
                 parameters.to.save = monitor,
                 model.file=jmodel,
