@@ -188,7 +188,7 @@ crossnma <- function(x,
   seeds <- sample(.Machine$integer.max, n.chains, replace = FALSE)
   # Run JAGS model
   jmodel <- x$model
-  jagsfit <- do.call(jags.parallel(data=x$data,
+  jagsfit <- do.call(jags.parallel,list(data=x$data,
                 inits = inits,
                 parameters.to.save = monitor,
                 model.file=jmodel,
