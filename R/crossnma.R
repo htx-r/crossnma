@@ -2,13 +2,14 @@
 #'
 #' @description
 #' This function takes the JAGS model from an object produced by
-#' \code{\link{crossnma.model}} and runs it using \code{jags.parallel} in
-#' R2jags package.
+#' \code{\link{crossnma.model}} and runs it using \code{jags.model} in
+#' rjags package.
 #'
 #' @param x An object produced by \code{\link{crossnma.model}}.
 #' @param inits A list with n.chains elements; each element is itself a list of initial values for each model parameter,
-#' or a function that generates starting values. Default is NULL where jags.parallel() function
+#' or a function that generates starting values. Default is NULL where jags.model() function
 #' will internally generate starting values for each parameter.
+#' @param n.adapt Number of adaptations for the MCMC chains. Default is 1000.
 #' @param n.burnin Number of burnin iterations for the MCMC chains. Default is n.iter/2 which discards the first half of the iterations.
 #' @param n.iter Number of iterations to run each MCMC chain. Default is 2000.
 #' @param n.thin Number of thinning for the MCMC chains. Default is max(1, floor((n.iter - n.burnin) / 1000)),
@@ -18,11 +19,12 @@
 #'   be monitored. Basic parameters (depends on the analysis) will be automatically monitored
 #'   and only additional parameters need to be specified.
 #'   Default is NULL.
+#'  @param  quiet A logical passed on to \code{\link{jags.model}}.TRUE is default.
 #'
 #' @return
 #' An object of class \code{crossnma} which is a list containing the
 #' following components:
-#' \item{jagsfit}{ An rjags-class object produced when R2jags package used to run the JAGS
+#' \item{jagsfit}{ An rjags-class object produced when rjags package used to run the JAGS
 #'   model.}
 #' \item{model}{The \code{crossnma.model} object obtained from
 #'   \code{\link{crossnma.model}} which was used to run JAGS.}
@@ -36,7 +38,7 @@
 #'   Schwarzer \email{sc@@imbi.uni-freiburg.de}
 #'
 #' @seealso \code{\link{crossnma.model}},
-#'   \code{\link[R2jags]{jags.parallel}}
+#'   \code{\link[rjags]{jags.model}}
 #'
 #' @examples
 #' # We conduct a network meta-analysis assuming a random-effects
@@ -64,42 +66,45 @@
 
 crossnma <- function(x,
                      inits=NULL,
+                     n.adapt = 1000,
                      n.burnin = floor(n.iter / 2),
                      n.iter = 2000,
                      n.thin = max(1, floor((n.iter - n.burnin)/1000)),
                      n.chains = 2,
-                     monitor = NULL
+                     monitor = NULL,
+                     quiet=TRUE
                      ) {
 
   chkclass(x, "crossnma.model")
   ##
-  #chknumeric(n.adapt, min = 1, length = 1)
+  chknumeric(n.adapt, min = 1, length = 1)
   chknumeric(n.burnin, min = 1, length = 1)
   chknumeric(n.iter, min = 1, length = 1)
   chknumeric(n.thin, min = 1, length = 1)
   chknumeric(n.chains, min = 1, length = 1)
-  #chklogical(quiet)
+  chklogical(quiet)
 
 
-  # inits <- list()
-  # for (i in 1:n.chains) inits[[i]] <- seeds[i]
-    # inits[[i]] <- list(.RNG.seed = seeds[i],
-    #                    .RNG.name = "base::Mersenne-Twister")
+  if (!is.null(inits))
+  {
+    seeds <- sample(.Machine$integer.max, n.chains, replace = FALSE)
+    inits <- list()
+    for (i in 1:n.chains)
+      inits[[i]] <- list(.RNG.seed = seeds[i], .RNG.name = "base::Mersenne-Twister")
+  }
+
+  suppressWarnings(jagsfit <-
+                     jags.model(textConnection(x$model),
+                                x$data,
+                                n.chains = n.chains,
+                                n.adapt = n.adapt,
+                                inits = inits,
+                                quiet = quiet))
 
 
-  # suppressWarnings(jagsfit <-
-  #                    jags.model(textConnection(x$model),
-  #                               x$data,
-  #                               n.chains = n.chains,
-  #                               n.adapt = n.adapt,
-  #                               inits = inits,
-  #                               quiet = quiet))
 
-
-  ## runjags.options(silent.jags = TRUE, silent.runjags = TRUE)
-  ##
-  # if (n.burnin != 0)
-  #   update(jagsfit, n.burnin)
+  if (n.burnin != 0)
+    update(jagsfit, n.burnin)
 
   ##
   ## Monitor (basics)
@@ -185,22 +190,22 @@ crossnma <- function(x,
   }
 
   # random seed for JAGS model (to produce identical results)
-  seeds <- sample(.Machine$integer.max, n.chains, replace = FALSE)
+  # seeds <- sample(.Machine$integer.max, n.chains, replace = FALSE)
   # Run JAGS model
-  jmodel <- x$model
-  jagsfit <- do.call(jags.parallel,list(data=x$data,
-                inits = inits,
-                parameters.to.save = monitor,
-                model.file=jmodel,
-                n.chains = n.chains,
-                n.iter = n.iter,
-                n.burnin = n.burnin,
-                n.thin = n.thin,
-                jags.seed=seeds,
-                DIC=FALSE))
-  res <- list(# samples = coda.samples(jagsfit,
-    #                                  variable.names = monitor,
-    #                                  n.iter = n.iter, thin = thin),
+  # jmodel <- x$model
+  # jagsfit <- do.call(jags.parallel,list(data=x$data,
+  #               inits = inits,
+  #               parameters.to.save = monitor,
+  #               model.file=jmodel,
+  #               n.chains = n.chains,
+  #               n.iter = n.iter,
+  #               n.burnin = n.burnin,
+  #               n.thin = n.thin,
+  #               jags.seed=seeds,
+  #               DIC=FALSE))
+  res <- list(samples = coda.samples(jagsfit,
+                                      variable.names = monitor,
+                                      n.iter = n.iter, n.thin = n.thin),
               jagsfit=jagsfit,
               model = x,
               trt.key = x$trt.key,

@@ -304,6 +304,7 @@ crossnma.model <- function(trt,
                            run.nrs.var.infl=1,
                            run.nrs.mean.shift=0,
                            run.nrs.trt.effect="common",
+                           run.nrs.n.adapt=1000,
                            run.nrs.n.iter=10000,
                            run.nrs.n.burnin = 4000,
                            run.nrs.n.thin=1,
@@ -1927,6 +1928,7 @@ crossnma.model <- function(trt,
     var.infl.nrs <- replaceNULL(run.nrs.var.infl, 1)
     mean.shift.nrs <- replaceNULL(run.nrs.mean.shift, 0)
     trt.effect.nrs <- replaceNULL(run.nrs.trt.effect, "common")
+    n.adapt.nrs <- replaceNULL(run.nrs.n.adapt, 1000)
     n.chains.nrs <- replaceNULL(run.nrs.n.chains, 2)
     n.iter.nrs <- replaceNULL(run.nrs.n.iter, 10000)
     n.thin.nrs <- replaceNULL(run.nrs.n.thin, 1)
@@ -1957,33 +1959,38 @@ crossnma.model <- function(trt,
                                method.bias = NULL,
                                d.prior.nrs=NULL)
     ## jags run NRS
-    seeds <- sample(.Machine$integer.max, n.chains.nrs, replace = FALSE)
-    jmodel <- model.nrs
-    jagsmodel.nrs <- jags.parallel(data=jagsdata.nrs,
-                             inits = NULL,
-                             parameters.to.save = "d",
-                             model.file=jmodel,
-                             n.chains = n.chains.nrs,
-                             n.iter = n.iter.nrs,
-                             n.burnin = n.burnin.nrs,
-                             n.thin = n.thin.nrs,
-                             jags.seed=seeds,
-                             DIC=FALSE)
+    # seeds <- sample(.Machine$integer.max, n.chains.nrs, replace = FALSE)
+    # jmodel <- model.nrs
+    # jagsmodel.nrs <- jags.parallel(data=jagsdata.nrs,
+    #                          inits = NULL,
+    #                          parameters.to.save = "d",
+    #                          model.file=jmodel,
+    #                          n.chains = n.chains.nrs,
+    #                          n.iter = n.iter.nrs,
+    #                          n.burnin = n.burnin.nrs,
+    #                          n.thin = n.thin.nrs,
+    #                          jags.seed=seeds,
+    #                          DIC=FALSE)
 
-    # jagsmodel.nrs <-
-    #   suppressWarnings(jags.model(textConnection(model.nrs),
-    #                               jagsdata.nrs,
-    #                               n.chains = n.chains.nrs,
-    #                               n.adapt = n.adapt.nrs,
-    #                               inits = inits,
-    #                               quiet = quiet))
-    # ##
-    # if (n.burnin.nrs != 0)
-    #   suppressWarnings(update(jagsmodel.nrs, n.burnin.nrs))
-    #
-    # jagssamples.nrs <-
-    #   coda.samples(jagsmodel.nrs, variable.names = "d",
-    #                n.iter = n.iter.nrs, thin = thin.nrs)
+    seeds <- sample(.Machine$integer.max, n.chains.nrs , replace = FALSE)
+    inits <- list()
+    for (i in 1:n.chains.nrs)
+      inits[[i]] <- list(.RNG.seed = seeds[i], .RNG.name = "base::Mersenne-Twister")
+
+    jagsmodel.nrs <-
+      suppressWarnings(jags.model(textConnection(model.nrs),
+                                  jagsdata.nrs,
+                                  n.chains = n.chains.nrs,
+                                  n.adapt = n.adapt.nrs,
+                                  inits = inits,
+                                  quiet = TRUE))
+    ##
+    if (n.burnin.nrs != 0)
+      suppressWarnings(update(jagsmodel.nrs, n.burnin.nrs))
+
+    jagssamples.nrs <-
+      coda.samples(jagsmodel.nrs, variable.names = "d",
+                   n.iter = n.iter.nrs, n.thin = n.thin.nrs)
 
     ## Output: prior for d's
     ##
@@ -1997,13 +2004,17 @@ crossnma.model <- function(trt,
                                         to = trt.key.nrs$trt.jags,
                                         warn_missing = FALSE) %>%
                  as.integer)
-    d.nrs <- summary(as.mcmc(jagsmodel.nrs))[[1]][,'Mean']+mean.shift.nrs
+    # d.nrs <- summary(as.mcmc(jagsmodel.nrs))[[1]][,'Mean']+mean.shift.nrs
+    d.nrs <- summary(jagssamples.nrs)[[1]][,'Mean']+mean.shift.nrs
+
     prec.nrs <-
       if (!is.null(var.infl.nrs))
         var.infl.nrs
       else
         1
-    prec.nrs <- prec.nrs / (summary(as.mcmc(jagsmodel.nrs))[[1]][,'SD']^2)
+    # prec.nrs <- prec.nrs / (summary(as.mcmc(jagsmodel.nrs))[[1]][,'SD']^2)
+    prec.nrs <- prec.nrs / (summary(jagssamples.nrs)[[1]][,'SD']^2)
+
     ##
     d.prior.nrs <- "\n"
     for (i in 2:nrow(trt.key2)) {

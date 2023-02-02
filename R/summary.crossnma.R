@@ -64,7 +64,8 @@ summary.crossnma <- function(x, quantiles = c(0.025, 0.5, 0.975),
                              exp = TRUE, ...) {
 
   ## initial
-  samples <- as.mcmc(x$jagsfit)
+  #samples <- as.mcmc(x$jagsfit)
+  samples <- x$samples
   sum.fit <- summary(samples, quantiles = quantiles, ...)
 
   #sum.fit <- summary((object$samples), quantiles = quantiles, ...)

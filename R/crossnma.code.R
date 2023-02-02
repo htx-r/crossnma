@@ -960,8 +960,8 @@ prior.u,prior.tau.theta, d.prior, beta0.prior.ipd, betab.prior, betaw.prior.ipd,
 
   ad.code <- ifelse(ad, ad.code, "")
   ipd.code <- ifelse(ipd, ipd.code, "")
-  #code.str <- paste0('model {', ipd.code, ad.code, prior.code, '\n}\n')
-  eval(parse(text = paste("code.str <- function(){ ",ipd.code,ad.code,prior.code,"}", sep='')))
+  code.str <- paste0('model {', ipd.code, ad.code, prior.code, '\n}\n')
+  #eval(parse(text = paste("code.str <- function(){ ",ipd.code,ad.code,prior.code,"}", sep='')))
 
   return(code.str)
 }

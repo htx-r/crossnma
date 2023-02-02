@@ -7,19 +7,23 @@
 crossnma(
   x,
   inits = NULL,
+  n.adapt = 1000,
   n.burnin = floor(n.iter/2),
   n.iter = 2000,
   n.thin = max(1, floor((n.iter - n.burnin)/1000)),
   n.chains = 2,
-  monitor = NULL
+  monitor = NULL,
+  quiet = TRUE
 )
 }
 \arguments{
 \item{x}{An object produced by \code{\link{crossnma.model}}.}
 
 \item{inits}{A list with n.chains elements; each element is itself a list of initial values for each model parameter,
-or a function that generates starting values. Default is NULL where jags.parallel() function
+or a function that generates starting values. Default is NULL where jags.model() function
 will internally generate starting values for each parameter.}
+
+\item{n.adapt}{Number of adaptations for the MCMC chains. Default is 1000.}
 
 \item{n.burnin}{Number of burnin iterations for the MCMC chains. Default is n.iter/2 which discards the first half of the iterations.}
 
@@ -31,14 +35,15 @@ that is only thinning if there are more than 2000 iterations.}
 \item{n.chains}{Number of MCMC chains. Default is 2.}
 
 \item{monitor}{A character vector of the names of the parameters to
-be monitored. Basic parameters (depends on the analysis) will be automatically monitored
-and only additional parameters need to be specified.
-Default is NULL.}
+ be monitored. Basic parameters (depends on the analysis) will be automatically monitored
+ and only additional parameters need to be specified.
+ Default is NULL.
+@param  quiet A logical passed on to \code{\link{jags.model}}.TRUE is default.}
 }
 \value{
 An object of class \code{crossnma} which is a list containing the
 following components:
-\item{jagsfit}{ An rjags-class object produced when R2jags package used to run the JAGS
+\item{jagsfit}{ An rjags-class object produced when rjags package used to run the JAGS
   model.}
 \item{model}{The \code{crossnma.model} object obtained from
   \code{\link{crossnma.model}} which was used to run JAGS.}
@@ -50,8 +55,8 @@ following components:
 }
 \description{
 This function takes the JAGS model from an object produced by
-\code{\link{crossnma.model}} and runs it using \code{jags.parallel} in
-R2jags package.
+\code{\link{crossnma.model}} and runs it using \code{jags.model} in
+rjags package.
 }
 \examples{
 # We conduct a network meta-analysis assuming a random-effects
@@ -77,7 +82,7 @@ plot(fit)
 }
 \seealso{
 \code{\link{crossnma.model}},
-  \code{\link[R2jags]{jags.parallel}}
+  \code{\link[rjags]{jags.model}}
 }
 \author{
 Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}, Guido

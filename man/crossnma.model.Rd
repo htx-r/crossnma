@@ -21,7 +21,7 @@ crossnma.model(
   bias.group = NULL,
   prt.data = NULL,
   std.data = NULL,
-  sm,
+  sm = "OR",
   reference = NULL,
   trt.effect = "random",
   cov1.ref = NULL,
@@ -35,12 +35,23 @@ crossnma.model(
   bias.type = NULL,
   bias.effect = "common",
   down.wgt = NULL,
-  prior = list(tau.trt = NULL, tau.reg0 = NULL, tau.regb = NULL, tau.regw = NULL,
-    tau.gamma = NULL, pi.high.rct = NULL, pi.low.rct = NULL, pi.high.nrs = NULL,
-    pi.low.nrs = NULL),
-  run.nrs = list(var.infl = 1, mean.shift = 0, trt.effect = "common", n.iter = 10000,
-    n.burnin = 4000, n.thin = 1, n.chains = 2),
-  quiet = TRUE
+  prior.tau.trt = NULL,
+  prior.tau.reg0 = NULL,
+  prior.tau.regb = NULL,
+  prior.tau.regw = NULL,
+  prior.tau.bias = NULL,
+  prior.pi.high.rct = NULL,
+  prior.pi.low.rct = NULL,
+  prior.pi.high.nrs = NULL,
+  prior.pi.low.nrs = NULL,
+  run.nrs.var.infl = 1,
+  run.nrs.mean.shift = 0,
+  run.nrs.trt.effect = "common",
+  run.nrs.n.adapt = 1000,
+  run.nrs.n.iter = 10000,
+  run.nrs.n.burnin = 4000,
+  run.nrs.n.thin = 1,
+  run.nrs.n.chains = 2
 )
 }
 \arguments{
@@ -66,11 +77,11 @@ conduct network meta-regression (see Details).}
 \item{cov3}{Optional third covariate in prt.data and std.data to
 conduct network meta-regression (see Details).}
 
-\item{bias}{An optional variable with information on risk of bias in prt.data
-and std.data (should be provided when method.bias = 'adjust1' or
-'adjust2'). Possible values for this variable are 'low', 'high' or
+\item{bias}{Optional variable with information on risk of bias in prt.data
+and std.data. Possible values for this variable are 'low', 'high' or
 'unclear' (can be abbreviated). These values must be identical
-for all participants from the same study.}
+for all participants from the same study. Either this variable or bias.covariate variable should be
+provided when method.bias = 'adjust1' or 'adjust2'.}
 
 \item{unfav}{An optional variable in prt.data and std.data indicating the
 unfavored treatment in each study (should be provided when
@@ -81,8 +92,8 @@ entry. The values need to be repeated for participants who take
 the same treatment.}
 
 \item{bias.covariate}{An optional variable in prt.data and std.data indicate
-the covariate  used to estimate the probability of bias (can be provided
-when method.bias = 'adjust1' or 'adjust2').}
+the covariate  used to estimate the probability of bias. Either this variable or bias variable should be
+provided when method.bias = 'adjust1' or 'adjust2'.}
 
 \item{bias.group}{An optional variable in prt.data and std.data
 that indicates the bias effect in each study (can be provided
@@ -110,7 +121,7 @@ design. Additional columns might be required for certain
 analyses.}
 
 \item{sm}{A character indicating the underlying summary measure.
-Options are: Odds Ratio "OR", Risk Ratio "RR", Mean Difference "MD" or
+Options are: Odds Ratio "OR" (default), Risk Ratio "RR", Mean Difference "MD" or
 Standardised Mean Difference "SMD".}
 
 \item{reference}{A character indicating the name of the reference
@@ -194,42 +205,64 @@ studies at high risk of bias will be downweighted on average. The
 value ranges between 0 and 1. It can be provided when
 method.bias='adjust1' or 'adjust2'.}
 
-\item{prior}{An optional list to control the prior for various
-parameters in JAGS model. When effects are set as 'random', we
-can set the heterogeneity parameters for: tau.trt for the
-treatment effects, tau.reg0 for the effect of prognostic
-covariates, tau.regb and tau.regw for within- and between-study
-covariate effect, respectively and tau.gamma for bias
-effect. The default of all heterogeneity parameters is
-'dunif(0,2)'. Currently only the uniform distribution is
-supported.  When the method.bias= 'adjust1' or 'adjust2', the
-user may provide priors to control the bias probability.  For the
-bias probabilities, beta distributions are assumed with the
-following default values: RCT with low
-(pi.low.rct='dbeta(1,10)'), high (pi.high.rct='dbeta(10,1)')
-bias, NRS with low (pi.low.rct='dbeta(1,30)') / high
-(pi.high.rct='dbeta(30,1)') bias (pi.low.nrs, pi.high.nrs).}
+\item{prior.tau.trt}{Optional string to specify the prior for the between-study heterogeneity in
+treatment effects in JAGS model (when trt.effect='random').
+The default prior is constructed from the data (see Details).}
 
-\item{run.nrs}{An optional list can be provided when the NRS used as a
-prior (method.bias='prior').  The list consists of the following:
-(\code{var.infl}) controls the common inflation of the variance
-of NRS estimates (\eqn{w}) and its values range between 0 (NRS
-does not contribute at all and the prior is vague) and 1 (the NRS
-evidence is used at face value, default approach).  The parameter
-(\code{mean.shift}) is the bias shift (\eqn{\zeta}) to be
-added/subtracted from the estimated mean treatment effects (on
-the log-scale) from NRS network (0 is the default).
-\code{trt.effect} is a character indicates how to combine
-treatment effects across NRS studies .Options are 'random' or
-'common' (default).  Here you can also specify the arguments to
-control the MCMC chains with default value is in the parentheses:
-the number of iterations n.iter(10000), number of burn in n.burnin (4000), number of
-thinning n.thin (1) and number of chains n.chains
-(2). \code{\link[rjags]{jags.model}} from rjags package describes
-these arguments.}
+\item{prior.tau.reg0}{Optional string to specify the prior for the between-study heterogeneity in
+prognostic effects in JAGS model (when reg0.effect='random').
+The default prior is constructed from the data (see Details).}
 
-\item{quiet}{A logical passed on to
-\code{\link[rjags]{jags.model}}.}
+\item{prior.tau.regb}{Optional string to specify the prior for the between-study heterogeneity in
+between-study covariate effects in JAGS model (when regb.effect='random').
+The default prior is constructed from the data (see Details).}
+
+\item{prior.tau.regw}{Optional string to specify the prior for the between-study heterogeneity in
+within-study covariate effects in JAGS model (when regw.effect='random').
+The default prior is constructed from the data (see Details).}
+
+\item{prior.tau.bias}{Optional string to specify the prior for the between-study heterogeneity in
+bias effects in JAGS model (when bias.effect='random').}
+
+\item{prior.pi.high.rct}{Optional string to provide the prior for the bias probability of
+randomised clinical trials (RCT) with high risk of bias in JAGS model (when the method.bias= 'adjust1' or 'adjust2' and the variable 'bias' is provided).
+The default is the beta distribution 'dbeta(10,1)'.}
+
+\item{prior.pi.low.rct}{Optional string to provide the prior for the bias probability of
+randomised clinical trials (RCT) with low risk of bias in JAGS model (when the method.bias= 'adjust1' or 'adjust2' and the variable 'bias' is provided).
+The default is the beta distribution 'dbeta(1,10)'.}
+
+\item{prior.pi.high.nrs}{Optional string to provide the prior for the bias probability of
+non-randomised studies (NRS) with high risk of bias in JAGS model (when the method.bias= 'adjust1' or 'adjust2' and the variable 'bias' is provided).
+The default is the beta distribution 'dbeta(30,1)'.}
+
+\item{prior.pi.low.nrs}{Optional string to provide the prior for the bias probability of
+non-randomised studies (NRS) with low risk of bias in JAGS model (when the method.bias= 'adjust1' or 'adjust2' and the variable 'bias' is provided).
+The default is the beta distribution 'dbeta(1,30)'.}
+
+\item{run.nrs.var.infl}{Optional numeric controls the common inflation of the variance of NRS estimates (\eqn{w})
+and its values range between 0 (NRS does not contribute at all and the prior is vague) and 1 (the NRS
+evidence is used at face value, default approach). This argument can be provided when the NRS used as a prior (method.bias='prior').}
+
+\item{run.nrs.mean.shift}{Optional numeric controls the bias shift (\eqn{\zeta}) to be added/subtracted from the estimated mean
+treatment effects (on the log-scale when sm='OR' or 'RR') from NRS network (0 is the default).
+This argument can be provided when the NRS used as a prior (method.bias='prior').}
+
+\item{run.nrs.trt.effect}{Optional character indicates how to combine treatment effects
+across NRS studies. Options are 'random' or 'common' (default).
+This argument can be provided when the NRS used as a prior (method.bias='prior').}
+
+\item{run.nrs.n.iter}{Optional numeric specifies the number of iterations to run MCMC chains for NRS network.
+Default is 10000. This argument can be provided when the NRS used as a prior (method.bias='prior').}
+
+\item{run.nrs.n.burnin}{Optional numeric specifies the number of burn-in to run MCMC chains for NRS network.
+Default is 4000. This argument can be provided when the NRS used as a prior (method.bias='prior').}
+
+\item{run.nrs.n.thin}{Optional numeric specifies the number of thinning to run MCMC chains for NRS network.
+Default is 1. This argument can be provided when the NRS used as a prior (method.bias='prior').}
+
+\item{run.nrs.n.chains}{Optional numeric specifies the number of chains to run MCMC chains for NRS network.
+Default is 2. This argument can be provided when the NRS used as a prior (method.bias='prior').}
 }
 \value{
 An object of class \code{crossnma.model} containing information on
@@ -286,6 +319,11 @@ Covariates provided in arguments \code{cov1}, \code{cov2} and
 \code{cov3} can be either numeric or dichotomous (should be
 provided as factor or character) variables. By default, no
 covariate adjustment is applied (network meta-analysis).
+
+The default prior for the between-study heterogeneity parameters
+(prior.tau.trt, prior.tau.reg0, prior.tau.regb, prior.tau.regw and prior.tau.bias)
+is a uniform distribution over the range 0 to ML, where ML is the largest maximum likelihood
+estimates of all relative treatment effects in all studies.
 }
 \examples{
 # We conduct a network meta-analysis assuming a random-effects
@@ -310,7 +348,7 @@ plot(fit)
 
 }
 \seealso{
-\code{\link{crossnma}}, \code{\link[rjags]{jags.model}}
+\code{\link{crossnma}}, \code{\link[R2jags]{jags.parallel}}
 }
 \author{
 Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}, Guido

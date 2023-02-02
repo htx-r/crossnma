@@ -30,7 +30,6 @@ max_TE <- function(data,sm){
     deltas <- pull(deltas, delta)
 
   } else if (sm == "MD"){
-
     deltas <- table %>%
       mutate(delta = as.numeric(outcome.e)-as.numeric(outcome.c)) %>%
       select(delta)

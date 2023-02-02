@@ -317,9 +317,9 @@ The MCMC is run under the same set up as in the network meta-analysis.
 
 ```{r}
 # run jags
-jagsfit2 <- crossnma(mod2,
-  n.iter = 5000, n.burnin = 2000,
-  n.thin = 1, n.chains = 2)
+# jagsfit2 <- crossnma(mod2,
+#   n.iter = 5000, n.burnin = 2000,
+#   n.thin = 1, n.chains = 2)
 ```
 
 and the output table is presented below
@@ -367,9 +367,9 @@ mod3 <- crossnma.model(treat, id, relapse, n, design,
 
 ```{r}
 # run jags
-jagsfit3 <- crossnma(mod3,
-  n.iter = 5000, n.burnin = 2000,
-  n.thin = 1, n.chains = 2)
+# jagsfit3 <- crossnma(mod3,
+#   n.iter = 5000, n.burnin = 2000,
+#   n.thin = 1, n.chains = 2)
 ```
 
 The heat plot summarizes the relative effect with the 95% credible interval of each treatment on the top compared to the treatment on the left. All estimates are computed for participant age 38.
@@ -405,9 +405,9 @@ mod4 <- crossnma.model(treat, id, relapse, n, design,
 
 ```{r}
 # run jags
-jagsfit4 <- crossnma(mod4,
-  n.iter = 5000, n.burnin = 2000,
-  n.thin = 1, n.chains = 2)
+# jagsfit4 <- crossnma(mod4,
+#   n.iter = 5000, n.burnin = 2000,
+#   n.thin = 1, n.chains = 2)
 ```
 
 The results are presented below
@@ -440,9 +440,9 @@ mod5 <- crossnma.model(treat, id, relapse, n, design,
 
 ```{r}
 # run jags
-jagsfit5 <- crossnma(mod5,
-  n.iter = 5000, n.burnin = 2000,
-  n.thin = 1, n.chains = 2)
+# jagsfit5 <- crossnma(mod5,
+#   n.iter = 5000, n.burnin = 2000,
+#   n.thin = 1, n.chains = 2)
 ```
 
 

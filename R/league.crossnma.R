@@ -97,7 +97,8 @@ league.crossnma <- function(x,
 
   ## Bind variables to function
   trt <- Treatment <- Comparator <- cov.ref <- NULL
-  samples <- as.mcmc(x$jagsfit)
+  #samples <- as.mcmc(x$jagsfit)
+  samples <- x$samples
 
   dmat <-
     do.call(rbind, samples) %>% data.frame() %>% select(starts_with("d."))
