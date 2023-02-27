@@ -33,45 +33,30 @@
 #' # The data comes from randomized-controlled trials and
 #' # non-randomized studies (combined naively)
 #' head(ipddata) # participant-level data
-#' head(stddata) # study-level data
+#' stddata # study-level data
 #'
 #' # Create a JAGS model
 #' mod <- crossnma.model(treat, id, relapse, n, design,
-#'   prt.data = ipddata, std.data = stddata,sm="OR",
+#'   prt.data = ipddata, std.data = stddata,
 #'   reference = "A", trt.effect = "random", method.bias = "naive")
 #'
 #' # Fit JAGS model
-#' fit <-crossnma(mod,
-#' n.burnin =10,n.iter = 50, n.thin = 1, n.chains = 3)
+#' set.seed(1909)
+#' fit <- crossnma(mod, n.burnin = 10, n.iter = 50,
+#'   n.thin = 1, n.chains = 3)
 #'
 #' # Create network plot
-#' netgraph(fit)
+#' netgraph(fit, plastic = FALSE, cex.points = 7, adj = 0.5)
 #'
 #'@method netgraph crossnma
 #'@export
 
 
 netgraph.crossnma <- function(x, ...) {
-
+  
   chkclass(x, "crossnma")
   ##
-  ## Bind variables to function
-  trt <- n <-outcome <- study <- se <- NULL
+  pw <- crossnma.model2pairwise(x$model)
   ##
-  if(x$sm%in%c("OR","RR")){
-    dat <-
-      suppressWarnings(pairwise(treat = trt, event = outcome, n = n, studlab = study,
-                                data = x$all.data.ad,
-                                sm = x$sm, warn = FALSE))
-    ##
-  }
-  if(x$sm%in%c("MD","SMD")){
-    dat <-
-      suppressWarnings(pairwise(treat = trt, mean = outcome, n = n, sd=se,studlab = study,
-                                data = x$all.data.ad,
-                                sm = x$sm, warn = FALSE))
-
-  }
-  ##
-  netgraph(suppressWarnings(netmeta(dat, warn = FALSE)), ...)
+  netgraph(suppressWarnings(netmeta(pw, warn = FALSE)), ...)
 }

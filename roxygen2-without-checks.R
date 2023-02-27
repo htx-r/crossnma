@@ -8,17 +8,18 @@ library(roxygen2)
 ##
 ## (2) Create documentation file(s)
 ##
-document("../crossnma")
+document()
 
 
 ##
 ## (3) Build R package and PDF file with help pages
 ##
-build("../crossnma")
-build_manual("../crossnma")
+##build(vignettes = FALSE)
+build(args = "--compact-vignettes=gs+qpdf")
+build_manual()
 
 
 ##
 ## (4) Install R package
 ##
-install("../crossnma")
+install(build_vignettes = TRUE)

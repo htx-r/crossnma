@@ -2,7 +2,7 @@
 % Please edit documentation in R/crossnma.model.R
 \name{crossnma.model}
 \alias{crossnma.model}
-\title{Create JAGS model and data to perform cross network meta-analysis
+\title{Create JAGS model and data to perform cross network meta analysis
 or meta-regression}
 \usage{
 crossnma.model(
@@ -11,7 +11,7 @@ crossnma.model(
   outcome,
   n,
   design,
-  se = NULL,
+  se,
   cov1 = NULL,
   cov2 = NULL,
   cov3 = NULL,
@@ -21,9 +21,10 @@ crossnma.model(
   bias.group = NULL,
   prt.data = NULL,
   std.data = NULL,
-  sm = "OR",
+  sm,
   reference = NULL,
   trt.effect = "random",
+  level.ma = gs("level.ma"),
   cov1.ref = NULL,
   cov2.ref = NULL,
   cov3.ref = NULL,
@@ -51,59 +52,66 @@ crossnma.model(
   run.nrs.n.iter = 10000,
   run.nrs.n.burnin = 4000,
   run.nrs.n.thin = 1,
-  run.nrs.n.chains = 2
+  run.nrs.n.chains = 2,
+  backtransf = gs("backtransf")
 )
 }
 \arguments{
-\item{trt}{Treatment variable in prt.data and std.data.}
+\item{trt}{Treatment variable in \code{prt.data} and
+\code{std.data}.}
 
-\item{study}{Study variable in prt.data and std.data.}
+\item{study}{Study variable in \code{prt.data} and \code{std.data}.}
 
-\item{outcome}{Outcome variable in prt.data and std.data.}
+\item{outcome}{Outcome variable in \code{prt.data} and
+\code{std.data}.}
 
-\item{n}{Number of participants in std.data.}
+\item{n}{Number of participants in \code{std.data}.}
 
-\item{design}{Design variable in prt.data and std.data.}
+\item{design}{Design variable in \code{prt.data} and
+\code{std.data}.}
 
-\item{se}{Standard error variable in std.data
-(required only for continuous outcome when sm="MD" or "SMD")}
+\item{se}{Standard error variable in \code{std.data} (required only
+for continuous outcome when \code{sm = "MD"} or \code{"SMD"}).}
 
-\item{cov1}{Optional first covariate in prt.data and std.data to
-conduct network meta-regression (see Details).}
+\item{cov1}{Optional first covariate in \code{prt.data} and
+\code{std.data} to conduct network meta-regression (see Details).}
 
-\item{cov2}{Optional second covariate in prt.data and std.data to
-conduct network meta-regression (see Details).}
+\item{cov2}{Optional second covariate in \code{prt.data} and
+\code{std.data} to conduct network meta-regression (see Details).}
 
-\item{cov3}{Optional third covariate in prt.data and std.data to
-conduct network meta-regression (see Details).}
+\item{cov3}{Optional third covariate in \code{prt.data} and
+\code{std.data} to conduct network meta-regression (see Details).}
 
-\item{bias}{Optional variable with information on risk of bias in prt.data
-and std.data. Possible values for this variable are 'low', 'high' or
-'unclear' (can be abbreviated). These values must be identical
-for all participants from the same study. Either this variable or bias.covariate variable should be
-provided when method.bias = 'adjust1' or 'adjust2'.}
+\item{bias}{Optional variable with information on risk of bias in
+\code{prt.data} and \code{std.data}. Possible values for this
+variable are "low", "high" or "unclear" (can be
+abbreviated). These values must be identical for all participants
+from the same study. Either this variable or bias.covariate
+variable should be provided when method.bias = "adjust1" or
+"adjust2".}
 
-\item{unfav}{An optional variable in prt.data and std.data indicating the
-unfavored treatment in each study (should be provided when
-method.bias = 'adjust1' or 'adjust2'). The entries of this
-variable are either 0 (unfavored treatment) or 1 (favorable
-treatment or treatments). Each study should include only one 0
-entry. The values need to be repeated for participants who take
-the same treatment.}
+\item{unfav}{An optional variable in \code{prt.data} and
+\code{std.data} indicating the unfavored treatment in each study
+(should be provided when method.bias = "adjust1" or
+"adjust2"). The entries of this variable are either 0 (unfavored
+treatment) or 1 (favorable treatment or treatments). Each study
+should include only one 0 entry. The values need to be repeated
+for participants who take the same treatment.}
 
-\item{bias.covariate}{An optional variable in prt.data and std.data indicate
-the covariate  used to estimate the probability of bias. Either this variable or bias variable should be
-provided when method.bias = 'adjust1' or 'adjust2'.}
+\item{bias.covariate}{An optional variable in \code{prt.data} and
+\code{std.data} indicate the covariate used to estimate the
+probability of bias. Either this variable or bias variable should
+be provided when method.bias = "adjust1" or "adjust2".}
 
-\item{bias.group}{An optional variable in prt.data and std.data
-that indicates the bias effect in each study (can be provided
-when method.bias = 'adjust1' or 'adjust2'). The entries of these
-variables should be either 1 (study has inactive treatment and
-its estimate should be adjusted for bias effect), 2 (study has
-only active treatments and its estimate should be adjusted for
-bias effect (different from inactive bias effect) or 0 (study
-does not need any bias adjustment). The values need to be
-repeated for the participants assigned to the same
+\item{bias.group}{An optional variable in \code{prt.data} and
+\code{std.data} that indicates the bias effect in each study (can
+be provided when method.bias = "adjust1" or "adjust2"). The
+entries of these variables should be either 1 (study has inactive
+treatment and its estimate should be adjusted for bias effect), 2
+(study has only active treatments and its estimate should be
+adjusted for bias effect (different from inactive bias effect) or
+0 (study does not need any bias adjustment). The values need to
+be repeated for the participants assigned to the same
 treatment. Default is 1.}
 
 \item{prt.data}{An object of class data.frame containing the
@@ -121,16 +129,19 @@ design. Additional columns might be required for certain
 analyses.}
 
 \item{sm}{A character indicating the underlying summary measure.
-Options are: Odds Ratio "OR" (default), Risk Ratio "RR", Mean Difference "MD" or
-Standardised Mean Difference "SMD".}
+Options are: Odds Ratio "OR" (default), Risk Ratio "RR", Mean
+Difference "MD" or Standardised Mean Difference "SMD".}
 
 \item{reference}{A character indicating the name of the reference
 treatment. When the reference is not specified, the first
 alphabetic treatment will be used as a reference in the analysis.}
 
 \item{trt.effect}{A character defining the model for the
-study-specific treatment effects. Options are 'random' (default)
-or 'common'.}
+study-specific treatment effects. Options are "random" (default)
+or "common".}
+
+\item{level.ma}{The level used to calculate credible intervals for
+network estimates.}
 
 \item{cov1.ref}{An optional value to center the first covariate
 which is only useful for a continuous covariate. Dichotomous
@@ -147,32 +158,32 @@ which is only useful for a continuous covariate. Dichotomous
 covariates should be given NA value. The default is the overall
 minimum covariate value from all studies.}
 
-\item{reg0.effect}{An optional character (can by provided when at least
-\code{cov1} is not NULL) indicating the relationship across
+\item{reg0.effect}{An optional character (can by provided when at
+least \code{cov1} is not NULL) indicating the relationship across
 studies for the prognostic effects expressed by the regression
-coefficient, (\eqn{\beta_0}), in a study \eqn{j}.  Options are
-'independent' or 'random'. We recommend using 'independent'
+coefficient, (\eqn{\beta_0}), in a study \eqn{j}. Options are
+"independent" or "random". We recommend using "independent"
 (default).}
 
-\item{regb.effect}{An optional character (can by provided when at least
-\code{cov1} is not NULL) indicating the relationship across
+\item{regb.effect}{An optional character (can by provided when at
+least \code{cov1} is not NULL) indicating the relationship across
 treatments for the between-study regression coefficient
 (\eqn{\beta^B}). This parameter quantifies the treatment-mean
-covariate interaction.  Options are 'independent', 'random' or
-'common'. Default is 'random'.}
+covariate interaction.  Options are "independent", "random" or
+"common". Default is "random".}
 
-\item{regw.effect}{An optional character (can by provided when at least
-\code{cov1} is not NULL) indicating the relationship across
+\item{regw.effect}{An optional character (can by provided when at
+least \code{cov1} is not NULL) indicating the relationship across
 treatments for the within-study regression coefficient
 (\eqn{\beta^W}). This parameter quantifies the
 treatment-covariate interaction effect at the individual level.
-Options are 'independent', 'random' and 'common'. Default is
-'random'.}
+Options are "independent", "random" and "common". Default is
+"random".}
 
 \item{split.regcoef}{A logical value (needed when at least
 \code{cov1} is not NULL). If TRUE (default) the within- and
 between-study coefficients will be splitted in the analysis of
-prt.data.  When the split.regcoef = FALSE, only a single
+\code{prt.data}.  When the split.regcoef = FALSE, only a single
 regression coefficient will be estimated to represent both the
 between-studies and within-studies covariate effects.  In this
 case, both arguments \code{regb.effect} and \code{regw.effect}
@@ -181,88 +192,124 @@ effect.}
 
 \item{method.bias}{A character for defining the method to combine
 randomized clinical trials (RCT) and non-randomized studies
-(NRS).  Options are 'naive' for naive or unadjusted synthesize,
-'prior' for using NRS evidence to construct priors for the
-relative treatment effects in RCTs analysis, or 'adjust1' and
-'adjust2' to allow a bias adjustment. When only one design is
+(NRS).  Options are "naive" for naive or unadjusted synthesize,
+"prior" for using NRS evidence to construct priors for the
+relative treatment effects in RCTs analysis, or "adjust1" and
+"adjust2" to allow a bias adjustment. When only one design is
 available (either rct or nrs), this argument needs also to be
 specified to indicate whether unadjusted (naive) or bias-adjusted
 analysis (adjust1 or adjust2) should be applied.}
 
-\item{bias.type}{An optional character defining the relationship between
-the bias effect and the treatment effect (required when method.bias='adjust1').  Three
-options are possible: 'add' to add the additive bias
-effect,'mult' for multiplicative bias effect and 'both' includes
-both an additive and a multiplicative terms.}
+\item{bias.type}{An optional character defining the relationship
+between the bias effect and the treatment effect (required when
+method.bias = "adjust1"). Three options are possible: "add" to
+add the additive bias effect, "mult" for multiplicative bias
+effect and "both" includes both an additive and a multiplicative
+terms.}
 
 \item{bias.effect}{An optional character indicating the
 relationship for the bias coefficients across studies.  Options
-are 'random' or 'common' (default). It can be provided when
-method.bias='adjust1' or 'adjust2'.}
+are "random" or "common" (default). It can be provided when
+method.bias = "adjust1" or "adjust2".}
 
 \item{down.wgt}{An optional numeric indicating the percent to which
 studies at high risk of bias will be downweighted on average. The
-value ranges between 0 and 1. It can be provided when
-method.bias='adjust1' or 'adjust2'.}
+value ranges between 0 and 1. It can be provided when method.bias
+= "adjust1" or "adjust2".}
 
-\item{prior.tau.trt}{Optional string to specify the prior for the between-study heterogeneity in
-treatment effects in JAGS model (when trt.effect='random').
-The default prior is constructed from the data (see Details).}
+\item{prior.tau.trt}{Optional string to specify the prior for the
+between-study heterogeneity in treatment effects in JAGS model
+(when trt.effect="random").  The default prior is constructed
+from the data (see Details).}
 
-\item{prior.tau.reg0}{Optional string to specify the prior for the between-study heterogeneity in
-prognostic effects in JAGS model (when reg0.effect='random').
-The default prior is constructed from the data (see Details).}
+\item{prior.tau.reg0}{Optional string to specify the prior for the
+between-study heterogeneity in prognostic effects in JAGS model
+(when reg0.effect="random").  The default prior is constructed
+from the data (see Details).}
 
-\item{prior.tau.regb}{Optional string to specify the prior for the between-study heterogeneity in
-between-study covariate effects in JAGS model (when regb.effect='random').
-The default prior is constructed from the data (see Details).}
+\item{prior.tau.regb}{Optional string to specify the prior for the
+between-study heterogeneity in between-study covariate effects in
+JAGS model (when regb.effect="random").  The default prior is
+constructed from the data (see Details).}
 
-\item{prior.tau.regw}{Optional string to specify the prior for the between-study heterogeneity in
-within-study covariate effects in JAGS model (when regw.effect='random').
-The default prior is constructed from the data (see Details).}
+\item{prior.tau.regw}{Optional string to specify the prior for the
+between-study heterogeneity in within-study covariate effects in
+JAGS model (when regw.effect="random").  The default prior is
+constructed from the data (see Details).}
 
-\item{prior.tau.bias}{Optional string to specify the prior for the between-study heterogeneity in
-bias effects in JAGS model (when bias.effect='random').}
+\item{prior.tau.bias}{Optional string to specify the prior for the
+between-study heterogeneity in bias effects in JAGS model (when
+bias.effect="random").}
 
-\item{prior.pi.high.rct}{Optional string to provide the prior for the bias probability of
-randomised clinical trials (RCT) with high risk of bias in JAGS model (when the method.bias= 'adjust1' or 'adjust2' and the variable 'bias' is provided).
-The default is the beta distribution 'dbeta(10,1)'.}
+\item{prior.pi.high.rct}{Optional string to provide the prior for
+the bias probability of randomised clinical trials (RCT) with
+high risk of bias in JAGS model (when the method.bias = "adjust1"
+or "adjust2" and the variable "bias" is provided).  The default
+is the beta distribution "dbeta(10,1)".}
 
-\item{prior.pi.low.rct}{Optional string to provide the prior for the bias probability of
-randomised clinical trials (RCT) with low risk of bias in JAGS model (when the method.bias= 'adjust1' or 'adjust2' and the variable 'bias' is provided).
-The default is the beta distribution 'dbeta(1,10)'.}
+\item{prior.pi.low.rct}{Optional string to provide the prior for
+the bias probability of randomised clinical trials (RCT) with low
+risk of bias in JAGS model (when the method.bias = "adjust1" or
+"adjust2" and the variable "bias" is provided).  The default is
+the beta distribution "dbeta(1,10)".}
 
-\item{prior.pi.high.nrs}{Optional string to provide the prior for the bias probability of
-non-randomised studies (NRS) with high risk of bias in JAGS model (when the method.bias= 'adjust1' or 'adjust2' and the variable 'bias' is provided).
-The default is the beta distribution 'dbeta(30,1)'.}
+\item{prior.pi.high.nrs}{Optional string to provide the prior for
+the bias probability of non-randomised studies (NRS) with high
+risk of bias in JAGS model (when the method.bias = "adjust1" or
+"adjust2" and the variable "bias" is provided).  The default is
+the beta distribution "dbeta(30,1)".}
 
-\item{prior.pi.low.nrs}{Optional string to provide the prior for the bias probability of
-non-randomised studies (NRS) with low risk of bias in JAGS model (when the method.bias= 'adjust1' or 'adjust2' and the variable 'bias' is provided).
-The default is the beta distribution 'dbeta(1,30)'.}
+\item{prior.pi.low.nrs}{Optional string to provide the prior for
+the bias probability of non-randomised studies (NRS) with low
+risk of bias in JAGS model (when the method.bias = "adjust1" or
+"adjust2" and the variable "bias" is provided).  The default is
+the beta distribution "dbeta(1,30)".}
 
-\item{run.nrs.var.infl}{Optional numeric controls the common inflation of the variance of NRS estimates (\eqn{w})
-and its values range between 0 (NRS does not contribute at all and the prior is vague) and 1 (the NRS
-evidence is used at face value, default approach). This argument can be provided when the NRS used as a prior (method.bias='prior').}
+\item{run.nrs.var.infl}{Optional numeric controls the common
+inflation of the variance of NRS estimates (\eqn{w}) and its
+values range between 0 (NRS does not contribute at all and the
+prior is vague) and 1 (the NRS evidence is used at face value,
+default approach). This argument can be provided when the NRS
+used as a prior (method.bias = "prior").}
 
-\item{run.nrs.mean.shift}{Optional numeric controls the bias shift (\eqn{\zeta}) to be added/subtracted from the estimated mean
-treatment effects (on the log-scale when sm='OR' or 'RR') from NRS network (0 is the default).
-This argument can be provided when the NRS used as a prior (method.bias='prior').}
+\item{run.nrs.mean.shift}{Optional numeric controls the bias shift
+(\eqn{\zeta}) to be added / subtracted from the estimated mean
+treatment effects (on the log-scale when \code{sm = "OR"} or
+\code{"RR"}) from NRS network (0 is the default).  This argument
+can be provided when the NRS used as a prior (\code{method.bias =
+"prior"}).}
 
-\item{run.nrs.trt.effect}{Optional character indicates how to combine treatment effects
-across NRS studies. Options are 'random' or 'common' (default).
-This argument can be provided when the NRS used as a prior (method.bias='prior').}
+\item{run.nrs.trt.effect}{Optional character indicates how to
+combine treatment effects across NRS studies. Options are
+"random" or "common" (default).  This argument can be provided
+when the NRS used as a prior (method.bias = "prior").}
 
-\item{run.nrs.n.iter}{Optional numeric specifies the number of iterations to run MCMC chains for NRS network.
-Default is 10000. This argument can be provided when the NRS used as a prior (method.bias='prior').}
+\item{run.nrs.n.adapt}{\bold{DESCRIBE ARGUMENT}.}
 
-\item{run.nrs.n.burnin}{Optional numeric specifies the number of burn-in to run MCMC chains for NRS network.
-Default is 4000. This argument can be provided when the NRS used as a prior (method.bias='prior').}
+\item{run.nrs.n.iter}{Optional numeric specifies the number of
+iterations to run MCMC chains for NRS network.  Default is
+10000. This argument can be provided when the NRS used as a prior
+(method.bias = "prior").}
 
-\item{run.nrs.n.thin}{Optional numeric specifies the number of thinning to run MCMC chains for NRS network.
-Default is 1. This argument can be provided when the NRS used as a prior (method.bias='prior').}
+\item{run.nrs.n.burnin}{Optional numeric specifies the number of
+burn-in to run MCMC chains for NRS network.  Default is
+4000. This argument can be provided when the NRS used as a prior
+(method.bias = "prior").}
 
-\item{run.nrs.n.chains}{Optional numeric specifies the number of chains to run MCMC chains for NRS network.
-Default is 2. This argument can be provided when the NRS used as a prior (method.bias='prior').}
+\item{run.nrs.n.thin}{Optional numeric specifies the number of
+thinning to run MCMC chains for NRS network.  Default is 1. This
+argument can be provided when the NRS used as a prior
+(method.bias = "prior").}
+
+\item{run.nrs.n.chains}{Optional numeric specifies the number of
+chains to run MCMC chains for NRS network.  Default is 2. This
+argument can be provided when the NRS used as a prior
+(method.bias = "prior").}
+
+\item{backtransf}{A logical indicating whether results should be
+back transformed in printouts. If \code{backtransf = TRUE},
+results for \code{sm = "OR"} are presented as odds ratios rather
+than log odds ratios, for example.}
 }
 \value{
 An object of class \code{crossnma.model} containing information on
@@ -279,7 +326,7 @@ components:
 \item{trt.effect}{A character defining the model for the
   study-specific treatment effects.}
 \item{method.bias}{A character for defining the method to analyse combine
-  randomized clinical trials (RCT) or\/and non-randomized studies
+  randomized clinical trials (RCT) or \/ and non-randomized studies
   (NRS).}
 \item{covariate}{A vector of the the names of the covariates
   (\code{cov1, cov2 and cov3}) in prt.data and std.data used in
@@ -298,8 +345,8 @@ components:
 \item{bias.effect}{A character indicating the model for the bias
   coefficients across studies.}
 \item{bias.type}{A character indicating the effect of bias on the
-  treatment effect; additive ('add') or multiplicative ('mult') or
-  both ('both').}
+  treatment effect; additive ("add") or multiplicative ("mult") or
+  both ("both").}
 \item{all.data.ad}{A data.frame object with the prt.data (after it
   is aggregated) and std.data in a single dataset.}
 \item{call}{Function call.}
@@ -321,9 +368,10 @@ provided as factor or character) variables. By default, no
 covariate adjustment is applied (network meta-analysis).
 
 The default prior for the between-study heterogeneity parameters
-(prior.tau.trt, prior.tau.reg0, prior.tau.regb, prior.tau.regw and prior.tau.bias)
-is a uniform distribution over the range 0 to ML, where ML is the largest maximum likelihood
-estimates of all relative treatment effects in all studies.
+(prior.tau.trt, prior.tau.reg0, prior.tau.regb, prior.tau.regw and
+prior.tau.bias) is a uniform distribution over the range 0 to ML,
+where ML is the largest maximum likelihood estimates of all
+relative treatment effects in all studies.
 }
 \examples{
 # We conduct a network meta-analysis assuming a random-effects
@@ -331,16 +379,23 @@ estimates of all relative treatment effects in all studies.
 # The data comes from randomized-controlled trials and
 # non-randomized studies (combined naively)
 head(ipddata) # participant-level data
-head(stddata) # study-level data
+stddata # study-level data
 
 # Create a JAGS model
 mod <- crossnma.model(treat, id, relapse, n, design,
-  prt.data = ipddata, std.data = stddata,sm="OR",
+  prt.data = ipddata, std.data = stddata,
   reference = "A", trt.effect = "random", method.bias = "naive")
 
+# Print call of JAGS model
+mod
+
+# Print JAGS code
+summary(mod)
+
 # Fit JAGS model
-fit <-crossnma(mod,
-n.burnin =10,n.iter = 50, n.thin = 1, n.chains = 3)
+set.seed(1909)
+fit <- crossnma(mod, n.burnin = 10, n.iter = 50,
+  n.thin = 1, n.chains = 3)
 
 # Display the output
 summary(fit)
@@ -352,5 +407,5 @@ plot(fit)
 }
 \author{
 Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}, Guido
-  Schwarzer \email{sc@imbi.uni-freiburg.de}
+  Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de}
 }

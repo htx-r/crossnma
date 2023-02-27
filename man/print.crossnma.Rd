@@ -2,15 +2,22 @@
 % Please edit documentation in R/print.crossnma.R
 \name{print.crossnma}
 \alias{print.crossnma}
-\title{Print call used to create JAGS model for cross-design & -format
-network meta-analysis or regression}
+\title{Print results of cross-design & -format network meta-analysis or
+regression}
 \usage{
-\method{print}{crossnma}(x, ...)
+\method{print}{crossnma}(x, backtransf = x$model$backtransf, digits = gs("digits"), ...)
 }
 \arguments{
 \item{x}{An object of class \code{crossnma}.}
 
-\item{\dots}{Additional arguments (ignored).}
+\item{backtransf}{A logical indicating whether results should be
+back transformed. If \code{backtransf = TRUE}, results for
+\code{sm = "OR"} are presented as odds ratios rather than log
+odds ratios, for example.}
+
+\item{digits}{The number of significant digits printed.}
+
+\item{\dots}{Additional arguments.}
 }
 \value{
 No return value (print function).
@@ -25,7 +32,7 @@ network meta-analysis or regression
 # The data comes from randomized-controlled trials and
 # non-randomized studies (combined naively)
 head(ipddata) # participant-level data
-head(stddata) # study-level data
+stddata # study-level data
 
 # Create a JAGS model
 mod <- crossnma.model(treat, id, relapse, n, design,
@@ -36,7 +43,7 @@ mod <- crossnma.model(treat, id, relapse, n, design,
 # (suppress warning 'Adaptation incomplete' due to n.adapt = 20)
 fit <-
   suppressWarnings(crossnma(mod, n.adapt = 20,
-    n.iter = 50, thin = 1, n.chains = 3))
+    n.iter = 50, n.thin = 1, n.chains = 3))
 fit
 
 }
@@ -44,6 +51,7 @@ fit
 \code{\link{crossnma}}
 }
 \author{
-Guido Schwarzer \email{sc@imbi.uni-freiburg.de}
+Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}, Guido
+  Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de}
 }
 \keyword{print}
