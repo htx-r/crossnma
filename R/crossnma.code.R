@@ -38,6 +38,20 @@ crossnma.code <- function(ipd = TRUE,
   ##
   sel.i <- "[j, t.ipd[j, k]]"
   sel.a <- "[j, t.ad[j, k]]"
+  ##
+  n.covs <- length(covariate)
+  ##
+  beta0.prior.ipd <- betab.prior <- betaw.prior.ipd <-
+    beta.prior.ipd <- beta.prior.ad <- ""
+  ##
+  mreg.ipd <- mreg.ad <- ""
+  ##
+  betab.consis.ipd <- betaw.consis.ipd <- betab.consis.ad <- ""
+  ##
+  gamma.effect <- ""
+  ##
+  ref.trt.effect.ipd <- ""
+  ref.trt.effect.ad <- ""
   
   
   ##
@@ -78,7 +92,7 @@ crossnma.code <- function(ipd = TRUE,
   prior.tau.regw <- replaceNULL(prior.tau.regw, dumax)
   prior.tau.gamma <- replaceNULL(prior.tau.gamma, dumax)
   ##
-                                        # Bias probabilities (for adjust1 and adjust2)
+  ## Bias probabilities (for adjust1 and adjust2)
   ##
   prior.pi.high.rct <- replaceNULL(prior.pi.high.rct, "dbeta(10, 1)")
   prior.pi.low.rct  <- replaceNULL(prior.pi.low.rct, "dbeta(1, 10)")
@@ -92,122 +106,112 @@ crossnma.code <- function(ipd = TRUE,
   ##
   ##
   
-  beta0.prior.ipd <- betab.prior <- betaw.prior.ipd <-
-    beta.prior.ipd <- beta.prior.ad <- ""
-  mreg.ipd <- mreg.ad <- ""
-  betab.consis.ipd <- betaw.consis.ipd <- betab.consis.ad <- ""
-  ##
-  if (!is.null(covariate)) {
+  if (n.covs > 0) {
     ##
     ## IPD
     ##
     if (ipd) {
-      for (i in 1:length(covariate[[1]])) {
+      for (i in seq_len(n.covs)) {
+        ##
         ## Meta-regression terms
-        mreg.ipd0 <-
-          paste0(
-            " + beta0_", i, "[study[i]] * (x", i, "[i]) + betaw_", i,
-            "[study[i], trt[i]] * (x", i,
-            "[i] - xm", i, ".ipd[i]) + betab_", i,
-            "[study[i], trt[i]] * xm", i, ".ipd[i]")
         ##
-        mreg.ipd <- paste0(mreg.ipd, mreg.ipd0)
+        mreg.ipd <-
+          paste0(mreg.ipd,
+                 paste0(
+                   " + beta0_", i, "[study[i]] * (x", i, "[i]) + betaw_", i,
+                   "[study[i], trt[i]] * (x", i,
+                   "[i] - xm", i, ".ipd[i]) + betab_", i,
+                   "[study[i], trt[i]] * xm", i, ".ipd[i]"))
         ## consistency equations for beta_b and beta_w - up to 3
-        betab.consis.ipd0 <-
-          paste0("\n    betab_", i, sel.i, " <- betab.t_", i,
-                 "[t.ipd[j, k]] - betab.t_", i, "[t.ipd[j, 1]]")
-        betaw.consis.ipd0 <-
-          paste0("\n    betaw_", i, sel.i, " <- betaw.t_", i,
-                 "[t.ipd[j, k]] - betaw.t_", i, "[t.ipd[j, 1]]")
+        betab.consis.ipd <-
+          paste0(betab.consis.ipd,
+                 paste0("\n    betab_", i, sel.i, " <- betab.t_", i,
+                        "[t.ipd[j, k]] - betab.t_", i, "[t.ipd[j, 1]]"))
         ##
-        betab.consis.ipd <- paste0(betab.consis.ipd, betab.consis.ipd0)
-        betaw.consis.ipd <- paste0(betaw.consis.ipd, betaw.consis.ipd0)
+        betaw.consis.ipd <-
+          paste0(betaw.consis.ipd,
+                 paste0("\n    betaw_", i, sel.i, " <- betaw.t_", i,
+                        "[t.ipd[j, k]] - betaw.t_", i, "[t.ipd[j, 1]]"))
       }
-
       ##
-      ## beta0
+      ## Prior: beta0
       ##
       if (reg0.effect == "random") {
-        for (i in 1:length(covariate[[1]])) {
-          beta0.prior.ipd0 <-
-            paste0("\n# Random effect for beta0",
-                   "\nfor (j in 1:(ns.ipd)) {",
-                   "\n  beta0_", i, "[j] ~ dnorm(b0_", i, ", prec.beta0_", i, ")",
-                   "\n}",
-                   "\nb0_", i, dnmax,
-                   "\nprec.beta0_", i, " <- pow(tau.b0_", i, ", -2)",
-                   "\ntau.b0_", i, " ~ ", prior.tau.reg0)
-          ##
-          beta0.prior.ipd <- paste0(beta0.prior.ipd, beta0.prior.ipd0)
+        for (i in seq_len(n.covs)) {
+          beta0.prior.ipd <-
+            paste0(beta0.prior.ipd,
+                   paste0("\n# Random effect for beta0",
+                          "\nfor (j in 1:(ns.ipd)) {",
+                          "\n  beta0_", i, "[j] ~ dnorm(b0_", i,
+                          ", prec.beta0_", i, ")",
+                          "\n}",
+                          "\nb0_", i, dnmax,
+                          "\nprec.beta0_", i, " <- pow(tau.b0_", i, ", -2)",
+                          "\ntau.b0_", i, " ~ ", prior.tau.reg0))
         }
       }
       else if (reg0.effect == "independent") {
-        for (i in 1:length(covariate[[1]])) {
-          beta0.prior.ipd0 <-
-            paste0("\n# Independent effect for beta0",
-                   "\nfor (j in 1:(ns.ipd)) {",
-                   "\n  beta0_", i, "[j] <- b0_", i, "[j]",
-                   "\n  b0_", i, "[j]", dnmax,
-                   "\n}")
-          ##
-          beta0.prior.ipd <- paste0(beta0.prior.ipd, beta0.prior.ipd0)
+        for (i in seq_len(n.covs)) {
+          beta0.prior.ipd <-
+            paste0(beta0.prior.ipd,
+                   paste0("\n# Independent effect for beta0",
+                          "\nfor (j in 1:(ns.ipd)) {",
+                          "\n  beta0_", i, "[j] <- b0_", i, "[j]",
+                          "\n  b0_", i, "[j]", dnmax,
+                          "\n}"))
         }
       }
       else
         stop("The progonostic effect can be assumed either ",
              "'independent' or 'random' across studies")
-      
-      
       ##
-      ## betab and betaw
+      ## Prior: betab and betaw
       ##
       if (!split.regcoef) { # not splitted within and between-study covariate
         if (regb.effect == "independent" || regw.effect == "independent") {
-          beta.prior.ipd0 <-
-            paste0("\n# Independent effect for beta (within = between)",
-                   "\nbeta.t_", i, "[1] <- 0",
-                   "\nfor (k in 1:nt) {",
-                   "\n  betab.t_", i, "[k] <- beta.t_", i, "[k]",
-                   "\n  betaw.t_", i, "[k] <- beta.t_", i, "[k]",
-                   "\n}",
-                   "\nfor (k in 2:nt) {",
-                   "\n  beta.t_", i, "[k]", dnmax,
-                   "\n}")
-          ##
-          beta.prior.ipd <- paste0(beta.prior.ipd, beta.prior.ipd0)
+          beta.prior.ipd <-
+            paste0(beta.prior.ipd,
+                   paste0("\n# Independent effect for beta (within = between)",
+                          "\nbeta.t_", i, "[1] <- 0",
+                          "\nfor (k in 1:nt) {",
+                          "\n  betab.t_", i, "[k] <- beta.t_", i, "[k]",
+                          "\n  betaw.t_", i, "[k] <- beta.t_", i, "[k]",
+                          "\n}",
+                          "\nfor (k in 2:nt) {",
+                          "\n  beta.t_", i, "[k]", dnmax,
+                          "\n}"))
         }
         else if (regb.effect == "random" || regw.effect == "random") {
-          for (i in 1:length(covariate[[1]])) {
-            beta.prior.ipd0 <-
-              paste0("\n# Random effects for beta (within = between)",
-                     "\nbeta.t_", i, "[1] <- 0",
-                     "\nfor (k in 1:nt) {",
-                     "\n  betab.t_", i, "[k] <- beta.t_", i, "[k]",
-                     "\n  betaw.t_", i, "[k] <- beta.t_", i, "[k]",
-                     "\n}",
-                     "\nfor (k in 2:nt) {",
-                     "\n  beta.t_", i, "[k] ~ dnorm(b_", i, ", prec.beta_", i, ")",
-                     "\n}",
-                     "\nb_", i, dnmax,
-                     "\ntau.b_", i, " ~ ", prior.tau.regw,
-                     "\nprec.beta_", i, " <- pow(tau.b_", i, ", -2)")
-            ##
-            beta.prior.ipd <- paste0(beta.prior.ipd, beta.prior.ipd0)
+          for (i in seq_len(n.covs)) {
+            beta.prior.ipd <-
+              paste0(beta.prior.ipd,
+                     paste0("\n# Random effects for beta (within = between)",
+                            "\nbeta.t_", i, "[1] <- 0",
+                            "\nfor (k in 1:nt) {",
+                            "\n  betab.t_", i, "[k] <- beta.t_", i, "[k]",
+                            "\n  betaw.t_", i, "[k] <- beta.t_", i, "[k]",
+                            "\n}",
+                            "\nfor (k in 2:nt) {",
+                            "\n  beta.t_", i, "[k] ~ dnorm(b_", i,
+                            ", prec.beta_", i, ")",
+                            "\n}",
+                            "\nb_", i, dnmax,
+                            "\ntau.b_", i, " ~ ", prior.tau.regw,
+                            "\nprec.beta_", i, " <- pow(tau.b_", i, ", -2)"))
           }
         }
         else if (regb.effect == "common" & regw.effect == "common") {
-          for (i in 1:length(covariate[[1]])) {
-            beta.prior.ipd0 <-
-              paste0("\n# Common effect for beta (within = between)",
-                     "\nbetab.t_", i, "[1] <- 0",
-                     "\nbetaw.t_", i, "[1] <- 0",
-                     "\nfor (k in 2:nt) {",
-                     "\n  betab.t_", i, "[k] <- b_", i,
-                     "\n  betaw.t_", i, "[k] <- b_", i,
-                     "\n}",
-                     "\nb_", i, dnmax)
-            ##
-            beta.prior.ipd <- paste0(beta.prior.ipd, beta.prior.ipd0)
+          for (i in seq_len(n.covs)) {
+            beta.prior.ipd <-
+              paste0(beta.prior.ipd,
+                     paste0("\n# Common effect for beta (within = between)",
+                            "\nbetab.t_", i, "[1] <- 0",
+                            "\nbetaw.t_", i, "[1] <- 0",
+                            "\nfor (k in 2:nt) {",
+                            "\n  betab.t_", i, "[k] <- b_", i,
+                            "\n  betaw.t_", i, "[k] <- b_", i,
+                            "\n}",
+                            "\nb_", i, dnmax))
           }
         }
         else
@@ -215,98 +219,89 @@ crossnma.code <- function(ipd = TRUE,
                "'random' or 'common' across studies")
       }
       else {
-        ## splitted within and between- study covariate between- study
-        ## covariate
+        ## splitted within and between-study covariate
         if (regb.effect == "independent") {
-          betab.prior0 <-
-            paste0("\n# Random effect for betab ",
-                   "(the between-study covariate effect)",
-                   "\nbetab.t_", i, "[1] <- 0",
-                   "\nfor (k in 2:nt) {",
-                   "\n  betab.t_", i, "[k]", dnmax,
-                   "\n}")
-          ##
-          betab.prior <- paste0(betab.prior, betab.prior0)
+          betab.prior <-
+            paste0(betab.prior,
+                   paste0("\n# Random effect for betab ",
+                          "(the between-study covariate effect)",
+                          "\nbetab.t_", i, "[1] <- 0",
+                          "\nfor (k in 2:nt) {",
+                          "\n  betab.t_", i, "[k]", dnmax,
+                          "\n}"))
         }
         else if (regb.effect == "random") {
-          for (i in 1:length(covariate[[1]])) {
-            betab.prior0 <-
-              paste0("\n# Random effect for betab ",
-                     "(the between-study covariate effect)",
-                     "\nbetab.t_", i, "[1] <- 0",
-                     "\nfor (k in 2:nt) {",
-                     "\n  betab.t_", i, "[k] ~ dnorm(bb_", i, ", ",
-                     "prec.betab_", i, ")",
-                     "\n}",
-                     "\nbb_", i, dnmax,
-                     "\ntau.bb_", i, " ~ ", prior.tau.regb,
-                     "\nprec.betab_", i, " <- pow(tau.bb_", i, ", -2)")
-            ##
-            betab.prior <- paste0(betab.prior, betab.prior0)
+          for (i in seq_len(n.covs)) {
+            betab.prior <-
+              paste0(betab.prior,
+                     paste0("\n# Random effect for betab ",
+                            "(the between-study covariate effect)",
+                            "\nbetab.t_", i, "[1] <- 0",
+                            "\nfor (k in 2:nt) {",
+                            "\n  betab.t_", i, "[k] ~ dnorm(bb_", i, ", ",
+                            "prec.betab_", i, ")",
+                            "\n}",
+                            "\nbb_", i, dnmax,
+                            "\ntau.bb_", i, " ~ ", prior.tau.regb,
+                            "\nprec.betab_", i, " <- pow(tau.bb_", i, ", -2)"))
           }
         }
         else if (regb.effect == "common") {
-          for (i in 1:length(covariate[[1]])) {
-            betab.prior0 <-
-              paste0("\n# Common effect for betab ",
-                     "(the between-study covariate effect)",
-                     "\nbetab.t_", i, "[1] <- 0",
-                     "\nfor (k in 2:nt) {",
-                     "\n  betab.t_", i, "[k] <- bb_", i,
-                     "\n}",
-                     "\nbb_", i, dnmax)
-            ##
-            betab.prior <- paste0(betab.prior, betab.prior0)
+          for (i in seq_len(n.covs)) {
+            betab.prior <-
+              paste0(betab.prior,
+                     paste0("\n# Common effect for betab ",
+                            "(the between-study covariate effect)",
+                            "\nbetab.t_", i, "[1] <- 0",
+                            "\nfor (k in 2:nt) {",
+                            "\n  betab.t_", i, "[k] <- bb_", i,
+                            "\n}",
+                            "\nbb_", i, dnmax))
           }
         }
         else
           stop("The between-study covariate effect need to be assumed ",
                "'independent', 'random' or 'common' across studies")
-
-
         ##
         ## Within-study covariate
         ##
         if (regw.effect == "independent") {
-          betaw.prior.ipd0 <-
-            paste0("\n# Random effect for betab ",
-                   "(the between-study covariate effect)",
-                   "\nbetaw.t_", i, "[1] <- 0",
-                   "\nfor (k in 2:nt) {",
-                   "\n  betaw.t_", i, "[k]", dnmax,
-                   "\n}")
-          ##
-          betaw.prior.ipd <- paste0(betaw.prior.ipd, betaw.prior.ipd0)
+          betaw.prior.ipd <-
+            paste0(betaw.prior.ipd,
+                   paste0("\n# Random effect for betab ",
+                          "(the between-study covariate effect)",
+                          "\nbetaw.t_", i, "[1] <- 0",
+                          "\nfor (k in 2:nt) {",
+                          "\n  betaw.t_", i, "[k]", dnmax,
+                          "\n}"))
         }
         else if (regw.effect == "random") {
-          for (i in 1:length(covariate[[1]])) {
-            betaw.prior.ipd0 <-
-              paste0("\n# Random effect for betaw ",
-                     "(the within-study covariate effect)",
-                     "\nbetaw.t_", i, "[1] <- 0",
-                     "\nfor (k in 2:nt) {",
-                     "\n  betaw.t_", i, "[k] ~ dnorm(bw_", i, ", ",
-                     "prec.betaw_", i, ")",
-                     "\n}",
-                     "\nbw_", i, dnmax,
-                     "\nprec.betaw_", i, " <- pow(tau.bw_", i, ", -2)",
-                     "\ntau.bw_", i, " ~ ", prior.tau.regw)
-            ##
-            betaw.prior.ipd <- paste0(betaw.prior.ipd, betaw.prior.ipd0)
+          for (i in seq_len(n.covs)) {
+            betaw.prior.ipd <-
+              paste0(betaw.prior.ipd,
+                     paste0("\n# Random effect for betaw ",
+                            "(the within-study covariate effect)",
+                            "\nbetaw.t_", i, "[1] <- 0",
+                            "\nfor (k in 2:nt) {",
+                            "\n  betaw.t_", i, "[k] ~ dnorm(bw_", i, ", ",
+                            "prec.betaw_", i, ")",
+                            "\n}",
+                            "\nbw_", i, dnmax,
+                            "\nprec.betaw_", i, " <- pow(tau.bw_", i, ", -2)",
+                            "\ntau.bw_", i, " ~ ", prior.tau.regw))
           }
         }
         else if (regw.effect == "common") {
-          for (i in 1:length(covariate[[1]])) {
-            betaw.prior.ipd0 <-
-              paste0("\n# Common effect for betaw ",
-                     "(the within-study covariate effect)",
-                     "betaw.t_", i, "[1] <- 0",
-                     "\nfor (k in 2:nt) {",
-                     "\n  betaw.t_", i, "[k] <- bw_", i,
-                     "\n}",
-                     "\nbw_", i, dnmax)
-            ##
-            betaw.prior.ipd <- paste0(betaw.prior.ipd, betaw.prior.ipd0)
+          for (i in seq_len(n.covs)) {
+            betaw.prior.ipd <-
+              paste0(betaw.prior.ipd,
+                     paste0("\n# Common effect for betaw ",
+                            "(the within-study covariate effect)",
+                            "betaw.t_", i, "[1] <- 0",
+                            "\nfor (k in 2:nt) {",
+                            "\n  betaw.t_", i, "[k] <- bw_", i,
+                            "\n}",
+                            "\nbw_", i, dnmax))
           }
         }
         else
@@ -320,63 +315,59 @@ crossnma.code <- function(ipd = TRUE,
     ## AD
     ##
     if (ad) {
-      for (i in 1:length(covariate[[1]])) {
+      for (i in seq_len(n.covs)) {
         ## meta-regression terms - up to 3
-        mreg.ad0 <-
-          paste0(" + betab.ad_", i, sel.a, " * xm", i, ".ad[j]")
-        betab.consis.ad0 <-
-          paste0("\n    betab.ad_", i,
-                 sel.a, " <- betab.t_", i,
-                 "[t.ad[j, k]] - betab.t_", i, "[t.ad[j, 1]]")
-        
+        mreg.ad <-
+          paste0(mreg.ad,
+                 paste0(" + betab.ad_", i, sel.a, " * xm", i, ".ad[j]"))
         ## consistency equation - up to 3
-        mreg.ad <- paste0(mreg.ad, mreg.ad0)
-        betab.consis.ad <- paste0(betab.consis.ad, betab.consis.ad0)
+        betab.consis.ad <-
+          paste0(betab.consis.ad,
+                 paste0("\n    betab.ad_", i,
+                        sel.a, " <- betab.t_", i,
+                        "[t.ad[j, k]] - betab.t_", i, "[t.ad[j, 1]]"))
       }
       if (!split.regcoef) { # not splitted
         if (regb.effect == "independent" && regw.effect == "independent") {
-          beta.prior.ad0 <-
-            paste0("\n# Random effect for beta (within = between)",
-                   "\nbeta.t_", i, "[1] <- 0",
-                   "\nfor (k in 1:nt) {",
-                   "\n  betab.t_", i, "[k] <- beta.t_", i, "[k]",
-                   "\n}",
-                   "\nfor (k in 2:nt) {",
-                   "\n  beta.t_", i, "[k]", dnmax,
-                   "\n}")
-          ##
-          beta.prior.ad <- paste0(beta.prior.ad, beta.prior.ad0)
+          beta.prior.ad <-
+            paste0(beta.prior.ad,
+                   paste0("\n# Random effect for beta (within = between)",
+                          "\nbeta.t_", i, "[1] <- 0",
+                          "\nfor (k in 1:nt) {",
+                          "\n  betab.t_", i, "[k] <- beta.t_", i, "[k]",
+                          "\n}",
+                          "\nfor (k in 2:nt) {",
+                          "\n  beta.t_", i, "[k]", dnmax,
+                          "\n}"))
         }
         else if (regb.effect == "random" && regw.effect == "random") {
-          for (i in 1:length(covariate[[1]])) {
-            beta.prior.ad0 <-
-              paste0("\n# Random effect for beta (within = between)",
-                     "\nbeta.t_", i, "[1] <- 0",
-                     "\nfor (k in 1:nt) {",
-                     "\n  betab.t_", i, "[k] <- beta.t_", i, "[k]",
-                     "\n}",
-                     "\nfor (k in 2:nt) {",
-                     "\n  beta.t_", i, "[k] ~ dnorm(b_", i, ", prec.beta_",
-                     i, ")",
-                     "\n}",
-                     "\nb_", i, dnmax,
-                     "\ntau.b_", i, " ~ ", prior.tau.regb,
-                     "\nprec.beta_", i, " <- pow(tau.b_", i, ", -2)")
-            ##
-            beta.prior.ad <- paste0(beta.prior.ad, beta.prior.ad0)
+          for (i in seq_len(n.covs)) {
+            beta.prior.ad <-
+              paste0(beta.prior.ad,
+                     paste0("\n# Random effect for beta (within = between)",
+                            "\nbeta.t_", i, "[1] <- 0",
+                            "\nfor (k in 1:nt) {",
+                            "\n  betab.t_", i, "[k] <- beta.t_", i, "[k]",
+                            "\n}",
+                            "\nfor (k in 2:nt) {",
+                            "\n  beta.t_", i, "[k] ~ dnorm(b_", i,
+                            ", prec.beta_", i, ")",
+                            "\n}",
+                            "\nb_", i, dnmax,
+                            "\ntau.b_", i, " ~ ", prior.tau.regb,
+                            "\nprec.beta_", i, " <- pow(tau.b_", i, ", -2)"))
           }
         }
         else if (regb.effect == "common" & regw.effect == "common") {
-          for (i in 1:length(covariate[[1]])) {
-            beta.prior.ad0 <-
-              paste0("\n# Common effect for beta (within = between)",
-                     "\nbetab.t_", i, "[1] <- 0",
-                     "\nfor (k in 2:nt) {",
-                     "\n  betab.t_", i, "[k] <- b_", i,
-                     "\n}",
-                     "\nb_", i, dnmax)
-            ##
-            beta.prior.ad <- paste0(beta.prior.ad, beta.prior.ad0)
+          for (i in seq_len(n.covs)) {
+            beta.prior.ad <-
+              paste0(beta.prior.ad,
+                     paste0("\n# Common effect for beta (within = between)",
+                            "\nbetab.t_", i, "[1] <- 0",
+                            "\nfor (k in 2:nt) {",
+                            "\n  betab.t_", i, "[k] <- b_", i,
+                            "\n}",
+                            "\nb_", i, dnmax))
           }
         }
         else
@@ -386,44 +377,41 @@ crossnma.code <- function(ipd = TRUE,
       else { # splitted
         betab.prior <- ""
         if (regb.effect == "independent") {
-          betab.prior0 <-
-            paste0("\n# Random effect for betab ",
-                   "(the between-study covariate effect)",
-                   "\nbetab.t_", i, "[1] <- 0",
-                   "\nfor (k in 2:nt) {",
-                   "\n  betab.t_", i, "[k]", dnmax,
-                   "\n}")
-          ##
-          betab.prior <- paste0(betab.prior, betab.prior0)
+          betab.prior <- paste0(betab.prior,
+                                paste0("\n# Random effect for betab ",
+                                       "(the between-study covariate effect)",
+                                       "\nbetab.t_", i, "[1] <- 0",
+                                       "\nfor (k in 2:nt) {",
+                                       "\n  betab.t_", i, "[k]", dnmax,
+                                       "\n}"))
         }
         else if (regb.effect == "random") {
-          for (i in 1:length(covariate[[1]])) {
-            betab.prior0 <-
-              paste0("\n# Random effects for betab ",
-                     "(the between-study covariate effect)",
-                     "\nbetab.t_", i, "[1] <- 0",
-                     "\nfor (k in 2:nt) {",
-                     "\nbetab.t_", i, "[k] ~ dnorm(bb_", i, ", prec.betab_", i, ")",
-                     "\n}",
-                     "\nbb_", i, dnmax,
-                     "\ntau.bb_", i, " ~ ", prior.tau.regb,
-                     "\nprec.betab_", i, " <- pow(tau.bb_", i, ", -2)")
-            ##
-            betab.prior <- paste0(betab.prior, betab.prior0)
+          for (i in seq_len(n.covs)) {
+            betab.prior <-
+              paste0(betab.prior,
+                     paste0("\n# Random effects for betab ",
+                            "(the between-study covariate effect)",
+                            "\nbetab.t_", i, "[1] <- 0",
+                            "\nfor (k in 2:nt) {",
+                            "\nbetab.t_", i, "[k] ~ dnorm(bb_", i,
+                            ", prec.betab_", i, ")",
+                            "\n}",
+                            "\nbb_", i, dnmax,
+                            "\ntau.bb_", i, " ~ ", prior.tau.regb,
+                            "\nprec.betab_", i, " <- pow(tau.bb_", i, ", -2)"))
           }
         }
         else if (regb.effect == "common") {
-          for (i in 1:length(covariate[[1]])) {
-            betab.prior0 <-
-              paste0("\n# Random effects for betab ",
-                     "(the between-study covariate effect)",
-                     "\nbetab.t_", i, "[1] <- 0",
-                     "\nfor (k in 2:nt) {",
-                     "\nbetab.t_", i, "[k] <- bb_", i,
-                     "\n}",
-                     "\nbb_", i, dnmax)
-            ##
-            betab.prior <- paste0(betab.prior, betab.prior0)
+          for (i in seq_len(n.covs)) {
+            betab.prior <-
+              paste0(betab.prior,
+                     paste0("\n# Random effects for betab ",
+                            "(the between-study covariate effect)",
+                            "\nbetab.t_", i, "[1] <- 0",
+                            "\nfor (k in 2:nt) {",
+                            "\nbetab.t_", i, "[k] <- bb_", i,
+                            "\n}",
+                            "\nbb_", i, dnmax))
           }
         }
         else
@@ -446,30 +434,25 @@ crossnma.code <- function(ipd = TRUE,
   ##
   ## Treatment effect is zero for reference treatment
   ##
-  ref.trt.effect.ipd <- ""
-  ref.trt.effect.ad <- ""
-  ##  
   if (!is.null(covariate)) {
     if (ipd) {
-      for (i in 1:length(covariate[[1]])) {
+      for (i in seq_len(n.covs)) {
         ## meta-regression terms - Up to 3
-        ref.trt.effect.ipd0 <-
-          paste0("\n  betaw_", i, "[j, t.ipd[j, 1]] <- 0",
-                 "\n  betab_", i, "[j, t.ipd[j, 1]] <- 0")
-        ##
-        ref.trt.effect.ipd <- paste0(ref.trt.effect.ipd, ref.trt.effect.ipd0)
+        ref.trt.effect.ipd <-
+          paste0(ref.trt.effect.ipd,
+                 paste0("\n  betaw_", i, "[j, t.ipd[j, 1]] <- 0",
+                        "\n  betab_", i, "[j, t.ipd[j, 1]] <- 0"))
       }
     }
     if (ad) {
-      for (i in 1:length(covariate[[1]])) {
+      for (i in seq_len(n.covs)) {
         ## meta-regression terms - up to 3
-        ref.trt.effect.ad0 <-
-          if (ipd)
-            ""
-          else
-            paste0("\nbetab.ad_", i, "[j, t.ad[j, 1]] <- 0")
-        ##
-        ref.trt.effect.ad <- paste0(ref.trt.effect.ad, ref.trt.effect.ad0)
+        ref.trt.effect.ad <-
+          paste0(ref.trt.effect.ad,
+                 if (ipd)
+                   ""
+                 else
+                   paste0("\nbetab.ad_", i, "[j, t.ad[j, 1]] <- 0"))
       }
     }
   }
@@ -605,58 +588,56 @@ crossnma.code <- function(ipd = TRUE,
 
 
       if (bias.type == "both") {
-        gamma.effect <- ""
         if (bias.effect == "random") {
           for (i in 1:2) {
-            gamma.effect0 <-
-              paste0("\n# Random effect for gamma (bias effect)",
-                     if (add.std.in)
-                       paste0("\nfor (j in std.in) {",
-                              "\n  gamma", i, "[j] ~ dnorm(g", i, ", ",
-                              "prec.gamma", i, ")",
-                              "\n}"),
-                     if (add.std.act.no)
-                       paste0("\nfor (j in std.act.no) {",
-                              "\n  gamma", i, "[j] ~ ",
-                              "dnorm(0, prec.gamma", i, ")",
-                              "\n}"),
-                     if (add.std.act.yes)
-                       paste0("\nfor (j in std.act.yes) {",
-                              "\n  gamma", i, "[j] ~ dnorm(g.act", i, ", ",
-                              "prec.gamma", i, ")",
-                              "\n}"),
-                     if (add.std.in)
-                       paste0("\ng", i, dnmax),
-                     if (add.std.act.yes)
-                       paste0("\ng.act", i, dnmax),
-                     "\nprec.gamma", i, " <- pow(tau.gamma", i, ", -2)",
-                     "\ntau.gamma", i, " ~ ", prior.tau.gamma)
-            ##
-            gamma.effect <- paste0(gamma.effect, gamma.effect0)
+            gamma.effect <-
+              paste0(gamma.effect,
+                     paste0("\n# Random effect for gamma (bias effect)",
+                            if (add.std.in)
+                              paste0("\nfor (j in std.in) {",
+                                     "\n  gamma", i, "[j] ~ dnorm(g", i, ", ",
+                                     "prec.gamma", i, ")",
+                                     "\n}"),
+                            if (add.std.act.no)
+                              paste0("\nfor (j in std.act.no) {",
+                                     "\n  gamma", i, "[j] ~ ",
+                                     "dnorm(0, prec.gamma", i, ")",
+                                     "\n}"),
+                            if (add.std.act.yes)
+                              paste0("\nfor (j in std.act.yes) {",
+                                     "\n  gamma", i,
+                                     "[j] ~ dnorm(g.act", i, ", ",
+                                     "prec.gamma", i, ")",
+                                     "\n}"),
+                            if (add.std.in)
+                              paste0("\ng", i, dnmax),
+                            if (add.std.act.yes)
+                              paste0("\ng.act", i, dnmax),
+                            "\nprec.gamma", i, " <- pow(tau.gamma", i, ", -2)",
+                            "\ntau.gamma", i, " ~ ", prior.tau.gamma))
           }
         }
         else {
           for (i in 1:2) {
-            gamma.effect0 <-
-              paste0("\n# Common effect for gamma (bias effect)",
-                     if (add.std.in)
-                       paste0("\nfor (j in std.in) {",
-                              "\n  gamma", i, "[j] <- g", i,
-                              "\n}"),
-                     if (add.std.act.no)
-                       paste0("\nfor (j in std.act.no) {",
-                              "\n  gamma", i, "[j] <- 0",
-                              "\n}"),
-                     if (add.std.act.yes)
-                       paste0("\nfor (j in std.act.yes) {",
-                              "\n  gamma", i, "[j] <- g.act", i,
-                              "\n}"),
-                     if (add.std.in)
-                       paste0("\ng", i, dnmax),
-                     if (add.std.act.yes)
-                       paste0("\ng.act", i, dnmax))
-            ##
-            gamma.effect <- paste0(gamma.effect, gamma.effect0)
+            gamma.effect <-
+              paste0(gamma.effect,
+                     paste0("\n# Common effect for gamma (bias effect)",
+                            if (add.std.in)
+                              paste0("\nfor (j in std.in) {",
+                                     "\n  gamma", i, "[j] <- g", i,
+                                     "\n}"),
+                            if (add.std.act.no)
+                              paste0("\nfor (j in std.act.no) {",
+                                     "\n  gamma", i, "[j] <- 0",
+                                     "\n}"),
+                            if (add.std.act.yes)
+                              paste0("\nfor (j in std.act.yes) {",
+                                     "\n  gamma", i, "[j] <- g.act", i,
+                                     "\n}"),
+                            if (add.std.in)
+                              paste0("\ng", i, dnmax),
+                            if (add.std.act.yes)
+                              paste0("\ng.act", i, dnmax)))
           }
           ##
           gamma.effect <- paste0(gamma.effect, "\nprec.gamma <- 0")
