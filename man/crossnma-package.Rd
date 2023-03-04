@@ -13,7 +13,7 @@ of individual participant data and aggregate data or combination of
 both. Each format can come from randomized controlled trials or
 non-randomized studies. Estimates are generated in a Bayesian
 framework using JAGS. The implemented models are described by Hamza
-et al. 2022 \doi{10.48550/arXiv.2203.06350}.
+et al. (2023).
 }
 \details{
 The evidence in network meta-analysis (NMA) typically comes from
@@ -51,34 +51,39 @@ Saramago P, Sutton AJ, Cooper NJ, Manca A (2012):
 Mixed treatment comparisons using aggregate and individual
 participant level data.
 \emph{Statistics in Medicine},
-\bold{10;31(28)}, 3516-36
+\bold{31}, 3516-36
 
-Dias, Sofia, N. J. Welton, V. C. C. Marinho, G. Salanti, J.P.T
-Higgins, and A. E. Ades (2010):
-Estimation and Adjustment of Bias in Randomized Evidence by Using
-Mixed Treatment Comparison Meta-Analysis.
-\emph{Journal of the Royal Statistical Society},
+Dias S, Welton NJ, Marinho VCC et al. (2010):
+Estimation and adjustment of bias in randomized evidence by using
+mixed treatment comparison meta-analysis.
+\emph{Journal of the Royal Statistical Society: Series A},
 \bold{173}, 613-29
 
-Plummer, Martyn. (2003):
-JAGS: A Program for Analysis of Bayesian Graphical Models Using
-Gibbs Sampling.
+Hamza T, Chalkou K, Pellegrini F et al. (2023):
+Synthesizing cross-design evidence and cross-format data using
+network meta-regression.
+\emph{Research Synthesis Methods},
+\doi{10.1002/jrsm.1619}
 
-Tramacere, Del Giovane, I, and G Filippini (2015):
-Immunomodulators and Immunosuppressants for Relapsing‐remitting
-Multiple Sclerosis: A Network Meta‐analysis.
-\emph{Cochrane Database of Systematic Reviews, no. 9.} John Wiley &
-Sons, Ltd. \doi{10.1002/14651858.CD011381.pub2}.
+Plummer M (2003):
+JAGS: A program for analysis of Bayesian graphical models using
+Gibbs sampling
 
-Verde, Pablo Emilio. (2020):
-A Bias-Corrected Meta-Analysis Model for Combining, Studies of
-Different Types and Quality.
+Tramacere I, Del Giovane C, Salanti G et al. (2015):
+Immunomodulators and immunosuppressants for relapsing-remitting
+multiple sclerosis: a network meta-analysis.
+\emph{Cochrane Database of Systematic Reviews}, \bold{9},
+John Wiley \& Sons, Ltd. \doi{10.1002/14651858.CD011381.pub2}
+
+Verde PE (2020):
+A bias-corrected meta-analysis model for combining studies of
+different types and quality.
 \emph{Biometrical Journal},
 \doi{10.1002/bimj.201900376}
 }
 \author{
 Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch},
-Guido Schwarzer \email{sc@imbi.uni-freiburg.de},
+Guido Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de},
 Georgia Salanti \email{georgia.salanti@ispm.unibe.ch}
 }
 \keyword{package}

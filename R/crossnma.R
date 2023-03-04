@@ -6,36 +6,49 @@
 #' rjags package.
 #'
 #' @param x An object produced by \code{\link{crossnma.model}}.
-#' @param inits A list with n.chains elements; each element is itself a list of initial values for each model parameter,
-#' or a function that generates starting values. Default is NULL where jags.model() function
-#' will internally generate starting values for each parameter.
-#' @param n.adapt Number of adaptations for the MCMC chains. Default is 1000.
-#' @param n.burnin Number of burnin iterations for the MCMC chains. Default is n.iter/2 which discards the first half of the iterations.
-#' @param n.iter Number of iterations to run each MCMC chain. Default is 2000.
-#' @param n.thin Number of thinning for the MCMC chains. Default is max(1, floor((n.iter - n.burnin) / 1000)),
-#' that is only thinning if there are more than 2000 iterations.
-#' @param n.chains Number of MCMC chains. Default is 2.
+#' @param inits A list of lists with \code{n.chains} elements; each
+#'   element contains initial values for each model parameter or a
+#'   function that generates starting values. Default is different
+#'   numbers in \code{.RNG.seed} and \code{.RNG.name =
+#'   "base::Mersenne-Twister"}.
+#' @param n.adapt Number of adaptations for the MCMC chains.
+#' @param n.burnin Number of burnin iterations for the MCMC
+#'   chains. Default is \code{n.iter / 2} which discards the first
+#'   half of the iterations.
+#' @param n.iter Number of iterations to run each MCMC chain.
+#' @param n.thin Number of thinning for the MCMC chains. Default is
+#'   max(1, floor((n.iter - n.burnin) / 1000)), that is only thinning
+#'   if there are more than 2000 iterations.
+#' @param n.chains Number of MCMC chains.
 #' @param monitor A character vector of the names of the parameters to
-#'   be monitored. Basic parameters (depends on the analysis) will be automatically monitored
-#'   and only additional parameters need to be specified.
-#'   Default is NULL.
-#'  @param  quiet A logical passed on to \code{\link{jags.model}}.TRUE is default.
+#'   be monitored. Basic parameters (depends on the analysis) will be
+#'   automatically monitored and only additional parameters need to be
+#'   specified.
+#' @param level.ma The level used to calculate credible intervals for
+#'   network estimates.
+#' @param backtransf A logical indicating whether results should be
+#'   back transformed in printouts. If \code{backtransf = TRUE},
+#'   results for \code{sm = "OR"} are presented as odds ratios rather
+#'   than log odds ratios, for example.
+#' @param quiet A logical passed on to \code{\link{jags.model}}.
 #'
 #' @return
 #' An object of class \code{crossnma} which is a list containing the
 #' following components:
-#' \item{jagsfit}{ An rjags-class object produced when rjags package used to run the JAGS
-#'   model.}
+#' \item{jagsfit}{An "rjags" object produced when rjags package used
+#'   to run the JAGS model.}
 #' \item{model}{The \code{crossnma.model} object obtained from
 #'   \code{\link{crossnma.model}} which was used to run JAGS.}
 #' \item{trt.key}{A table of treatment names and their correspondence
 #'   to integers used in the JAGS model.}
+#' \item{inits, n.adapt, n.burnin, n.iter}{As defined above.}
+#' \item{n.thin, n.chains}{As defined above.}
 #' \item{call}{Function call.}
 #' \item{version}{Version of R package \bold{crossnma} used to create
 #'   object.}
 #'
 #' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch}, Guido
-#'   Schwarzer \email{sc@@imbi.uni-freiburg.de}
+#'   Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de}
 #'
 #' @seealso \code{\link{crossnma.model}},
 #'   \code{\link[rjags]{jags.model}}
@@ -46,16 +59,17 @@
 #' # The data comes from randomized-controlled trials and
 #' # non-randomized studies (combined naively)
 #' head(ipddata) # participant-level data
-#' head(stddata) # study-level data
+#' stddata # study-level data
 #'
 #' # Create a JAGS model
 #' mod <- crossnma.model(treat, id, relapse, n, design,
-#'   prt.data = ipddata, std.data = stddata,sm="OR",
+#'   prt.data = ipddata, std.data = stddata,
 #'   reference = "A", trt.effect = "random", method.bias = "naive")
 #'
 #' # Fit JAGS model
-#' fit <-crossnma(mod,
-#' n.burnin =10,n.iter = 50, n.thin = 1, n.chains = 3)
+#' set.seed(1909)
+#' fit <- crossnma(mod, n.burnin = 10, n.iter = 50,
+#'   n.thin = 1, n.chains = 3)
 #'
 #' # Display the output
 #' summary(fit)
@@ -65,16 +79,18 @@
 
 
 crossnma <- function(x,
-                     inits=NULL,
+                     inits = NULL,
                      n.adapt = 1000,
                      n.burnin = floor(n.iter / 2),
                      n.iter = 2000,
-                     n.thin = max(1, floor((n.iter - n.burnin)/1000)),
+                     n.thin = max(1, floor((n.iter - n.burnin) / 1000)),
                      n.chains = 2,
                      monitor = NULL,
-                     quiet=TRUE
+                     level.ma = x$level.ma,
+                     backtransf = x$backtransf,
+                     quiet = TRUE
                      ) {
-
+  
   chkclass(x, "crossnma.model")
   ##
   chknumeric(n.adapt, min = 1, length = 1)
@@ -82,30 +98,38 @@ crossnma <- function(x,
   chknumeric(n.iter, min = 1, length = 1)
   chknumeric(n.thin, min = 1, length = 1)
   chknumeric(n.chains, min = 1, length = 1)
+  chklevel(level.ma)
+  chklogical(backtransf)
   chklogical(quiet)
-
-
-  if (!is.null(inits))
-  {
-    seeds <- sample(.Machine$integer.max, n.chains, replace = FALSE)
-    inits <- list()
-    for (i in 1:n.chains)
-      inits[[i]] <- list(.RNG.seed = seeds[i], .RNG.name = "base::Mersenne-Twister")
+  
+  
+  if (!missing(level.ma)) {
+    x$level.ma <- level.ma
+    x$quantiles =
+      c((1 - level.ma) / 2, 0.5, 1 - (1 - level.ma) / 2)
   }
-
-  suppressWarnings(jagsfit <-
-                     jags.model(textConnection(x$model),
-                                x$data,
-                                n.chains = n.chains,
-                                n.adapt = n.adapt,
-                                inits = inits,
-                                quiet = quiet))
-
-
-
+  
+  
+  if (is.null(inits)) {
+    seeds <- sample(.Machine$integer.max, n.chains)
+    inits <- vector("list", n.chains)
+    for (i in seq_len(n.chains))
+      inits[[i]] <- list(.RNG.seed = seeds[i],
+                         .RNG.name = "base::Mersenne-Twister")
+  }
+  
+  
+  suppressWarnings(
+    jagsfit <-
+      jags.model(textConnection(x$model),
+                 x$data, inits = inits,
+                 n.chains = n.chains, n.adapt = n.adapt,
+                 quiet = quiet))
+  ##
   if (n.burnin != 0)
     update(jagsfit, n.burnin)
-
+  
+  
   ##
   ## Monitor (basics)
   ##
@@ -145,7 +169,7 @@ crossnma <- function(x,
       monitor.reg <- c(monitor.reg, paste0("b_", id.cov))
       ##
       if (x$regb.effect == 'random' && x$regw.effect == 'random')
-          monitor.reg <- c(monitor.reg, paste0("tau.b_", id.cov))
+        monitor.reg <- c(monitor.reg, paste0("tau.b_", id.cov))
     }
     ##
     monitor <- c(monitor, monitor.reg)
@@ -188,29 +212,26 @@ crossnma <- function(x,
     }
     monitor <- c(monitor, monitor.bias)
   }
-
-  # random seed for JAGS model (to produce identical results)
-  # seeds <- sample(.Machine$integer.max, n.chains, replace = FALSE)
-  # Run JAGS model
-  # jmodel <- x$model
-  # jagsfit <- do.call(jags.parallel,list(data=x$data,
-  #               inits = inits,
-  #               parameters.to.save = monitor,
-  #               model.file=jmodel,
-  #               n.chains = n.chains,
-  #               n.iter = n.iter,
-  #               n.burnin = n.burnin,
-  #               n.thin = n.thin,
-  #               jags.seed=seeds,
-  #               DIC=FALSE))
-  res <- list(samples = coda.samples(jagsfit,
-                                      variable.names = monitor,
-                                      n.iter = n.iter, n.thin = n.thin),
-              jagsfit=jagsfit,
-              model = x,
-              trt.key = x$trt.key,
-              call = match.call(),
-              version = packageDescription("crossnma")$Version)
+  
+  
+  res <- list(
+    samples = coda.samples(jagsfit,
+                           variable.names = monitor,
+                           n.iter = n.iter, n.thin = n.thin),
+    jagsfit = jagsfit,
+    model = x,
+    trt.key = x$trt.key,
+    ##
+    inits = inits,
+    n.adapt = n.adapt,
+    n.burnin = n.burnin,
+    n.iter = n.iter,
+    n.thin = n.thin,
+    n.chains = n.chains,
+    ##
+    call = match.call(),
+    version = packageDescription("crossnma")$Version
+  )
   ##
   class(res) <- "crossnma"
   ##

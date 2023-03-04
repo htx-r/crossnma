@@ -9,13 +9,14 @@
 \method{league}{crossnma}(
   x,
   median = TRUE,
-  exp = FALSE,
+  backtransf = x$model$backtransf,
   order = NULL,
   cov1.value = NULL,
   cov2.value = NULL,
   cov3.value = NULL,
-  digits = 2,
+  digits = gs("digits"),
   direction = "wide",
+  exp = backtransf,
   ...
 )
 
@@ -29,35 +30,39 @@ league(x, ...)
 \item{median}{A logical indicating whether to use the median
 (default) or mean to measure relative treatment effects.}
 
-\item{exp}{If TRUE (default), odds ratios are displayed. If FALSE,
-log odds ratios will be presented.}
+\item{backtransf}{A logical indicating whether results should be
+back transformed. If \code{backtransf = TRUE}, results for
+\code{sm = "OR"} are presented as odds ratios rather than log
+odds ratios, for example.}
 
 \item{order}{A vector of treatment names (character) representing
 the order in which to display these treatments.}
 
-\item{cov1.value}{The participant covariate value of
-\code{cov1} for which to report the results. Must be specified
-for network meta-regression and when individual participant
-dataset is used in the analysis. For dichotomous covariates, a
-character of the level (used in the data) should be indicated.}
+\item{cov1.value}{The participant covariate value of \code{cov1}
+for which to report the results. Must be specified for network
+meta-regression and when individual participant dataset is used
+in the analysis. For dichotomous covariates, a character of the
+level (used in the data) should be indicated.}
 
-\item{cov2.value}{The participant covariate value of
-\code{cov2} for which to report the results. Must be specified
-for network meta-regression and when individual participant
-dataset is used in the analysis. For dichotomous covariates, a
-character of the level (used in the data) should be indicated.}
+\item{cov2.value}{The participant covariate value of \code{cov2}
+for which to report the results. Must be specified for network
+meta-regression and when individual participant dataset is used
+in the analysis. For dichotomous covariates, a character of the
+level (used in the data) should be indicated.}
 
-\item{cov3.value}{The participant covariate value of
-\code{cov3} for which to report the results. Must be specified
-for network meta-regression and when individual participant
-dataset is used in the analysis. For dichotomous covariates, a
-character of the level (used in the data) should be indicated.}
+\item{cov3.value}{The participant covariate value of \code{cov3}
+for which to report the results. Must be specified for network
+meta-regression and when individual participant dataset is used
+in the analysis. For dichotomous covariates, a character of the
+level (used in the data) should be indicated.}
 
 \item{digits}{The number of digits to be used when displaying the
 results.}
 
 \item{direction}{The format to display the league table. Two
 options "wide" (default) and "long".}
+
+\item{exp}{Deprecated argument (replaced by \code{backtransf}).}
 
 \item{\dots}{Additional arguments (ignored at the moment).}
 }
@@ -76,20 +81,21 @@ credible intervals obtained with the quantile method.
 # The data comes from randomized-controlled trials and
 # non-randomized studies (combined naively)
 head(ipddata) # participant-level data
-head(stddata) # study-level data
+stddata # study-level data
 
 # Create a JAGS model
 mod <- crossnma.model(treat, id, relapse, n, design,
-  prt.data = ipddata, std.data = stddata,sm="OR",
+  prt.data = ipddata, std.data = stddata,
   reference = "A", trt.effect = "random", method.bias = "naive")
 
 # Fit JAGS model
-fit <-crossnma(mod,
-n.burnin =10,n.iter = 50, n.thin = 1, n.chains = 3)
+set.seed(1909)
+fit <- crossnma(mod, n.burnin = 10, n.iter = 50,
+  n.thin = 1, n.chains = 3)
 
 # Create league tables
-league(fit, exp = TRUE)                     #  wide format
-league(fit, exp = TRUE, direction = "long") #  long format
+league(fit)                     #  wide format
+league(fit, direction = "long") #  long format
 
 }
 \seealso{

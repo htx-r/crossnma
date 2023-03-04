@@ -39,19 +39,20 @@ meta-regression
 # The data comes from randomized-controlled trials and
 # non-randomized studies (combined naively)
 head(ipddata) # participant-level data
-head(stddata) # study-level data
+stddata # study-level data
 
 # Create a JAGS model
 mod <- crossnma.model(treat, id, relapse, n, design,
-  prt.data = ipddata, std.data = stddata,sm="OR",
+  prt.data = ipddata, std.data = stddata,
   reference = "A", trt.effect = "random", method.bias = "naive")
 
 # Fit JAGS model
-fit <-crossnma(mod,
-n.burnin =10,n.iter = 50, n.thin = 1, n.chains = 3)
+set.seed(1909)
+fit <- crossnma(mod, n.burnin = 10, n.iter = 50,
+  n.thin = 1, n.chains = 3)
 
 # Create network plot
-netgraph(fit)
+netgraph(fit, plastic = FALSE, cex.points = 7, adj = 0.5)
 
 }
 \seealso{

@@ -2,15 +2,17 @@
 #'
 #' @description
 #' Produces a heat plot that contain point estimates of relative
-#' effects for all possible pairs of treatments along with 95\%
-#' credible intervals obtained with the quantile method.
+#' effects for all possible pairs of treatments along with credible
+#' intervals obtained with the quantile method.
 #'
 #' @param x An object created with \code{\link{crossnma}}.
 #' @param median A logical indicating whether to use the median
 #'   (default) or mean to measure relative treatment effects.
-#' @param exp If TRUE (default), odds ratios are displayed. If FALSE,
-#'   log odds ratios will be presented.
-#' @param order A vector of treatment names (character) representing
+#' @param backtransf A logical indicating whether results should be
+#'   back transformed. If \code{backtransf = TRUE}, results for
+#'   \code{sm = "OR"} are presented as odds ratios rather than log
+#'   odds ratios, for example.
+#' @param seq A vector of treatment names (character) representing
 #'   the order in which to display these treatments.
 #' @param low.colour A string indicating the colour of low relative
 #'   treatment effects for the heat plot (e.g odds ratio of ~0.5)
@@ -40,6 +42,7 @@
 #' @param size.axis The size of labels on the top and left of the plot
 #' @param digits The number of digits to be used when displaying the
 #'   results.
+#' @param exp Deprecated argument (replaced by \code{backtransf}).
 #' @param \dots Additional arguments (ignored at the moment).
 #'
 #' @return
@@ -49,26 +52,28 @@
 #' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch}
 #'
 #' @seealso \code{\link{crossnma}}
+#' 
+#' @keywords hplot
 #'
 #' @examples
 #' # We conduct a network meta-analysis assuming a random-effects
-#' # model.
-#' # The data comes from randomized-controlled trials and
+#' # model. The data comes from randomized-controlled trials and
 #' # non-randomized studies (combined naively)
 #' head(ipddata) # participant-level data
-#' head(stddata) # study-level data
+#' stddata # study-level data
 #'
 #' # Create a JAGS model
 #' mod <- crossnma.model(treat, id, relapse, n, design,
-#'   prt.data = ipddata, std.data = stddata,sm="OR",
+#'   prt.data = ipddata, std.data = stddata,
 #'   reference = "A", trt.effect = "random", method.bias = "naive")
 #'
 #' # Fit JAGS model
-#' fit <-crossnma(mod,
-#' n.burnin =10,n.iter = 50, n.thin = 1, n.chains = 3)
+#' set.seed(1909)
+#' fit <- crossnma(mod, n.burnin = 10, n.iter = 50,
+#'   n.thin = 1, n.chains = 3)
 #'
 #' # Create a heat plot
-#' heatplot(fit)
+#' #heatplot(fit)
 #'
 #' @method heatplot crossnma
 #' @export
@@ -76,8 +81,8 @@
 
 heatplot.crossnma <- function(x,
                               median = TRUE,
-                              exp = TRUE,
-                              order = NULL,
+                              backtransf = x$model$backtransf,
+                              seq = NULL,
                               low.colour = "red",
                               mid.colour = "white",
                               high.colour = "springgreen4",
@@ -87,7 +92,8 @@ heatplot.crossnma <- function(x,
                               size = 6,
                               size.trt = 20,
                               size.axis = 12,
-                              digits = 2,
+                              digits = gs("digits.forest"),
+                              exp = backtransf,
                               ...) {
 
   chkclass(x, "crossnma")
@@ -98,32 +104,42 @@ heatplot.crossnma <- function(x,
   else
     central.tdcy <- "mean"
   ##
-  chklogical(exp)
-  ##
   chknumeric(size, min = 0, length = 1)
   chknumeric(size.trt, min = 0, length = 1)
   chknumeric(size.trt, min = 0, length = 1)
   ##
   chknumeric(digits, min = 0, length = 1)
-
-
+  ##
+  missing.backtransf <- missing(backtransf)
+  backtransf <-
+    deprecated2(backtransf, missing.backtransf, exp, missing(exp))
+  chklogical(backtransf)
+  if (backtransf & x$model$sm %in% c("MD", "SMD")) {
+    if (!missing.backtransf)
+      warning("No back transformation of results for (standardised) ",
+              "mean differences (argument 'backtransf').")
+    backtransf <- FALSE
+  }
+  ##
+  exp <- backtransf
+  quant <- x$model$quantiles
+  
+  
   if (!is.null(x$model$covariate) & is.null(cov1.value))
     stop("cov1.value must be specified for network meta-regression")
 
 
   ## Bind variables to function
-  trt <- Treatment <- Comparator <- cov.ref <- ct.stat <- lci <- uci <- NULL
-  #samples <- as.mcmc(x$jagsfit)
-  samples <- x$samples
+  trt <- Treatment <- Comparator <- cov.ref <- ct.stat <- lcl <- ucl <- NULL
   dmat <-
-    do.call(rbind, samples) %>% data.frame() %>% select(starts_with("d."))
+    do.call(rbind, x$samples) %>% data.frame() %>% select(starts_with("d."))
   trt.names <- x$trt.key$trt.ini
   colnames(dmat) <- trt.names
   ##
-  if (is.null(order))
-    order <- trt.names
+  if (is.null(seq))
+    seq <- trt.names
   else
-    order <- setseq(order, trt.names)
+    seq <- setseq(seq, trt.names)
 
 
   ##
@@ -148,7 +164,7 @@ heatplot.crossnma <- function(x,
       if (x$model$split.regcoef) {
         ## betaw
         if (x$model$regw.effect == "independent") {
-          bwmat <- do.call(rbind, samples) %>% data.frame() %>%
+          bwmat <- do.call(rbind, x$samples) %>% data.frame() %>%
             select(starts_with("betaw.t_"))
           ## split bwmat by nt_column to generate bwmat.cov for each covariate
           ##
@@ -180,7 +196,7 @@ heatplot.crossnma <- function(x,
           dmat <- dmat + bwmat.cov1 + bwmat.cov2 + bwmat.cov3
         }
         else {
-          bwmat <- do.call(rbind, samples) %>% data.frame() %>%
+          bwmat <- do.call(rbind, x$samples) %>% data.frame() %>%
             select(starts_with("bw_"))
           bwmat.cov1 <-
             sweep(cbind(bwmat[, 1]), MARGIN = 2,
@@ -223,7 +239,7 @@ heatplot.crossnma <- function(x,
         }
         ## betab
         if (x$model$regb.effect == "independent") {
-          bbmat <- do.call(rbind, samples) %>% data.frame() %>%
+          bbmat <- do.call(rbind, x$samples) %>% data.frame() %>%
             select(starts_with("betab.t_"))
           ## split bbmat by nt_column to generate bbmat.cov for each
           ## covariate
@@ -262,7 +278,7 @@ heatplot.crossnma <- function(x,
               mean(c(x$model$data$xm2.ad, x$model$data$xm2.ipd),na.rm = TRUE),
               mean(c(x$model$data$xm3.ad, x$model$data$xm3.ipd),na.rm = TRUE))
           ##
-          bbmat <- do.call(rbind, samples) %>% data.frame() %>%
+          bbmat <- do.call(rbind, x$samples) %>% data.frame() %>%
             select(starts_with("bb_"))
           ##
           bbmat.cov1 <-
@@ -307,7 +323,7 @@ heatplot.crossnma <- function(x,
       else {
         if (x$model$regb.effect == "independent" &&
             x$model$regw.effect == "independent") {
-          bmat <- do.call(rbind, samples) %>% data.frame() %>%
+          bmat <- do.call(rbind, x$samples) %>% data.frame() %>%
             select(starts_with("beta.t_"))
           ## For factor covariate, multiply by 0 or 1 depends on what
           ## value the user indicate in cov1.value
@@ -338,7 +354,7 @@ heatplot.crossnma <- function(x,
           dmat <- dmat + bmat.cov1 + bmat.cov2 + bmat.cov3
         }
         else {
-          bmat <- do.call(rbind, samples) %>% data.frame() %>%
+          bmat <- do.call(rbind, x$samples) %>% data.frame() %>%
             select(starts_with("b_"))
           bmat.cov1 <-
             sweep(cbind(bmat[, 1]), MARGIN = 2,
@@ -388,7 +404,7 @@ heatplot.crossnma <- function(x,
       bbmat.cov2 <- bbmat.cov3 <- 0
       ##
       if (x$model$regb.effect == "independent") {
-        bbmat <- do.call(rbind, samples) %>% data.frame() %>%
+        bbmat <- do.call(rbind, x$samples) %>% data.frame() %>%
           select(starts_with("beta.t_"))
         ## split bbmat by nt_column to generate bbmat.cov for each
         ## covariate
@@ -423,7 +439,7 @@ heatplot.crossnma <- function(x,
       else {
         stds.mean <-
           c(x$model$data$xm1.ad, x$model$data$xm2.ad, x$model$data$xm3.ad)
-        bbmat <- do.call(rbind, samples) %>% data.frame() %>%
+        bbmat <- do.call(rbind, x$samples) %>% data.frame() %>%
           select(starts_with("b_"))
         bbmat.cov1 <-
           sweep(cbind(bbmat[, 1]), MARGIN = 2,
@@ -463,8 +479,8 @@ heatplot.crossnma <- function(x,
     }
   }
   ##
-  dmat %<>% select(order)
-  trt.names <- order
+  dmat %<>% select(seq)
+  trt.names <- seq
 
 
   ## Useful functions to compute some statistics
@@ -477,25 +493,33 @@ heatplot.crossnma <- function(x,
       eval(call(fct,(call(trans, x)), arg))
   }
   ##
-  exp.mean <- function(x) calc.report(x, "mean", trans = "exp")
-  exp.median <- function(x) calc.report(x, "median", trans = "exp")
-  exp.sd <- function(x) calc.report(x, "sd", trans = "exp")
-  exp.lci <- function(x) calc.report(x, "quantile", arg = 0.025, trans = "exp")
-  exp.uci <- function(x) calc.report(x, "quantile", arg = 0.975, trans = "exp")
+  exp.mean <- function(x)
+    calc.report(x, "mean", trans = "exp")
+  exp.median <- function(x)
+    calc.report(x, "median", trans = "exp")
+  exp.sd <- function(x)
+    calc.report(x, "sd", trans = "exp")
+  exp.lcl <- function(x)
+    calc.report(x, "quantile", arg = quant[1], trans = "exp")
+  exp.ucl <- function(x)
+    calc.report(x, "quantile", arg = quant[3], trans = "exp")
   ##
-  id.mean <- function(x) calc.report(x, "mean", trans = "identity")
-  id.median <- function(x) calc.report(x, "median", trans = "identity")
-  id.sd <- function(x) calc.report(x, "sd", trans = "identity")
-  id.lci <- function(x) calc.report(x, "quantile", arg = 0.025,
-                                    trans = "identity")
-  id.uci <- function(x) calc.report(x, "quantile", arg = 0.975,
-                                    trans = "identity")
+  id.mean <- function(x)
+    calc.report(x, "mean", trans = "identity")
+  id.median <- function(x)
+    calc.report(x, "median", trans = "identity")
+  id.sd <- function(x)
+    calc.report(x, "sd", trans = "identity")
+  id.lcl <- function(x)
+    calc.report(x, "quantile", arg = quant[1], trans = "identity")
+  id.ucl <- function(x)
+    calc.report(x, "quantile", arg = quant[3], trans = "identity")
   ##
   colvals <- function(dmat, b.col=1, paste = TRUE) {
     ## Bind variables to function
-    key <- value <- trt <- estimate <- lci <- uci <- result <- NULL
+    key <- value <- trt <- estimate <- lcl <- ucl <- result <- NULL
 
-    base <- colnames(dmat)[b.col]
+    #base <- colnames(dmat)[b.col]
 
     dmat2 <- dmat
     new.vars <- paste0(colnames(dmat2), "-", b.col)
@@ -532,28 +556,28 @@ heatplot.crossnma <- function(x,
     }
     ##
     if (exp) {
-      tmp.lci <- dmat2 %>%
-        summarise_all(list(lci = exp.lci)) %>% gather() %>%
-        rename(trt = key, lci = value) %>%
-        mutate(trt = sub("_lci", "", trt))
+      tmp.lcl <- dmat2 %>%
+        summarise_all(list(lcl = exp.lcl)) %>% gather() %>%
+        rename(trt = key, lcl = value) %>%
+        mutate(trt = sub("_lcl", "", trt))
       ##
-      tmp.uci <- dmat2 %>%
-        summarise_all(list(uci = exp.uci)) %>% gather() %>%
-        rename(trt = key, uci = value) %>%
-        mutate(trt = sub("_uci", "", trt))
+      tmp.ucl <- dmat2 %>%
+        summarise_all(list(ucl = exp.ucl)) %>% gather() %>%
+        rename(trt = key, ucl = value) %>%
+        mutate(trt = sub("_ucl", "", trt))
       ##
       null.value <- 1
     }
     else {
-      tmp.lci <- dmat2 %>%
-        summarise_all(list(lci = id.lci)) %>% gather() %>%
-        rename(trt = key, lci = value) %>%
-        mutate(trt = sub("_lci", "", trt))
+      tmp.lcl <- dmat2 %>%
+        summarise_all(list(lcl = id.lcl)) %>% gather() %>%
+        rename(trt = key, lcl = value) %>%
+        mutate(trt = sub("_lcl", "", trt))
       ##
-      tmp.uci <- dmat2 %>%
-        summarise_all(list(uci = id.uci)) %>% gather() %>%
-        rename(trt = key, uci = value) %>%
-        mutate(trt = sub("_uci", "", trt))
+      tmp.ucl <- dmat2 %>%
+        summarise_all(list(ucl = id.ucl)) %>% gather() %>%
+        rename(trt = key, ucl = value) %>%
+        mutate(trt = sub("_ucl", "", trt))
       ##
       null.value <- 0
     }
@@ -563,22 +587,19 @@ heatplot.crossnma <- function(x,
     fmt <- paste0("%.", digits, "f")
 
     if (paste) {
-      tmp1 <- left_join(tmp.estimate, tmp.lci, by = "trt") %>%
-        left_join(tmp.uci, by = "trt") %>%
+      tmp1 <- left_join(tmp.estimate, tmp.lcl, by = "trt") %>%
+        left_join(tmp.ucl, by = "trt") %>%
         mutate(result = paste(sprintf(fmt, estimate),
-                              " (",
-                              sprintf(fmt, lci),
-                              " to ",
-                              sprintf(fmt, uci),
-                              ")", sep="")) %>%
+                              formatCI(round(lcl, digits),
+                                       round(ucl, digits)))) %>%
         select(trt, result)
       colnames(tmp1)[2] <-
         as.character(tmp.estimate %>% filter(estimate == null.value) %>%
                      select(trt))
     }
     else {
-      tmp1 <- left_join(tmp.estimate, tmp.lci, by = "trt") %>%
-        left_join(tmp.uci, by = "trt")
+      tmp1 <- left_join(tmp.estimate, tmp.lcl, by = "trt") %>%
+        left_join(tmp.ucl, by = "trt")
       colnames(tmp1)[2] <- central.tdcy
     }
 
@@ -610,15 +631,15 @@ heatplot.crossnma <- function(x,
   ## Create heat plot
   ##
   ##
-  heatplot <-
+  hplot <-
     ggplot(data = league.tmp,
            aes(x = Treatment, y = Comparator, fill = ct.stat)) +
     geom_tile() +
     geom_text(aes(label = paste0(sprintf(fmt, ct.stat), "\n",
-                                 "(", sprintf(fmt, lci), ", ",
-                                 sprintf(fmt, uci),")")),
+                                 formatCI(round(lcl, digits),
+                                       round(ucl, digits)))),
               size = size)
-  heatplot <- heatplot +
+  hplot <- hplot +
     scale_fill_gradient2(low = low.colour,
                          mid = mid.colour,
                          high = high.colour,
@@ -631,16 +652,8 @@ heatplot.crossnma <- function(x,
           axis.ticks.y = element_blank(),
           axis.text = element_text(size = size.trt),
           axis.title = element_text(size = size.axis)) +
-    scale_x_discrete(limits = order, expand = c(0, 0), position = "top") +
-    scale_y_discrete(limits = rev(order), expand = c(0, 0))
+    scale_x_discrete(limits = seq, expand = c(0, 0), position = "top") +
+    scale_y_discrete(limits = rev(seq), expand = c(0, 0))
 
-  return(heatplot)
+  return(hplot)
 }
-
-
-#' @rdname heatplot.crossnma
-#' @export heatplot
-
-
-heatplot <- function(x, ...)
-  UseMethod("heatplot")

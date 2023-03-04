@@ -8,15 +8,22 @@
 A data frame with 4 rows and 11 variables:
 \describe{
   \item{id}{numeric, study identifier}
-  \item{relapse}{numeric, the number of relapses}
   \item{n}{numeric, the sample size}
-  \item{treat}{character, indicating the assigned treatment to participants in each study arm}
-  \item{design}{character, design of the study, either 'rct' or 'nrs'}
+  \item{relapse}{numeric, the number of relapses}
+  \item{treat}{character, indicating the assigned treatment to
+    participants in each study arm}
+  \item{design}{character, design of the study, either 'rct' or
+    'nrs'}
   \item{age}{numeric, the mean age of participants in each study}
   \item{sex}{numeric, the proportion of females on each study}
-  \item{rob}{character, the risk of bias of the study, 'low', 'high','unclear'}
-  \item{unfavored}{numeric, the indicator of the unfavored treatment in each study, values are 0 or 1}
-  \item{bias.group}{numeric, the bias effect of the study, 1 = study has inactive treatment and adjust for bias effect, 2= study has active treatments and another adjustment for bias effect, 0=no bias adjustment}
+  \item{rob}{character, the risk of bias of the study, 'low',
+    'high','unclear'}
+  \item{unfavored}{numeric, the indicator of the unfavored
+    treatment in each study, values are 0 or 1}
+  \item{bias.group}{numeric, the bias effect of the study, 1 =
+    study has inactive treatment and adjust for bias effect, 2=
+    study has active treatments and another adjustment for bias
+    effect, 0=no bias adjustment}
   \item{year}{numeric, the year published of the study}
 }
 }
@@ -24,9 +31,8 @@ A data frame with 4 rows and 11 variables:
 stddata
 }
 \description{
-The dataset includes two randomized-controlled trials
-  (RCTs), comparing treatments A and C. The outcome is binary
-  represented as the number of participants with at least one
-  relapse.
+The dataset includes two randomized-controlled trials (RCTs),
+comparing treatments A and C. The outcome is binary represented as
+the number of participants with at least one relapse.
 }
 \keyword{datasets}

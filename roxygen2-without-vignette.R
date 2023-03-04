@@ -14,24 +14,18 @@ document()
 ##
 ## (3) Build R package and PDF file with help pages
 ##
-build(args = "--compact-vignettes=gs+qpdf")
+build(vignettes = FALSE)
 build_manual()
 
 
 ##
 ## (4) Install R package
 ##
-install(build_vignettes = TRUE)
+install()
 
 
 ##
 ## (5) Check R package
 ##
-check(build_args = "--compact-vignettes=gs+qpdf")
+check(vignettes = FALSE)
 
-
-##
-## (6) Check examples
-##
-run_examples(run_dontrun = TRUE, run_donttest = TRUE)
-warnings()
