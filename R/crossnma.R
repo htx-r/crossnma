@@ -90,7 +90,7 @@ crossnma <- function(x,
                      backtransf = x$backtransf,
                      quiet = TRUE
                      ) {
-  
+
   chkclass(x, "crossnma.model")
   ##
   chknumeric(n.adapt, min = 1, length = 1)
@@ -101,15 +101,15 @@ crossnma <- function(x,
   chklevel(level.ma)
   chklogical(backtransf)
   chklogical(quiet)
-  
-  
+
+
   if (!missing(level.ma)) {
     x$level.ma <- level.ma
     x$quantiles =
       c((1 - level.ma) / 2, 0.5, 1 - (1 - level.ma) / 2)
   }
-  
-  
+
+
   if (is.null(inits)) {
     seeds <- sample(.Machine$integer.max, n.chains)
     inits <- vector("list", n.chains)
@@ -117,8 +117,8 @@ crossnma <- function(x,
       inits[[i]] <- list(.RNG.seed = seeds[i],
                          .RNG.name = "base::Mersenne-Twister")
   }
-  
-  
+
+
   suppressWarnings(
     jagsfit <-
       jags.model(textConnection(x$model),
@@ -128,8 +128,8 @@ crossnma <- function(x,
   ##
   if (n.burnin != 0)
     update(jagsfit, n.burnin)
-  
-  
+
+
   ##
   ## Monitor (basics)
   ##
@@ -141,7 +141,7 @@ crossnma <- function(x,
   ## Monitor (meta-regression)
   ##
   if (!is.null(x$covariate)) {
-    n.covs <- length(x$covariate[[1]])
+    n.covs <- length(x$covariate) # [[1]]
     id.cov <- seq_len(n.covs)
     ##
     monitor.reg <- character(0)
@@ -212,8 +212,8 @@ crossnma <- function(x,
     }
     monitor <- c(monitor, monitor.bias)
   }
-  
-  
+
+
   res <- list(
     samples = coda.samples(jagsfit,
                            variable.names = monitor,

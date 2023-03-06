@@ -35,3 +35,10 @@ check(build_args = "--compact-vignettes=gs+qpdf")
 ##
 run_examples(run_dontrun = TRUE, run_donttest = TRUE)
 warnings()
+
+##
+## (7) Add MetaAnalysis views
+##
+install.packages("ctv")
+library(ctv)
+ctv::install.views("MetaAnalysis", coreOnly = TRUE)
