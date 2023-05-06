@@ -73,7 +73,7 @@ Tramacere I, Del Giovane C, Salanti G et al. (2015):
 Immunomodulators and immunosuppressants for relapsing-remitting
 multiple sclerosis: a network meta-analysis.
 \emph{Cochrane Database of Systematic Reviews}, \bold{9},
-John Wiley \& Sons, Ltd. \doi{10.1002/14651858.CD011381.pub2}
+John Wiley & Sons, Ltd. \doi{10.1002/14651858.CD011381.pub2}
 
 Verde PE (2020):
 A bias-corrected meta-analysis model for combining studies of

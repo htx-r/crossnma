@@ -73,7 +73,9 @@
 #'
 #' # Display the output
 #' summary(fit)
+#' \dontrun{
 #' plot(fit)
+#' }
 #'
 #' @export
 
