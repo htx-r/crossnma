@@ -96,7 +96,9 @@ fit <- crossnma(mod, n.burnin = 10, n.iter = 50,
 
 # Display the output
 summary(fit)
+\dontrun{
 plot(fit)
+}
 
 }
 \seealso{

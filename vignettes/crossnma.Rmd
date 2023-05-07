@@ -25,7 +25,7 @@ options(knitr.kable.NA = ".")
 ```
 
 ```{r setup, message = FALSE, echo = FALSE}
-library(crossnma)
+library("crossnma")
 set.seed(1910)
 settings.meta(digits = 3)
 cilayout("(", " to ")

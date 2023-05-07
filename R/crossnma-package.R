@@ -76,7 +76,7 @@
 #' Immunomodulators and immunosuppressants for relapsing-remitting
 #' multiple sclerosis: a network meta-analysis.
 #' \emph{Cochrane Database of Systematic Reviews}, \bold{9},
-#' John Wiley \& Sons, Ltd. \doi{10.1002/14651858.CD011381.pub2}
+#' John Wiley & Sons, Ltd. \doi{10.1002/14651858.CD011381.pub2}
 #'
 #' Verde PE (2020):
 #' A bias-corrected meta-analysis model for combining studies of
@@ -90,7 +90,7 @@
 #' @importFrom ggplot2 aes element_blank element_text geom_text
 #'   geom_tile ggplot scale_fill_gradient2 scale_x_discrete
 #'   scale_y_discrete theme theme_dark
-#' @importFrom magrittr %>% "%<>%"
+#' @importFrom magrittr %>% %<>%
 #' @importFrom dplyr .data arrange bind_cols bind_rows case_when do
 #'   everything filter group_by group_keys group_map group_size
 #'   left_join mutate n pull rename row_number select starts_with
