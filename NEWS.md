@@ -1,4 +1,4 @@
-## crossnma, version 1.1.0 (2023-05-06)
+## crossnma, version 1.1.0 (2023-05-08)
 
 ### Major changes
 

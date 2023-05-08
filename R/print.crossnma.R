@@ -24,6 +24,7 @@
 #' @keywords print
 #' 
 #' @examples
+#' \dontrun{
 #' # We conduct a network meta-analysis assuming a random-effects
 #' # model.
 #' # The data comes from randomized-controlled trials and
@@ -39,9 +40,9 @@
 #' # Fit JAGS model
 #' # (suppress warning 'Adaptation incomplete' due to n.adapt = 20)
 #' fit <-
-#'   suppressWarnings(crossnma(mod, n.adapt = 20,
-#'     n.iter = 50, n.thin = 1, n.chains = 3))
+#'   suppressWarnings(crossnma(mod))
 #' fit
+#' }
 #'
 #' @method print crossnma
 #' @export
