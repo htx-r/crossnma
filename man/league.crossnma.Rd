@@ -3,84 +3,105 @@
 \name{league.crossnma}
 \alias{league.crossnma}
 \alias{league}
+\alias{print.league.crossnma}
 \title{League Table}
 \usage{
 \method{league}{crossnma}(
   x,
-  central.tdcy = "median",
-  exp = FALSE,
+  median = TRUE,
+  backtransf = x$model$backtransf,
   order = NULL,
-  prt.cov1.value = NULL,
-  prt.cov2.value = NULL,
-  prt.cov3.value = NULL,
-  digits = 2,
+  cov1.value = NULL,
+  cov2.value = NULL,
+  cov3.value = NULL,
+  digits = gs("digits"),
   direction = "wide",
+  exp = backtransf,
   ...
 )
 
 league(x, ...)
+
+\method{print}{league.crossnma}(x, ...)
 }
 \arguments{
-\item{x}{A \code{crossrun} object produced by running \code{crossnma.run()}.}
+\item{x}{An object created with \code{\link{crossnma}}.}
 
-\item{central.tdcy}{The statistic to be used to measure the relative treatment effects. The options are "mean" and "median".}
+\item{median}{A logical indicating whether to use the median
+(default) or mean to measure relative treatment effects.}
 
-\item{exp}{If TRUE (default), odds ratios are displayed. If FALSE, log odds ratios will be presented.}
+\item{backtransf}{A logical indicating whether results should be
+back transformed. If \code{backtransf = TRUE}, results for
+\code{sm = "OR"} are presented as odds ratios rather than log
+odds ratios, for example.}
 
-\item{order}{A vector of treatment names (character) representing the order in which to display these treatments.}
+\item{order}{A vector of treatment names (character) representing
+the order in which to display these treatments.}
 
-\item{prt.cov1.value}{The participant covariate value of \code{cov1} for which to report the results. Must be specified for network meta-regression and when individual participant dataset is used in the analysis.
-For dichotomous covariates, a character of the level (used in the data) should be indicated.}
+\item{cov1.value}{The participant covariate value of \code{cov1}
+for which to report the results. Must be specified for network
+meta-regression and when individual participant dataset is used
+in the analysis. For dichotomous covariates, a character of the
+level (used in the data) should be indicated.}
 
-\item{prt.cov2.value}{The participant covariate value of \code{cov2} for which to report the results. Must be specified for network meta-regression and when individual participant dataset is used in the analysis.
-For dichotomous covariates, a character of the level (used in the data) should be indicated.}
+\item{cov2.value}{The participant covariate value of \code{cov2}
+for which to report the results. Must be specified for network
+meta-regression and when individual participant dataset is used
+in the analysis. For dichotomous covariates, a character of the
+level (used in the data) should be indicated.}
 
-\item{prt.cov3.value}{The participant covariate value of \code{cov3} for which to report the results. Must be specified for network meta-regression and when individual participant dataset is used in the analysis.
-For dichotomous covariates, a character of the level (used in the data) should be indicated.}
+\item{cov3.value}{The participant covariate value of \code{cov3}
+for which to report the results. Must be specified for network
+meta-regression and when individual participant dataset is used
+in the analysis. For dichotomous covariates, a character of the
+level (used in the data) should be indicated.}
 
-\item{digits}{The number of digits to be used when displaying the results.}
+\item{digits}{The number of digits to be used when displaying the
+results.}
 
-\item{direction}{The format to display the league table. Two options "wide" (default) and "long".}
+\item{direction}{The format to display the league table. Two
+options "wide" (default) and "long".}
+
+\item{exp}{Deprecated argument (replaced by \code{backtransf}).}
 
 \item{\dots}{Additional arguments (ignored at the moment).}
 }
 \value{
-\code{table}  A league table. Row names indicate comparator treatments.
-The table will be displayed in a long or wide formatting.
+A league table. Row names indicate comparator treatments.  The
+table will be displayed in a long or wide formatting.
 }
 \description{
-Produces a league table that contain point estimates of relative effects
-for all possible pairs of treatments along with 95\% credible intervals obtained with the quantile method.
+Produces a league table that contains point estimates of relative
+effects for all possible pairs of treatments along with 95\%
+credible intervals obtained with the quantile method.
 }
 \examples{
+\dontrun{
 # We conduct a network meta-analysis assuming a random-effects
 # model.
 # The data comes from randomized-controlled trials and
 # non-randomized studies (combined naively)
 head(ipddata) # participant-level data
-head(stddata) # study-level data
+stddata # study-level data
 
-#=========================#
-# Create a jags model     #
-#=========================#
+# Create a JAGS model
 mod <- crossnma.model(treat, id, relapse, n, design,
   prt.data = ipddata, std.data = stddata,
   reference = "A", trt.effect = "random", method.bias = "naive")
 
-#=========================#
-# Fit jags model          #
-#=========================#
-fit <-
-  crossnma.run(model = mod, n.adapt = 20,
-    n.iter = 50, thin = 1, n.chains = 3)
+# Fit JAGS model
+set.seed(1909)
+fit <- crossnma(mod)
 
-#==========================#
-# Display the league table #
-#==========================#
-league(fit,exp = TRUE)                   #  wide formatting
-league(fit,exp = TRUE, direction="long") #  long formatting
+# Create league tables
+league(fit)                     #  wide format
+league(fit, direction = "long") #  long format
+}
 
 }
 \seealso{
-\code{\link{crossnma.run}}
+\code{\link{crossnma}}
+}
+\author{
+Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}
 }

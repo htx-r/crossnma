@@ -8,31 +8,37 @@ library(roxygen2)
 ##
 ## (2) Create documentation file(s)
 ##
-document("../crossnma")
+document()
 
 
 ##
 ## (3) Build R package and PDF file with help pages
 ##
-build("../crossnma")
-build_manual("../crossnma")
+build(args = "--compact-vignettes=gs+qpdf")
+build_manual()
 
 
 ##
 ## (4) Install R package
 ##
-install("../crossnma")
+install(build_vignettes = TRUE)
 
 
 ##
 ## (5) Check R package
 ##
-check("../crossnma")
+check(build_args = "--compact-vignettes=gs+qpdf")
 
 
 ##
 ## (6) Check examples
 ##
-setwd("..")
-run_examples("crossnma", run_dontrun = TRUE, run_donttest = TRUE)
+run_examples(run_dontrun = TRUE, run_donttest = TRUE)
 warnings()
+
+##
+## (7) Add MetaAnalysis views
+##
+install.packages("ctv")
+library(ctv)
+ctv::install.views("MetaAnalysis", coreOnly = TRUE)
