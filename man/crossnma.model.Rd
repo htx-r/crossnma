@@ -374,6 +374,7 @@ where ML is the largest maximum likelihood estimates of all
 relative treatment effects in all studies.
 }
 \examples{
+\dontrun{
 # We conduct a network meta-analysis assuming a random-effects
 # model.
 # The data comes from randomized-controlled trials and
@@ -394,12 +395,12 @@ summary(mod)
 
 # Fit JAGS model
 set.seed(1909)
-fit <- crossnma(mod, n.burnin = 10, n.iter = 50,
-  n.thin = 1, n.chains = 3)
+fit <- crossnma(mod)
 
 # Display the output
 summary(fit)
 plot(fit)
+}
 
 }
 \seealso{

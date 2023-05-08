@@ -39,6 +39,7 @@ form in the case of subnetworks). If some treatments are
 combinations of
 }
 \examples{
+\dontrun{
 # We conduct a network meta-analysis assuming a random-effects
 # model.
 # The data comes from randomized-controlled trials and
@@ -53,11 +54,11 @@ mod <- crossnma.model(treat, id, relapse, n, design,
 
 # Fit JAGS model
 set.seed(1909)
-fit <- crossnma(mod, n.burnin = 10, n.iter = 50,
-  n.thin = 1, n.chains = 3)
+fit <- crossnma(mod)
 
 # Check network connectivity
 netconnection(fit)
+}
 
 }
 \seealso{

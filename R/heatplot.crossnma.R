@@ -56,6 +56,7 @@
 #' @keywords hplot
 #'
 #' @examples
+#' \dontrun{
 #' # We conduct a network meta-analysis assuming a random-effects
 #' # model. The data comes from randomized-controlled trials and
 #' # non-randomized studies (combined naively)
@@ -69,11 +70,11 @@
 #'
 #' # Fit JAGS model
 #' set.seed(1909)
-#' fit <- crossnma(mod, n.burnin = 10, n.iter = 50,
-#'   n.thin = 1, n.chains = 3)
+#' fit <- crossnma(mod)
 #'
 #' # Create a heat plot
-#' #heatplot(fit)
+#' heatplot(fit)
+#' }
 #'
 #' @method heatplot crossnma
 #' @export

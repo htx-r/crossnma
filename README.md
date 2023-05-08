@@ -6,18 +6,21 @@ Official Git repository of R package **crossnma**
 [![Total Downloads](http://cranlogs.r-pkg.org/badges/grand-total/crossnma)](http://cranlogs.r-pkg.org/badges/grand-total/crossnma)
 
 
+## Authors
+
+[Tasnim Hamza](https://orcid.org/0000-0002-4700-6990),
+[Guido Schwarzer](https://orcid.org/0000-0001-6214-9087),
+[Georgia Salanti](https://orcid.org/0000-0002-3830-8508)
+
+
 ## Description
 
 **crossnma** is an R package that allows for synthesizing the data
 from randomized or non-randomized studies coming from
-individual-participants or aggregate data. The package implements
+individual-participants or aggregate data ([Hamza et al.,
+2023](https://doi.org/10.1002/jrsm.1619)). The package implements
 Bayesian models in network meta-analysis and network meta-regression
 through JAGS software.
-
-
-### References
-
-[Hamza T, Chalkou K, Pellegrini F, et al. (2022), *Synthesizing cross-design evidence and cross-format data using network meta-regression*, arXiv:2203.06350](https://www.doi.org/10.48550/arXiv.2203.06350)
 
 
 ## Installation
@@ -49,11 +52,15 @@ Monte Carlo) through JAGS.
 We illustrate how to use **crossnma** through several examples in the vignette:
 
 ```
-vignette("crossnma", package = "crossnma")
+vignette("crossnma")
 ```
 
 
 ## How to cite crossnma?
+
+[Hamza T, Chalkou K, Pellegrini F, et al. (2023): Synthesizing cross-design evidence and cross-format data using network meta-regression. *Research Synthesis Methods*, **14**, 283-300](https://doi.org/10.1002/jrsm.1619)
+
+A BibTeX entry for LaTeX users is provided by
 
 ```
 citation(package = "crossnma")
@@ -70,3 +77,8 @@ The bug.report function is not supported in RStudio. Please send an
 email to Tasnim Hamza <tasnim.hamza@ispm.unibe.ch> if you use RStudio.
 
 You can also report bugs on GitHub under [Issues](https://github.com/htx-r/crossnma/issues/).
+
+
+### Reference
+
+[Hamza T, Chalkou K, Pellegrini F, Kuhle J, Benkert P, Lorscheider J, Zecca C, Iglesias-Urrutia CP, Manca A, Furukawa TA, Cipriani A, Salanti G (2023): Synthesizing cross-design evidence and cross-format data using network meta-regression. *Research Synthesis Methods*, **14**, 283-300](https://doi.org/10.1002/jrsm.1619)
