@@ -356,7 +356,7 @@ individual participant data `ipddata` (3 RCTs and 1 cohort study) or
 aggregate data `stddata` (2 RCTs). In total, four drugs are compared
 which are anonymized.
 
-The `ipddata` contains 1994 participants / rows. We display the first
+The `ipddata` contains 1944 participants / rows. We display the first
 few rows of the data set:
 
 ```{r}
@@ -399,7 +399,7 @@ names of the datasets on participant-level (argument `prt.data`) and
 aggregate data (argument `std.data`). By default, binary data is
 analyzed using the odds ratio as a summary measure (`sm = "OR"`). The
 `reference` treatment can be assigned which by default is the first
-treatment (here: drug A). By choosing `trt.effect = "random"`, we are
+treatment (here: drug A). By default (`trt.effect = "random"`), we are
 assigning a normal distribution to each relative treatment effect to
 allow the synthesis across studies, see the table in Section
 2.1. Finally, the different designs; RCT and NRS are combined with the
@@ -414,7 +414,6 @@ argument `prior.tau.trt = "dunif(0, 3)"`, see below.
 # JAGS model: code + data
 mod1 <- crossnma.model(treat, id, relapse, n, design,
   prt.data = ipddata, std.data = stddata,
-  trt.effect = "random",
   #---------- bias adjustment ----------
   method.bias = "naive",
   #---------- assign a prior ----------
@@ -426,17 +425,19 @@ The network should be checked for its connectivity before running the
 analysis. This is a vital step as the model will run even if the
 network is not connected.
 
-
 ```{r, fig.width=4.5, fig.height=5,fig.show='hold',fig.align='center'}
-netgraph(mod1, cex.points = 7, adj = 0.5, plastic = FALSE)
+netgraph(mod1, cex.points = n.trts, adj = 0.5, plastic = FALSE,
+ number = TRUE, pos.number.of.studies = c(0.5, 0.4, 0.5, 0.5, 0.6, 0.5))
 ```
+
+We are using argument `number.of.studies = TRUE` in order to print the number of studies in each direct comparison. The position of the number of studies is set by argument `pos.number.of.studies`.
 
 Next, we fit the NMA model using `crossnma()`. We change the default settings for 
 the number of iterations, burn-in and thinning.
 
 ```{r}
 # Run JAGS
-jagsfit1 <- crossnma(mod1, n.iter = 5000, n.burnin = 2000, n.thin = 1)
+jagsfit1 <- crossnma(mod1, n.iter = 5000, n.burnin = 2000, thin = 1)
 jagsfit1
 ```
 
@@ -473,7 +474,6 @@ variable name.
 # JAGS model: code + data
 mod2 <- crossnma.model(treat, id, relapse, n, design,
   prt.data = ipddata, std.data = stddata,
-  trt.effect = "random",
   #---------- bias adjustment ----------
   method.bias = "naive",
   #----------  meta-regression ----------
@@ -489,7 +489,7 @@ The MCMC is run under the same set up as in the network meta-analysis.
 
 ```{r}
 # Run JAGS
-jagsfit2 <- crossnma(mod2, n.iter = 5000, n.burnin = 2000, n.thin = 1)
+jagsfit2 <- crossnma(mod2, n.iter = 5000, n.burnin = 2000, thin = 1)
 ```
 
 and the output table is presented below
@@ -544,7 +544,7 @@ influence of NRS on the final estimation.
 # JAGS model: code + data
 mod3 <- crossnma.model(treat, id, relapse, n, design,
   prt.data = ipddata, std.data = stddata,
-  reference = "D", trt.effect = "random",
+  reference = "D",
   #----------  meta-regression ----------
   cov1 = age,
   split.regcoef = FALSE,
@@ -553,14 +553,14 @@ mod3 <- crossnma.model(treat, id, relapse, n, design,
   run.nrs.trt.effect= "common",
   run.nrs.var.infl = 0.6, run.nrs.mean.shift = 0,
   run.nrs.n.iter = 10000, run.nrs.n.burnin = 4000,
-  run.nrs.n.thin = 1, run.nrs.n.chains = 2
+  run.nrs.thin = 1, run.nrs.n.chains = 2
   )
 ```
 
 
 ```{r}
 # Run JAGS
-jagsfit3 <- crossnma(mod3, n.iter = 5000, n.burnin = 2000, n.thin = 1)
+jagsfit3 <- crossnma(mod3, n.iter = 5000, n.burnin = 2000, thin = 1)
 ```
 
 The heat plot summarizes the relative effect with the 95% credible
@@ -593,7 +593,6 @@ to estimate the study-probability of bias, `bias.covariate = year`.
 # JAGS model: code + data
 mod4 <- crossnma.model(treat, id, relapse, n, design,
   prt.data = ipddata, std.data = stddata,
-  trt.effect = "random",
   #---------- bias adjustment ----------
   method.bias = "adjust1",
   bias.type = "add",
@@ -607,7 +606,7 @@ mod4 <- crossnma.model(treat, id, relapse, n, design,
 
 ```{r}
 # Run JAGS
-jagsfit4 <- crossnma(mod4, n.iter = 5000, n.burnin = 2000, n.thin = 1)
+jagsfit4 <- crossnma(mod4, n.iter = 5000, n.burnin = 2000, thin = 1)
 ```
 
 The results are presented below
@@ -628,7 +627,6 @@ used before in `method.bias = "adjust1"`.
 # JAGS model: code + data
 mod5 <- crossnma.model(treat, id, relapse, n, design,
   prt.data = ipddata, std.data = stddata,
-  trt.effect = "random",
   #---------- bias adjustment ----------
   method.bias = "adjust2",
   bias.type = "add",
@@ -641,7 +639,7 @@ mod5 <- crossnma.model(treat, id, relapse, n, design,
 
 ```{r}
 # Run JAGS
-jagsfit5 <- crossnma(mod5, n.iter = 5000, n.burnin = 2000, n.thin = 1)
+jagsfit5 <- crossnma(mod5, n.iter = 5000, n.burnin = 2000, thin = 1)
 ```
 
 

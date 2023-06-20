@@ -109,7 +109,7 @@
 #'   between-study coefficients will be splitted in the analysis of
 #'   \code{prt.data}.  When the split.regcoef = FALSE, only a single
 #'   regression coefficient will be estimated to represent both the
-#'   between-studies and within-studies covariate effects.  In this
+#'   between-studies and within-studies covariate effects. In this
 #'   case, both arguments \code{regb.effect} and \code{regw.effect}
 #'   need to be given the same option to model the single regression
 #'   effect.
@@ -200,10 +200,9 @@
 #'   burn-in to run MCMC chains for NRS network.  Default is
 #'   4000. This argument can be provided when the NRS used as a prior
 #'   (method.bias = "prior").
-#' @param run.nrs.n.thin Optional numeric specifies the number of
-#'   thinning to run MCMC chains for NRS network.  Default is 1. This
-#'   argument can be provided when the NRS used as a prior
-#'   (method.bias = "prior").
+#' @param run.nrs.thin Optional numeric specifying thinning to run
+#'   MCMC chains for NRS network. Default is 1. This argument can be
+#'   provided when the NRS used as a prior (method.bias = "prior").
 #' @param run.nrs.n.chains Optional numeric specifies the number of
 #'   chains to run MCMC chains for NRS network.  Default is 2. This
 #'   argument can be provided when the NRS used as a prior
@@ -212,6 +211,8 @@
 #'   back transformed in printouts. If \code{backtransf = TRUE},
 #'   results for \code{sm = "OR"} are presented as odds ratios rather
 #'   than log odds ratios, for example.
+#' @param run.nrs.n.thin Deprecated argument (replaced by
+#'   \code{run.nrs.thin}).
 #' 
 #' @details
 #' This function creates a JAGS model and the needed data. The JAGS
@@ -360,10 +361,12 @@ crossnma.model <- function(trt,
                            run.nrs.n.adapt = 1000,
                            run.nrs.n.iter = 10000,
                            run.nrs.n.burnin = 4000,
-                           run.nrs.n.thin = 1,
+                           run.nrs.thin = 1,
                            run.nrs.n.chains = 2,
                            ##
-                           backtransf = gs("backtransf")
+                           backtransf = gs("backtransf"),
+                           ##
+                           run.nrs.n.thin = NULL
                            ) {
   
   ## Check and set variables
@@ -425,7 +428,7 @@ crossnma.model <- function(trt,
   }
   ##
   if (trt.effect == "common" & !is.null(prior.tau.trt))
-    warning("The prior of the heterogeneity between",
+    warning("The prior of the heterogeneity between ",
             "relative treatments parameters is ignored")
   if (reg0.effect == "common" & !is.null(prior.tau.reg0))
     warning("The prior of the heterogeneity between ",
@@ -2271,8 +2274,20 @@ crossnma.model <- function(trt,
     trt.effect.nrs <- replaceNULL(run.nrs.trt.effect, "common")
     n.adapt.nrs <- replaceNULL(run.nrs.n.adapt, 1000)
     n.chains.nrs <- replaceNULL(run.nrs.n.chains, 2)
+    ##
     n.iter.nrs <- replaceNULL(run.nrs.n.iter, 10000)
-    n.thin.nrs <- replaceNULL(run.nrs.n.thin, 1)
+    if (!missing(run.nrs.n.thin)) {
+      if (!missing(run.nrs.thin))
+        warning("Deprecated argument 'run.nrs.n.thin' ignored as ",
+                "argument 'run.nrs.thin' is provided.")
+      else {
+        warning("Argument 'run.nrs.n.thin' is deprecated; please use ",
+                "argument 'run.nrs.thin' instead.")
+        run.nrs.thin <- run.nrs.n.thin
+      }
+    }
+    thin.nrs <- replaceNULL(run.nrs.n.thin, 1)
+    ##
     n.burnin.nrs <- replaceNULL(run.nrs.n.burnin, 4000)
     
     
@@ -2311,7 +2326,7 @@ crossnma.model <- function(trt,
     ##                          n.chains = n.chains.nrs,
     ##                          n.iter = n.iter.nrs,
     ##                          n.burnin = n.burnin.nrs,
-    ##                          n.thin = n.thin.nrs,
+    ##                          thin = thin.nrs,
     ##                          jags.seed = seeds,
     ##                          DIC = FALSE)
     
@@ -2336,7 +2351,7 @@ crossnma.model <- function(trt,
     
     jagssamples.nrs <-
       coda.samples(jagsmodel.nrs, variable.names = "d",
-                   n.iter = n.iter.nrs, n.thin = n.thin.nrs)
+                   n.iter = n.iter.nrs, thin = thin.nrs)
     
     
     ## Output: prior for d's

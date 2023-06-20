@@ -4,10 +4,35 @@
 \alias{netgraph.crossnma.model}
 \title{Produce a network plot}
 \usage{
-\method{netgraph}{crossnma.model}(x, ...)
+\method{netgraph}{crossnma.model}(
+  x,
+  labels,
+  adj = NULL,
+  offset = if (!is.null(adj) && all(unique(adj) == 0.5)) 0 else 0.0175,
+  points = !missing(cex.points),
+  cex.points = 1,
+  ...
+)
 }
 \arguments{
 \item{x}{An object produced by \code{\link{crossnma.model}}.}
+
+\item{labels}{An optional vector with treatment labels.}
+
+\item{adj}{One, two, or three values in [0, 1] (or a vector /
+matrix with length / number of rows equal to the number of
+treatments) specifying the x (and optionally y and z) adjustment
+for treatment labels.}
+
+\item{offset}{Distance between edges (i.e. treatments) in graph and
+treatment labels for 2-D plots (value of 0.0175 corresponds to a
+difference of 1.75\% of the range on x- and y-axis).}
+
+\item{points}{A logical indicating whether points should be printed
+at nodes (i.e. treatments) of the network graph.}
+
+\item{cex.points}{Corresponding size for points. Can be a vector
+with length equal to the number of treatments.}
 
 \item{...}{\dots Additional arguments (passed on to
 \code{\link{netgraph.netmeta}})}
@@ -54,5 +79,6 @@ netgraph(mod, plastic = FALSE, cex.points = 7, adj = 0.5)
 \code{\link[netmeta]{netgraph.netmeta}}
 }
 \author{
-Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}
+Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}, Guido
+  Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de}
 }
