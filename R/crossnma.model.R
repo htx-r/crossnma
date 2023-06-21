@@ -212,7 +212,7 @@
 #'   back transformed in printouts. If \code{backtransf = TRUE},
 #'   results for \code{sm = "OR"} are presented as odds ratios rather
 #'   than log odds ratios, for example.
-#' 
+#'
 #' @details
 #' This function creates a JAGS model and the needed data. The JAGS
 #' code is created from the internal function \code{crossnma.code}.
@@ -294,7 +294,7 @@
 #'
 #' # Print JAGS code
 #' summary(mod)
-#' 
+#'
 #' # Fit JAGS model
 #' set.seed(1909)
 #' fit <- crossnma(mod)
@@ -365,7 +365,7 @@ crossnma.model <- function(trt,
                            ##
                            backtransf = gs("backtransf")
                            ) {
-  
+
   ## Check and set variables
   ##
   if (missing(trt))
@@ -653,8 +653,8 @@ crossnma.model <- function(trt,
                          outcome = outcome, n = n,
                          design = design,
                          stringsAsFactors = FALSE)
-    
-    
+
+
     ## ** se (standard error) needed for continuous outcome
     ##
     if (sm %in% c("MD", "SMD")) {
@@ -1019,7 +1019,7 @@ crossnma.model <- function(trt,
     data.frame(std.id = c(unique(data1$study), unique(data2$study)),
                stringsAsFactors = FALSE)
   study.key$study.jags <- seq_len(nrow(study.key))
-  
+
   error.metacat <-
     paste("crossnma does not currently support meta-regression with",
           "categorical variables that have more than two levels.")
@@ -1027,8 +1027,8 @@ crossnma.model <- function(trt,
   error.biascat <-
     paste("crossnma does not currently support bias-regression with",
           "categorical variables that have more than two levels.")
-  
-  
+
+
   if (!is.null(prt.data)) {
     ## Trt mapping
     ## Add treatment mapping to data
@@ -1231,7 +1231,7 @@ crossnma.model <- function(trt,
     ## Create the matrix of trt index following the values of unfav
     ## column (adjust 1 & 2)
     if (method.bias %in% c("adjust1", "adjust2")) {
-      
+
       ## Default, make bias adjustment when bias.group is not provided
       if (is.null(bias.group))
         data1$bias.group <- 1
@@ -1292,7 +1292,7 @@ crossnma.model <- function(trt,
           group_by(study.jags, trt.jags) %>%
           do(prec = 1 / var(.$outcome)) %>%
           unnest(cols = prec)
-        
+
         ##  2. Represent "sd" column as a matrix with dim: study X
         ##  treatment arm
         jagsdata1$prec.delta.ipd <- sd_jk %>%
@@ -1393,7 +1393,7 @@ crossnma.model <- function(trt,
           unnest(cols = c(sd, n))
         ## For continuous outcome (doesn't matter the order of
         ## treatments)
-        s.pool0.ipd <- data1 %>%
+        s.pool0.ipd <- data1 %>% #!! data1 should be  replaced by s_n_jk?
           arrange(study.jags, trt.jags) %>%
           group_by(study.jags) %>%
           do(num = sum(.$sd^2 * (.$n - 1)),
@@ -1424,7 +1424,7 @@ crossnma.model <- function(trt,
         unlist())
     jagsdata1$np <- data1 %>%
       nrow()
-    
+
     ## Modify names in JAGS object
     names(jagsdata1)[names(jagsdata1) == "outcome"]  <- "y"
     names(jagsdata1)[names(jagsdata1) == "trt.jags"] <- "trt"
@@ -1544,7 +1544,7 @@ crossnma.model <- function(trt,
             group_by(study.jags) %>%
             summarize(xm1.ad = mean(x1, na.rm = TRUE)) %>%
             pull(xm1.ad) - cov1.ref)
-        
+
         ## Center the mean covariate cov1.ref if specified
         ## data2$xm1.ad <- data2$xm1.ad - cov1.ref
       }
@@ -1685,7 +1685,7 @@ crossnma.model <- function(trt,
       ## Default, make bias adjustment when bias.group is no provided
       if (is.null(bias.group))
         data2$bias.group <- 1
-      
+
       ## From the unfav column create new ref treatment per study
       suppressMessages(
         dd0 <- data2 %>%
@@ -1703,7 +1703,7 @@ crossnma.model <- function(trt,
                },
                simplify = FALSE)
       dd2 <- do.call(rbind, dd1)
-      
+
       ## Create a matrix with the treatment index
       if (!is.null(bias)) {
         ## bias not needed, bias_index added later as bias_index.ad as
@@ -1886,7 +1886,7 @@ crossnma.model <- function(trt,
   ## Aggregate IPD dataset
   if (!is.null(data1)&!is.null(data2)) {
     ## When IPD & AD provided
-    
+
     ## prt.data.ad0 <- sapply(1:length(unique(data1$study)),
     ##                        function(i) {
     ##                          with(data1,
@@ -1900,8 +1900,8 @@ crossnma.model <- function(trt,
     ##                          )
     ##                        }, simplify = F)
     ## prt.data.ad <- do.call(rbind,prt.data.ad0)
-    
-    
+
+
     if (sm %in% c("MD", "SMD")) {
       ## For continuous outcome
       prt.data.ad <- data1 %>%
@@ -1928,7 +1928,7 @@ crossnma.model <- function(trt,
                     (sum(.$n) - summarize(., n.arms = group_size(.)) %>%
                      pull(n.arms))) ) %>%
           unnest(cols = c(s.pooled))
-        
+
         ## Add s.pooled per study to the dataset
         all.data.ad %<>%
           mutate(s.pooled =
@@ -2041,8 +2041,8 @@ crossnma.model <- function(trt,
   ## Construct default priors
   ##
   max.d <- max_TE(all.data.ad, sm = sm)
-  
-  
+
+
   ##
   ## use NRS as prior, JAGS needs to be run for only NRS
   ##
@@ -2205,7 +2205,7 @@ crossnma.model <- function(trt,
                            to = study.key.nrs$study.jags,
                            warn_missing = FALSE) %>%
                  as.integer))
-      
+
       suppressMessages(
         jagstemp.nrs2 <- data2.nrs %>%
           arrange(study.jags, trt.jags) %>%
@@ -2215,7 +2215,7 @@ crossnma.model <- function(trt,
           select(-c(trt, design, study)) %>%
           gather("variable", "value", -study.jags, -arm) %>%
           spread(arm, value))
-      
+
       for (v in unique(jagstemp.nrs2$variable)) {
         suppressMessages(
           jagsdata2.nrs[[v]] <-
@@ -2243,7 +2243,7 @@ crossnma.model <- function(trt,
       names(jagsdata2.nrs)[names(jagsdata2.nrs) == "trt.jags"] <- "t.ad"
       if (sm %in% c("MD", "SMD"))
         names(jagsdata2.nrs)[names(jagsdata2) == "outcome"] <- "ybar"
-      
+
       ## Add number of treatments, studies, and arms to JAGS data
       ## object
       jagsdata2.nrs$ns.ad <- data2.nrs$study %>%
@@ -2261,8 +2261,8 @@ crossnma.model <- function(trt,
     }
     else
       jagsdata2.nrs <- list(ns.ad = 0)
-    
-    
+
+
     ## Combine jagsdata of IPD and AD
     jagsdata.nrs <- c(jagsdata1.nrs, jagsdata2.nrs)
     ## Set default values to the list in run.nrs
@@ -2274,8 +2274,8 @@ crossnma.model <- function(trt,
     n.iter.nrs <- replaceNULL(run.nrs.n.iter, 10000)
     n.thin.nrs <- replaceNULL(run.nrs.n.thin, 1)
     n.burnin.nrs <- replaceNULL(run.nrs.n.burnin, 4000)
-    
-    
+
+
     ## JAGS code NRS
     ##
     model.nrs <- crossnma.code(ipd = !is.null(data1.nrs),
@@ -2314,14 +2314,14 @@ crossnma.model <- function(trt,
     ##                          n.thin = n.thin.nrs,
     ##                          jags.seed = seeds,
     ##                          DIC = FALSE)
-    
-    
+
+
     inits <- list()
     seeds <- sample(.Machine$integer.max, n.chains.nrs)
     for (i in 1:n.chains.nrs)
       inits[[i]] <- list(.RNG.seed = seeds[i],
                          .RNG.name = "base::Mersenne-Twister")
-    ##    
+    ##
     jagsmodel.nrs <-
       suppressWarnings(jags.model(textConnection(model.nrs),
                                   jagsdata.nrs,
@@ -2332,13 +2332,13 @@ crossnma.model <- function(trt,
     ##
     if (n.burnin.nrs != 0)
       suppressWarnings(update(jagsmodel.nrs, n.burnin.nrs))
-    
-    
+
+
     jagssamples.nrs <-
       coda.samples(jagsmodel.nrs, variable.names = "d",
                    n.iter = n.iter.nrs, n.thin = n.thin.nrs)
-    
-    
+
+
     ## Output: prior for d's
     ##
     ## map NRS trt to RCT trt
@@ -2355,7 +2355,7 @@ crossnma.model <- function(trt,
     ## d.nrs <-
     ##   summary(as.mcmc(jagsmodel.nrs))[[1]][, "Mean"] + mean.shift.nrs
     d.nrs <- summary(jagssamples.nrs)[[1]][, "Mean"] + mean.shift.nrs
-    
+
     prec.nrs <-
       if (!is.null(var.infl.nrs))
         var.infl.nrs
@@ -2389,8 +2389,8 @@ crossnma.model <- function(trt,
   }
   else
     d.prior.nrs <- NULL
-  
-  
+
+
   ##
   ## JAGS code
   ##
@@ -2432,8 +2432,8 @@ crossnma.model <- function(trt,
                          method.bias = method.bias,
                          d.prior.nrs = d.prior.nrs
                          )
-  
-  
+
+
   res <- list(model = model,
               data = jagsdata,
               sm = sm,
@@ -2462,6 +2462,6 @@ crossnma.model <- function(trt,
               version = packageDescription("crossnma")$Version)
   ##
   class(res) <- "crossnma.model"
-  
+
   res
 }
