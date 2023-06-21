@@ -51,9 +51,10 @@ crossnma.model(
   run.nrs.n.adapt = 1000,
   run.nrs.n.iter = 10000,
   run.nrs.n.burnin = 4000,
-  run.nrs.n.thin = 1,
+  run.nrs.thin = 1,
   run.nrs.n.chains = 2,
-  backtransf = gs("backtransf")
+  backtransf = gs("backtransf"),
+  run.nrs.n.thin = NULL
 )
 }
 \arguments{
@@ -185,7 +186,7 @@ Options are "independent", "random" and "common". Default is
 between-study coefficients will be splitted in the analysis of
 \code{prt.data}.  When the split.regcoef = FALSE, only a single
 regression coefficient will be estimated to represent both the
-between-studies and within-studies covariate effects.  In this
+between-studies and within-studies covariate effects. In this
 case, both arguments \code{regb.effect} and \code{regw.effect}
 need to be given the same option to model the single regression
 effect.}
@@ -296,10 +297,9 @@ burn-in to run MCMC chains for NRS network.  Default is
 4000. This argument can be provided when the NRS used as a prior
 (method.bias = "prior").}
 
-\item{run.nrs.n.thin}{Optional numeric specifies the number of
-thinning to run MCMC chains for NRS network.  Default is 1. This
-argument can be provided when the NRS used as a prior
-(method.bias = "prior").}
+\item{run.nrs.thin}{Optional numeric specifying thinning to run
+MCMC chains for NRS network. Default is 1. This argument can be
+provided when the NRS used as a prior (method.bias = "prior").}
 
 \item{run.nrs.n.chains}{Optional numeric specifies the number of
 chains to run MCMC chains for NRS network.  Default is 2. This
@@ -310,6 +310,9 @@ argument can be provided when the NRS used as a prior
 back transformed in printouts. If \code{backtransf = TRUE},
 results for \code{sm = "OR"} are presented as odds ratios rather
 than log odds ratios, for example.}
+
+\item{run.nrs.n.thin}{Deprecated argument (replaced by
+\code{run.nrs.thin}).}
 }
 \value{
 An object of class \code{crossnma.model} containing information on

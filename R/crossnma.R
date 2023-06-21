@@ -16,9 +16,9 @@
 #'   chains. Default is \code{n.iter / 2} which discards the first
 #'   half of the iterations.
 #' @param n.iter Number of iterations to run each MCMC chain.
-#' @param n.thin Number of thinning for the MCMC chains. Default is
-#'   max(1, floor((n.iter - n.burnin) / 1000)), that is only thinning
-#'   if there are more than 2000 iterations.
+#' @param thin Thinning for the MCMC chains. Default is max(1,
+#'   floor((n.iter - n.burnin) / 1000)), that is only thinning if
+#'   there are more than 2000 iterations.
 #' @param n.chains Number of MCMC chains.
 #' @param monitor A character vector of the names of the parameters to
 #'   be monitored. Basic parameters (depends on the analysis) will be
@@ -31,6 +31,7 @@
 #'   results for \code{sm = "OR"} are presented as odds ratios rather
 #'   than log odds ratios, for example.
 #' @param quiet A logical passed on to \code{\link{jags.model}}.
+#' @param n.thin Deprecated argument (replaced by \code{thin}).
 #'
 #' @return
 #' An object of class \code{crossnma} which is a list containing the
@@ -42,7 +43,7 @@
 #' \item{trt.key}{A table of treatment names and their correspondence
 #'   to integers used in the JAGS model.}
 #' \item{inits, n.adapt, n.burnin, n.iter}{As defined above.}
-#' \item{n.thin, n.chains}{As defined above.}
+#' \item{thin, n.chains}{As defined above.}
 #' \item{call}{Function call.}
 #' \item{version}{Version of R package \bold{crossnma} used to create
 #'   object.}
@@ -84,12 +85,13 @@ crossnma <- function(x,
                      n.adapt = 1000,
                      n.burnin = floor(n.iter / 2),
                      n.iter = 2000,
-                     n.thin = max(1, floor((n.iter - n.burnin) / 1000)),
+                     thin = max(1, floor((n.iter - n.burnin) / 1000)),
                      n.chains = 2,
                      monitor = NULL,
                      level.ma = x$level.ma,
                      backtransf = x$backtransf,
-                     quiet = TRUE
+                     quiet = TRUE,
+                     n.thin = NULL
                      ) {
 
   chkclass(x, "crossnma.model")
@@ -97,7 +99,17 @@ crossnma <- function(x,
   chknumeric(n.adapt, min = 1, length = 1)
   chknumeric(n.burnin, min = 1, length = 1)
   chknumeric(n.iter, min = 1, length = 1)
-  chknumeric(n.thin, min = 1, length = 1)
+  if (!missing(n.thin)) {
+    if (!missing(thin))
+      warning("Deprecated argument 'n.thin' ignored as ",
+              "argument 'thin' is provided.")
+    else {
+      warning("Argument 'n.thin' is deprecated; please use ",
+              "argument 'thin' instead.")
+      thin <- n.thin
+    }
+  }
+  chknumeric(thin, min = 1, length = 1)
   chknumeric(n.chains, min = 1, length = 1)
   chklevel(level.ma)
   chklogical(backtransf)
@@ -218,7 +230,7 @@ crossnma <- function(x,
   res <- list(
     samples = coda.samples(jagsfit,
                            variable.names = monitor,
-                           n.iter = n.iter, n.thin = n.thin),
+                           n.iter = n.iter, thin = thin),
     jagsfit = jagsfit,
     model = x,
     trt.key = x$trt.key,
@@ -227,7 +239,7 @@ crossnma <- function(x,
     n.adapt = n.adapt,
     n.burnin = n.burnin,
     n.iter = n.iter,
-    n.thin = n.thin,
+    thin = thin,
     n.chains = n.chains,
     ##
     call = match.call(),
