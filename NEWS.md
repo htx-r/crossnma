@@ -1,3 +1,21 @@
+## crossnma, version 1.2.0 (2023-mm-dd)
+
+### Major changes
+
+* Rename argument names containing *n.thin* to *thin* to match
+  argument names in R packages **rjags** and **coda**
+
+* More flexible network graphs
+
+### User-visible changes
+
+* crossnma():
+  - argument 'n.thin' renamed to 'thin'
+
+* crossnma.model():
+  - argument 'run.nrs.n.thin' renamed to 'run.nrs.thin'
+
+
 ## crossnma, version 1.1.0 (2023-05-08)
 
 ### Major changes

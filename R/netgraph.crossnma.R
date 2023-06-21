@@ -5,8 +5,21 @@
 #' meta-regression
 #'
 #' @param x An object produced by \code{\link{crossnma}}.
+#' @param labels An optional vector with treatment labels.
+#' @param adj One, two, or three values in [0, 1] (or a vector /
+#'   matrix with length / number of rows equal to the number of
+#'   treatments) specifying the x (and optionally y and z) adjustment
+#'   for treatment labels.
+#' @param offset Distance between edges (i.e. treatments) in graph and
+#'   treatment labels for 2-D plots (value of 0.0175 corresponds to a
+#'   difference of 1.75\% of the range on x- and y-axis).
+#' @param points A logical indicating whether points should be printed
+#'   at nodes (i.e. treatments) of the network graph.
+#' @param cex.points Corresponding size for points. Can be a vector
+#'   with length equal to the number of treatments.
 #' @param ... \dots Additional arguments (passed on to
 #'   \code{\link{netgraph.netmeta}})
+#' 
 #' @return A data frame containing the following columns:
 #' \item{labels}{Treatment labels.}
 #' \item{seq}{Sequence of treatment labels.}
@@ -53,11 +66,59 @@
 #'@export
 
 
-netgraph.crossnma <- function(x, ...) {
+netgraph.crossnma <- function(x,
+                              ##
+                              labels,
+                              adj = NULL,
+                              offset =
+                                if (!is.null(adj) &&
+                                    all(unique(adj) == 0.5))
+                                  0
+                                else
+                                  0.0175,
+                              ##
+                              points = !missing(cex.points),
+                              cex.points = 1,
+                              ##
+                              ...) {
   
   chkclass(x, "crossnma")
   ##
   pw <- crossnma.model2pairwise(x$model)
   ##
-  netgraph(suppressWarnings(netmeta(pw, warn = FALSE)), ...)
+  sfsp <- sys.frame(sys.parent())
+  mc <- match.call()
+  ##
+  net <- suppressWarnings(netmeta(pw, warn = FALSE))
+  ##
+  if (!missing(labels)) {
+    ##
+    labels <- catch("labels", mc, x, sfsp)
+    print(labels)
+    labels <- catch("labels", mc, net, sfsp)
+    print(labels)
+    ##
+    if (is.null(labels))
+      stop("Argument 'labels' must be not NULL.")
+  }
+  else
+    labels <- net$trts
+  ##
+  if (!missing(adj)) {
+    adj <- catch("adj", mc, net, sfsp)
+    if (is.data.frame(adj))
+      adj <- as.matrix(adj)
+    if (is.logical(adj))
+      adj <- 1L * adj
+  }
+  ##
+  if (!missing(offset))
+    offset <- catch("offset", mc, net, sfsp)
+  ##
+  cex.points <- replaceNULL(catch("cex.points", mc, net, sfsp), 1)
+  ##
+  netgraph(net,
+           labels = labels, adj = adj, offset = offset,
+           points = points, cex.points = cex.points,
+           ...)
 }

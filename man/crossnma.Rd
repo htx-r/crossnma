@@ -10,12 +10,13 @@ crossnma(
   n.adapt = 1000,
   n.burnin = floor(n.iter/2),
   n.iter = 2000,
-  n.thin = max(1, floor((n.iter - n.burnin)/1000)),
+  thin = max(1, floor((n.iter - n.burnin)/1000)),
   n.chains = 2,
   monitor = NULL,
   level.ma = x$level.ma,
   backtransf = x$backtransf,
-  quiet = TRUE
+  quiet = TRUE,
+  n.thin = NULL
 )
 }
 \arguments{
@@ -35,9 +36,9 @@ half of the iterations.}
 
 \item{n.iter}{Number of iterations to run each MCMC chain.}
 
-\item{n.thin}{Number of thinning for the MCMC chains. Default is
-max(1, floor((n.iter - n.burnin) / 1000)), that is only thinning
-if there are more than 2000 iterations.}
+\item{thin}{Thinning for the MCMC chains. Default is max(1,
+floor((n.iter - n.burnin) / 1000)), that is only thinning if
+there are more than 2000 iterations.}
 
 \item{n.chains}{Number of MCMC chains.}
 
@@ -55,6 +56,8 @@ results for \code{sm = "OR"} are presented as odds ratios rather
 than log odds ratios, for example.}
 
 \item{quiet}{A logical passed on to \code{\link{jags.model}}.}
+
+\item{n.thin}{Deprecated argument (replaced by \code{thin}).}
 }
 \value{
 An object of class \code{crossnma} which is a list containing the
@@ -66,7 +69,7 @@ following components:
 \item{trt.key}{A table of treatment names and their correspondence
   to integers used in the JAGS model.}
 \item{inits, n.adapt, n.burnin, n.iter}{As defined above.}
-\item{n.thin, n.chains}{As defined above.}
+\item{thin, n.chains}{As defined above.}
 \item{call}{Function call.}
 \item{version}{Version of R package \bold{crossnma} used to create
   object.}
