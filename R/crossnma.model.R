@@ -73,6 +73,26 @@
 #'   or "common".
 #' @param level.ma The level used to calculate credible intervals for
 #'   network estimates.
+#' @param sucra Logical. If TRUE SUCRA (Surface Under the Cumulative Ranking) values
+#'   will be calculated within JAGS.
+#' @param cov1.value The participant covariate value of \code{cov1}
+#'   for which to report the results. Must be specified for network
+#'   meta-regression, \code{sucra} is TRUE and when individual participant dataset is used
+#'   in the analysis. For dichotomous covariates, a character of the
+#'   level (used in the data) should be indicated.
+#' @param outcome.dir Direction of preference for the outcome: Assign a value of 1 if
+#' higher values are favored, and -1 if lower values are favored.
+#' This argument is required when\code{sucra} is TRUE.
+#' @param cov2.value The participant covariate value of \code{cov2}
+#'   for which to report the results. Must be specified for network
+#'   meta-regression, \code{sucra} is TRUE and when individual participant dataset is used
+#'   in the analysis. For dichotomous covariates, a character of the
+#'   level (used in the data) should be indicated.
+#' @param cov3.value The participant covariate value of \code{cov3}
+#'   for which to report the results. Must be specified for network
+#'   meta-regression, \code{sucra} is TRUE and when individual participant dataset is used
+#'   in the analysis. For dichotomous covariates, a character of the
+#'   level (used in the data) should be indicated.
 #' @param cov1.ref An optional value to center the first covariate
 #'   which is only useful for a continuous covariate. Dichotomous
 #'   covariates should be given NA value. The default is the overall
@@ -331,6 +351,12 @@ crossnma.model <- function(trt,
                            reference = NULL,
                            trt.effect = "random",
                            level.ma = gs("level.ma"),
+                           ## ---------- SUCRA score ----------
+                           sucra=FALSE,
+                           outcome.dir=NULL,
+                           cov1.value=NULL,
+                           cov2.value=NULL,
+                           cov3.value=NULL,
                            ## ---------- meta regression ----------
                            cov1.ref = NULL,
                            cov2.ref = NULL,
@@ -400,6 +426,20 @@ crossnma.model <- function(trt,
   ##
   trt.effect <- setchar(trt.effect, c("common", "random"))
   chklevel(level.ma)
+  ##
+  chklogical(sucra)
+  if(!is.null(outcome.dir)){
+    if (!(outcome.dir %in%c(1,-1)))
+      stop("Values of argument 'outcome.dir' should be either '1' or '-1'.")
+  }
+  if(sucra && is.null(outcome.dir))
+    stop("Argument 'outcome.dir' must be provided if sucra = TRUE.")
+  if(sucra && is.null(cov1.value)&&!is.null(cov1))
+    stop("Argument 'cov1.value' must be provided if sucra = TRUE and 'cov1' is specified.")
+  if(sucra && is.null(cov2.value)&&!is.null(cov2))
+    stop("Argument 'cov2.value' must be provided if sucra = TRUE and 'cov2' is specified.")
+  if(sucra && is.null(cov3.value)&&!is.null(cov3))
+    stop("Argument 'cov3.value' must be provided if sucra = TRUE and 'cov3' is specified.")
   ##
   reg0.effect <- setchar(reg0.effect, c("independent", "random"))
   regb.effect <- setchar(regb.effect, c("common", "independent", "random"))
@@ -1427,6 +1467,19 @@ crossnma.model <- function(trt,
         unlist())
     jagsdata1$np <- data1 %>%
       nrow()
+    # Add cov1.value, cov2.value, cov3.value, needed when sucra=TRUE and cov1, cov2, cov3 are provided
+    if(sucra){
+    labs = rbind(cov1.labels, cov2.labels, cov3.labels)
+    jagsdata1$cov1.value <- if(is.numeric(cov1.value)) cov1.value else as.numeric(labs[labs[, 1] == cov1.value, 2])
+    jagsdata1$cov2.value <- if(is.numeric(cov2.value)) cov2.value else as.numeric(labs[labs[, 1] == cov2.value, 2])
+    jagsdata1$cov3.value <- if(is.numeric(cov3.value)) cov3.value else as.numeric(labs[labs[, 1] == cov3.value, 2])
+    } else {
+      jagsdata1$cov1.value <- NULL
+      jagsdata1$cov2.value <- NULL
+      jagsdata1$cov3.value <- NULL
+    }
+
+    #
 
     ## Modify names in JAGS object
     names(jagsdata1)[names(jagsdata1) == "outcome"]  <- "y"
@@ -1839,9 +1892,20 @@ crossnma.model <- function(trt,
     xbias.ad <- NULL
     bias_index.ad <- NULL
   }
+
   ## Combine jagsdata of IPD and AD
   jagsdata <- c(jagsdata1, jagsdata2)
 
+  ## Add mean study to calculate sucra (for betab*std.mean)
+  if(sucra){
+    jagsdata$stds.mean1 <-suppressWarnings(mean(c(xm1.ad, xm1.ipd),na.rm = TRUE))
+    jagsdata$stds.mean2 <-suppressWarnings(mean(c(xm2.ad, xm2.ipd),na.rm = TRUE))
+    jagsdata$stds.mean3 <-suppressWarnings(mean(c(xm3.ad, xm3.ipd),na.rm = TRUE))
+    jagsdata$cov.ref <- cov.ref
+  } else {
+    jagsdata$stds.mean1 <- jagsdata$stds.mean2 <- jagsdata$stds.mean3 <-NULL
+    jagsdata$cov.ref <- NULL
+  }
   ## Combine bias_index and bias covariate from IPD and AD
   jagsdata$bias_index <- c(bias_index.ipd$bias_index, bias_index.ad$bias_index)
   jagsdata$xbias <- c(xbias.ipd, xbias.ad)
@@ -2298,6 +2362,14 @@ crossnma.model <- function(trt,
                                sm = sm,
                                max.d = max.d,
                                trt.effect = trt.effect.nrs,
+                               ## ---------- SUCRA score ----------
+                               sucra=FALSE,
+                               outcome.dir=NULL,
+                               cov1.value=NULL,
+                               cov2.value=NULL,
+                               cov3.value=NULL,
+                               cov.ref = NULL,
+                               ## ---------- meta regression ----------
                                covariate = NULL,
                                split.regcoef = FALSE,
                                reg0.effect = NULL,
@@ -2413,6 +2485,13 @@ crossnma.model <- function(trt,
                          sm = sm,
                          max.d = max.d,
                          trt.effect = trt.effect,
+                         ## ---------- SUCRA score ----------
+                         sucra=sucra,
+                         outcome.dir=outcome.dir,
+                         cov1.value=cov1.value,
+                         cov2.value=cov2.value,
+                         cov3.value=cov3.value,
+                         cov.ref = cov.ref,
                          covariate = covariates,
                          split.regcoef = split.regcoef,
                          reg0.effect = reg0.effect,
@@ -2455,6 +2534,7 @@ crossnma.model <- function(trt,
               trt.key = trt.key,
               study.key = study.key,
               trt.effect = trt.effect,
+              sucra=sucra,
               method.bias = method.bias,
               level.ma = level.ma,
               quantiles =

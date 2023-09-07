@@ -225,7 +225,13 @@ crossnma <- function(x,
     }
     monitor <- c(monitor, monitor.bias)
   }
-
+  ##
+  ## Monitor (sucra)
+  ##
+  if(x$sucra){
+    monitor.sucra <- "SUCRA"
+    monitor <- c(monitor,monitor.sucra)
+  }
 
   res <- list(
     samples = coda.samples(jagsfit,
