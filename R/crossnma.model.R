@@ -73,26 +73,30 @@
 #'   or "common".
 #' @param level.ma The level used to calculate credible intervals for
 #'   network estimates.
-#' @param sucra Logical. If TRUE SUCRA (Surface Under the Cumulative Ranking) values
-#'   will be calculated within JAGS.
+#' @param sucra Logical. If TRUE SUCRA (Surface Under the Cumulative
+#'   Ranking) values will be calculated within JAGS.
+#' @param small.values A character string specifying whether small
+#'   treatment effects indicate a beneficial (\code{"desirable"}) or
+#'   harmful (\code{"undesirable"}) effect, can be abbreviated. This
+#'   argument is required when \code{sucra} is TRUE.
 #' @param cov1.value The participant covariate value of \code{cov1}
 #'   for which to report the results. Must be specified for network
-#'   meta-regression, \code{sucra} is TRUE and when individual participant dataset is used
-#'   in the analysis. For dichotomous covariates, a character of the
-#'   level (used in the data) should be indicated.
-#' @param outcome.dir Direction of preference for the outcome: Assign a value of 1 if
-#' higher values are favored, and -1 if lower values are favored.
-#' This argument is required when\code{sucra} is TRUE.
+#'   meta-regression, \code{sucra} is TRUE and when individual
+#'   participant dataset is used in the analysis. For dichotomous
+#'   covariates, a character of the level (used in the data) should be
+#'   indicated.
 #' @param cov2.value The participant covariate value of \code{cov2}
 #'   for which to report the results. Must be specified for network
-#'   meta-regression, \code{sucra} is TRUE and when individual participant dataset is used
-#'   in the analysis. For dichotomous covariates, a character of the
-#'   level (used in the data) should be indicated.
+#'   meta-regression, \code{sucra} is TRUE and when individual
+#'   participant dataset is used in the analysis. For dichotomous
+#'   covariates, a character of the level (used in the data) should be
+#'   indicated.
 #' @param cov3.value The participant covariate value of \code{cov3}
 #'   for which to report the results. Must be specified for network
-#'   meta-regression, \code{sucra} is TRUE and when individual participant dataset is used
-#'   in the analysis. For dichotomous covariates, a character of the
-#'   level (used in the data) should be indicated.
+#'   meta-regression, \code{sucra} is TRUE and when individual
+#'   participant dataset is used in the analysis. For dichotomous
+#'   covariates, a character of the level (used in the data) should be
+#'   indicated.
 #' @param cov1.ref An optional value to center the first covariate
 #'   which is only useful for a continuous covariate. Dichotomous
 #'   covariates should be given NA value. The default is the overall
@@ -352,11 +356,11 @@ crossnma.model <- function(trt,
                            trt.effect = "random",
                            level.ma = gs("level.ma"),
                            ## ---------- SUCRA score ----------
-                           sucra=FALSE,
-                           outcome.dir=NULL,
-                           cov1.value=NULL,
-                           cov2.value=NULL,
-                           cov3.value=NULL,
+                           sucra = FALSE,
+                           small.values = NULL,
+                           cov1.value = NULL,
+                           cov2.value = NULL,
+                           cov3.value = NULL,
                            ## ---------- meta regression ----------
                            cov1.ref = NULL,
                            cov2.ref = NULL,
@@ -406,6 +410,9 @@ crossnma.model <- function(trt,
   if (missing(design))
     stop("Mandatory argument 'design' missing.")
   ##
+  sfsp <- sys.frame(sys.parent())
+  mc <- match.call()
+  ## 
   missing.se <- missing(se)
   ##
   if (missing(sm)) {
@@ -427,19 +434,46 @@ crossnma.model <- function(trt,
   trt.effect <- setchar(trt.effect, c("common", "random"))
   chklevel(level.ma)
   ##
-  chklogical(sucra)
-  if(!is.null(outcome.dir)){
-    if (!(outcome.dir %in%c(1,-1)))
-      stop("Values of argument 'outcome.dir' should be either '1' or '-1'.")
+  cov1.prt <- cov2.prt <- cov3.prt <- 
+    cov1.std <- cov2.std <- cov3.std <- NULL
+  ##
+  if (!is.null(prt.data)) {
+    cov1.prt <- catch("cov1", mc, prt.data, sfsp)
+    cov2.prt <- catch("cov2", mc, prt.data, sfsp)
+    cov3.prt <- catch("cov3", mc, prt.data, sfsp)
   }
-  if(sucra && is.null(outcome.dir))
-    stop("Argument 'outcome.dir' must be provided if sucra = TRUE.")
-  if(sucra && is.null(cov1.value)&&!is.null(cov1))
-    stop("Argument 'cov1.value' must be provided if sucra = TRUE and 'cov1' is specified.")
-  if(sucra && is.null(cov2.value)&&!is.null(cov2))
-    stop("Argument 'cov2.value' must be provided if sucra = TRUE and 'cov2' is specified.")
-  if(sucra && is.null(cov3.value)&&!is.null(cov3))
-    stop("Argument 'cov3.value' must be provided if sucra = TRUE and 'cov3' is specified.")
+  ##
+  if (!is.null(std.data)) {
+    cov1.std <- catch("cov1", mc, std.data, sfsp)
+    cov2.std <- catch("cov2", mc, std.data, sfsp)
+    cov3.std <- catch("cov3", mc, std.data, sfsp)
+  }
+  ##
+  avail.cov1 <- !is.null(cov1.prt) | !is.null(cov1.std)
+  avail.cov2 <- !is.null(cov2.prt) | !is.null(cov2.std)
+  avail.cov3 <- !is.null(cov3.prt) | !is.null(cov3.std)
+  ##
+  chklogical(sucra)
+  ##
+  if (sucra & !is.null(small.values))
+    small.values <- setsv(small.values)
+  else
+    small.values <- NULL
+  ##
+  if (sucra & is.null(small.values))
+    stop("Argument 'small.values' must be provided if sucra = TRUE.")
+  ##
+  if (sucra & avail.cov1 & is.null(cov1.value))
+    stop("Argument 'cov1.value' must be provided if ",
+         "sucra = TRUE and 'cov1' is specified.")
+  ##
+  if (sucra & avail.cov2 & is.null(cov1.value))
+    stop("Argument 'cov2.value' must be provided if ",
+         "sucra = TRUE and 'cov2' is specified.")
+  ##
+  if (sucra & avail.cov3 & is.null(cov1.value))
+    stop("Argument 'cov3.value' must be provided if ",
+         "sucra = TRUE and 'cov3' is specified.")
   ##
   reg0.effect <- setchar(reg0.effect, c("independent", "random"))
   regb.effect <- setchar(regb.effect, c("common", "independent", "random"))
@@ -494,7 +528,8 @@ crossnma.model <- function(trt,
     arm <- value <- variable <- bias_index <-
       x.bias <- x1 <- x1f <- x2 <- x2f <- x3 <- x3f <-
         ref.trt.std <- n.arms <-
-          prec <- index <- num <- den <- na <- . <- NULL
+          prec <- index <- num <- den <- na <- . <-
+            events <- nonevents <- NULL
 
   ## Extract names of covariates
   ##
@@ -512,13 +547,9 @@ crossnma.model <- function(trt,
 
   ## Prepare IPD dataset
   ##
-  sfsp <- sys.frame(sys.parent())
-  mc <- match.call()
-  ##
   excl1 <- FALSE
   ##
   if (!is.null(prt.data)) {
-
     trt <- catch("trt", mc, prt.data, sfsp)
     if (is.factor(trt))
       trt <- as.character(trt)
@@ -581,16 +612,62 @@ crossnma.model <- function(trt,
       data11$unfav <- unfav
     }
     ##
-    cov1 <- catch("cov1", mc, prt.data, sfsp)
-    cov2 <- catch("cov2", mc, prt.data, sfsp)
-    cov3 <- catch("cov3", mc, prt.data, sfsp)
+    if (!is.null(cov1.prt))
+      data11$x1 <- cov1.prt
+    if (!is.null(cov2.prt))
+      data11$x2 <- cov2.prt
+    if (!is.null(cov3.prt))
+      data11$x3 <- cov3.prt
     ##
-    if (!is.null(cov1))
-      data11$x1 <- cov1
-    if (!is.null(cov2))
-      data11$x2 <- cov2
-    if (!is.null(cov3))
-      data11$x3 <- cov3
+    ## Exclude studies without or all events from network meta-analysis
+    ##
+    if (sm %in% c("RR", "OR")) {
+      data11 %<>%
+        group_by(study) %>%
+        mutate(n = length(outcome),
+               events = sum(outcome),
+               nonevents = sum(n - outcome)) %>%
+        as.data.frame()
+      ##
+      if (any(data11$events == 0)) {
+        study00 <- data11 %>% filter(events == 0) %>%
+          select(study) %>% unique() %>% as.character()
+        ##
+        if (length(study00) == 1)
+          warning("Study '", study00,
+                  "' without any events excluded from network meta-analysis.",
+                  call. = FALSE)
+        else if (length(study00) > 1)
+          warning("Studies without any events excluded ",
+                  "from network meta-analysis: ",
+                  paste(paste0("'", study00, "'"),
+                        collapse = " - "),
+                  call. = FALSE)
+        ##
+        data11 %<>% filter(study != study00) %>% as.data.frame()
+      }
+      ##
+      if (any(data11$nonevents == 0)) {
+        study11 <- data11 %>% filter(nonevents == 0) %>%
+          select(study) %>% unique() %>% as.character()
+        ##
+        if (length(study11) == 1)
+          warning("Study '", study11,
+                  "' with all events excluded from network meta-analysis.",
+                  call. = FALSE)
+        else if (length(study11) > 1)
+          warning("Studies with all events excluded ",
+                  "from network meta-analysis: ",
+                  paste(paste0("'", study11, "'"),
+                        collapse = " - "),
+                  call. = FALSE)
+        ##
+        data11 %<>% filter(study != study11)
+      }
+      ##
+      data11 %<>% select(-n) %>% select(-events) %>% select(-nonevents) %>%
+        as.data.frame()
+    }
     ##
     data11$study <- paste0(data11$study, ".ipd")
     ##
@@ -608,7 +685,7 @@ crossnma.model <- function(trt,
     ## Check unfav: unique value 0 per study (repeated for the same
     ## treatment)
     ##
-    if (!is.null(data11$unfav)) {
+    if (isCol(data11, "unfav")) {
       chk.unfav1 <- data11 %>%
         group_by(study) %>%
         group_map(~ length(unique(subset(.x, unfav == 0,
@@ -621,7 +698,7 @@ crossnma.model <- function(trt,
     ##
     ## Check unique bias per study
     ##
-    if (!is.null(data11$bias)) {
+    if (isCol(data11, "bias")) {
       chk.bias1 <- data11 %>%
         group_by(study) %>%
         group_map(~length(unique(.x$bias)) !=1 ) %>%
@@ -635,8 +712,8 @@ crossnma.model <- function(trt,
   }
   else
     data11 <- NULL
-
-
+  
+  
   ## Prepare AD dataset
   ##
   excl2 <- FALSE
@@ -696,13 +773,12 @@ crossnma.model <- function(trt,
                          outcome = outcome, n = n,
                          design = design,
                          stringsAsFactors = FALSE)
-
-
+    
+    
     ## ** se (standard error) needed for continuous outcome
     ##
     if (sm %in% c("MD", "SMD")) {
       se <- catch("se", mc, std.data, sfsp)
-      ##data22$se <- se
       data22$prec.delta.ad <- se^-2
     }
 
@@ -729,16 +805,61 @@ crossnma.model <- function(trt,
       data22$unfav <- unfav
     }
     ##
-    cov1 <- catch("cov1", mc, std.data, sfsp)
-    cov2 <- catch("cov2", mc, std.data, sfsp)
-    cov3 <- catch("cov3", mc, std.data, sfsp)
+    if (!is.null(cov1.std))
+      data22$x1 <- cov1.std
+    if (!is.null(cov2.std))
+      data22$x2 <- cov2.std
+    if (!is.null(cov3.std))
+      data22$x3 <- cov3.std
     ##
-    if (!is.null(cov1))
-      data22$x1 <- cov1
-    if (!is.null(cov2))
-      data22$x2 <- cov2
-    if (!is.null(cov3))
-      data22$x3 <- cov3
+    ## Exclude studies without or all events from network meta-analysis
+    ##
+    if (sm %in% c("RR", "OR")) {
+      data22 %<>%
+        group_by(study) %>%
+        mutate(events = sum(outcome),
+               nonevents = sum(n - outcome)) %>%
+        as.data.frame()
+      ##
+      if (any(data22$events == 0)) {
+        study00 <- data22 %>% filter(events == 0) %>%
+          select(study) %>% unique() %>% as.character()
+        ##
+        if (length(study00) == 1)
+          warning("Study '", study00,
+                  "' without any events excluded from network meta-analysis.",
+                  call. = FALSE)
+        else if (length(study00) > 1)
+          warning("Studies without any events excluded ",
+                  "from network meta-analysis: ",
+                  paste(paste0("'", study00, "'"),
+                        collapse = " - "),
+                  call. = FALSE)
+        ##
+        data22 %<>% filter(study != study00) %>% as.data.frame()
+      }
+      ##
+      if (any(data22$nonevents == 0)) {
+        study11 <- data22 %>% filter(nonevents == 0) %>%
+          select(study) %>% unique() %>% as.character()
+        ##
+        if (length(study11) == 1)
+          warning("Study '", study11,
+                  "' with all events excluded from network meta-analysis.",
+                  call. = FALSE)
+        else if (length(study11) > 1)
+          warning("Studies with all events excluded ",
+                  "from network meta-analysis: ",
+                  paste(paste0("'", study11, "'"),
+                        collapse = " - "),
+                  call. = FALSE)
+        ##
+        data22 %<>% filter(study != study11)
+      }
+      ##
+      data22 %<>% select(-events) %>% select(-nonevents) %>%
+        as.data.frame()
+    }
     ##
     data22$study <- paste0(data22$study, ".ad")
     ##
@@ -756,7 +877,7 @@ crossnma.model <- function(trt,
     ## Check unfav: unique value 0 per study (repeated for the same
     ## treatment)
     ##
-    if (!is.null(data22$unfav)) {
+    if (isCol(data22, "unfav")) {
       chk.unfav2 <- data22 %>%
         group_by(study) %>%
         group_map(~ length(unique(subset(.x, unfav == 0,
@@ -770,7 +891,7 @@ crossnma.model <- function(trt,
     ##
     ## Check unique bias per study
     ##
-    if (!is.null(data22$bias)) {
+    if (isCol(data22, "bias")) {
       chk.bias2 <- data22 %>%
         group_by(study) %>%
         group_map(~length(unique(.x$bias)) !=1 ) %>%
@@ -784,8 +905,8 @@ crossnma.model <- function(trt,
   }
   else
     data22 <- NULL
-
-
+  
+  
   ## Messages for missing values
   ##
   if (any(excl1))
@@ -797,14 +918,15 @@ crossnma.model <- function(trt,
     message("Arms with missing data in these variables: ",
             "outcome, n, bias, unfav or bias.group are ",
             "discarded from the analysis")
-
-
+  
+  
   ## jagsdata for IPD
   ##
-
+  
   ## Pull relevant fields from the data and apply naming convention
-
+  
   ## Include / exclude NRS
+  ##
   if (is.null(method.bias)) {
     if (any(data11$design == "nrs") | any(data22$design == "nrs"))
       stop("You should specify the method to combine RCT and NRS.")
@@ -828,9 +950,9 @@ crossnma.model <- function(trt,
   cov.ref <- NULL
   ##
   ## Set reference covariate values if missing
-  if (!is.null(prt.data)&!is.null(std.data)) {
+  if (!is.null(prt.data) & !is.null(std.data)) {
     ## IPD and AD are provided
-    if (isCol(data1, "x1")&isCol(data2, "x1")) {
+    if (isCol(data1, "x1") & isCol(data2, "x1")) {
       if (missing(cov1.ref)) {
         if (is.numeric(data1$x1) & is.numeric(data2$x1) &
             !(all(data2$x1 < 1) & all(data2$x1 > 0)))
@@ -900,7 +1022,7 @@ crossnma.model <- function(trt,
       }
     }
   }
-  else if (is.null(prt.data) | missing(prt.data)&!is.null(std.data)) {
+  else if (is.null(prt.data) | missing(prt.data) & !is.null(std.data)) {
     ## only ADs
     if (isCol(data2, "x1")) {
       if (missing(cov1.ref)) {
@@ -1449,8 +1571,7 @@ crossnma.model <- function(trt,
       }
     }
     ## Add number of treatments, studies, and arms to JAGS data object
-    jagsdata1$nt <- trt.key %>%
-      nrow()
+    jagsdata1$nt <- trt.key %>% nrow()
     jagsdata1$ns.ipd <-
       if (!is.null(data1))
         data1$study %>%
@@ -1467,20 +1588,33 @@ crossnma.model <- function(trt,
         unlist())
     jagsdata1$np <- data1 %>%
       nrow()
-    # Add cov1.value, cov2.value, cov3.value, needed when sucra=TRUE and cov1, cov2, cov3 are provided
-    if(sucra){
-    labs = rbind(cov1.labels, cov2.labels, cov3.labels)
-    jagsdata1$cov1.value <- if(is.numeric(cov1.value)) cov1.value else as.numeric(labs[labs[, 1] == cov1.value, 2])
-    jagsdata1$cov2.value <- if(is.numeric(cov2.value)) cov2.value else as.numeric(labs[labs[, 1] == cov2.value, 2])
-    jagsdata1$cov3.value <- if(is.numeric(cov3.value)) cov3.value else as.numeric(labs[labs[, 1] == cov3.value, 2])
-    } else {
+    ## Add cov1.value, cov2.value, cov3.value, needed when sucra = TRUE
+    ## and cov1, cov2, cov3 are provided
+    if (sucra) {
+      labs <- rbind(cov1.labels, cov2.labels, cov3.labels)
+      jagsdata1$cov1.value <-
+        if (is.numeric(cov1.value))
+          cov1.value
+        else
+          as.numeric(labs[labs[, 1] == cov1.value, 2])
+      ##
+      jagsdata1$cov2.value <-
+        if (is.numeric(cov2.value))
+          cov2.value
+        else
+          as.numeric(labs[labs[, 1] == cov2.value, 2])
+      ##
+      jagsdata1$cov3.value <-
+        if (is.numeric(cov3.value))
+          cov3.value
+        else
+          as.numeric(labs[labs[, 1] == cov3.value, 2])
+    }
+    else {
       jagsdata1$cov1.value <- NULL
       jagsdata1$cov2.value <- NULL
       jagsdata1$cov3.value <- NULL
     }
-
-    #
-
     ## Modify names in JAGS object
     names(jagsdata1)[names(jagsdata1) == "outcome"]  <- "y"
     names(jagsdata1)[names(jagsdata1) == "trt.jags"] <- "trt"
@@ -1732,7 +1866,7 @@ crossnma.model <- function(trt,
       xm2.ad <- NULL
       xm3.ad <- NULL
     }
-
+    
 
     ## Generate JAGS data object
     ## Create the matrix of trt index following the values of unfav
@@ -1896,18 +2030,26 @@ crossnma.model <- function(trt,
   ## Combine jagsdata of IPD and AD
   jagsdata <- c(jagsdata1, jagsdata2)
 
-  ## Add mean study to calculate sucra (for betab*std.mean)
-  if(sucra){
-    jagsdata$stds.mean1 <-suppressWarnings(mean(c(xm1.ad, xm1.ipd),na.rm = TRUE))
-    jagsdata$stds.mean2 <-suppressWarnings(mean(c(xm2.ad, xm2.ipd),na.rm = TRUE))
-    jagsdata$stds.mean3 <-suppressWarnings(mean(c(xm3.ad, xm3.ipd),na.rm = TRUE))
+  ## Add mean study to calculate sucra (for betab * std.mean)
+  if (sucra){
+    jagsdata$stds.mean1 <-
+      suppressWarnings(mean(c(xm1.ad, xm1.ipd), na.rm = TRUE))
+    ##
+    jagsdata$stds.mean2 <-
+      suppressWarnings(mean(c(xm2.ad, xm2.ipd), na.rm = TRUE))
+    ##
+    jagsdata$stds.mean3 <-
+      suppressWarnings(mean(c(xm3.ad, xm3.ipd), na.rm = TRUE))
+    ##
     jagsdata$cov.ref <- cov.ref
-  } else {
-    jagsdata$stds.mean1 <- jagsdata$stds.mean2 <- jagsdata$stds.mean3 <-NULL
+  }
+  else {
+    jagsdata$stds.mean1 <- jagsdata$stds.mean2 <- jagsdata$stds.mean3 <- NULL
     jagsdata$cov.ref <- NULL
   }
   ## Combine bias_index and bias covariate from IPD and AD
-  jagsdata$bias_index <- c(bias_index.ipd$bias_index, bias_index.ad$bias_index)
+  jagsdata$bias_index <-
+    c(bias_index.ipd$bias_index, bias_index.ad$bias_index)
   jagsdata$xbias <- c(xbias.ipd, xbias.ad)
 
   ## when method.bias is adjust1 or adjust 2: add studies index:
@@ -1951,7 +2093,7 @@ crossnma.model <- function(trt,
   ## Data to be used in netgraph.crossnma() to plot the network
   ##
   ## Aggregate IPD dataset
-  if (!is.null(data1)&!is.null(data2)) {
+  if (!is.null(data1) & !is.null(data2)) {
     ## When IPD & AD provided
 
     ## prt.data.ad0 <- sapply(1:length(unique(data1$study)),
@@ -2310,7 +2452,7 @@ crossnma.model <- function(trt,
       names(jagsdata2.nrs)[names(jagsdata2.nrs) == "trt.jags"] <- "t.ad"
       if (sm %in% c("MD", "SMD"))
         names(jagsdata2.nrs)[names(jagsdata2) == "outcome"] <- "ybar"
-
+      
       ## Add number of treatments, studies, and arms to JAGS data
       ## object
       jagsdata2.nrs$ns.ad <- data2.nrs$study %>%
@@ -2363,11 +2505,11 @@ crossnma.model <- function(trt,
                                max.d = max.d,
                                trt.effect = trt.effect.nrs,
                                ## ---------- SUCRA score ----------
-                               sucra=FALSE,
-                               outcome.dir=NULL,
-                               cov1.value=NULL,
-                               cov2.value=NULL,
-                               cov3.value=NULL,
+                               sucra = FALSE,
+                               small.values = NULL,
+                               cov1.value = NULL,
+                               cov2.value = NULL,
+                               cov3.value = NULL,
                                cov.ref = NULL,
                                ## ---------- meta regression ----------
                                covariate = NULL,
@@ -2486,8 +2628,8 @@ crossnma.model <- function(trt,
                          max.d = max.d,
                          trt.effect = trt.effect,
                          ## ---------- SUCRA score ----------
-                         sucra=sucra,
-                         outcome.dir=outcome.dir,
+                         sucra = sucra,
+                         small.values = small.values,
                          cov1.value=cov1.value,
                          cov2.value=cov2.value,
                          cov3.value=cov3.value,

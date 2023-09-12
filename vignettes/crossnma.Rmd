@@ -402,12 +402,17 @@ analyzed using the odds ratio as a summary measure (`sm = "OR"`). The
 treatment (here: drug A). By default (`trt.effect = "random"`), we are
 assigning a normal distribution to each relative treatment effect to
 allow the synthesis across studies, see the table in Section
-2.1. Finally, the different designs; RCT and NRS are combined with the
+2.1. The different designs; RCT and NRS are combined with the
 information taken at face-value as `method.bias = "naive"`.
 
 Optionally, we can specify a prior to the common heterogeneity of the
 treatment effect across studies. We indicate that distribution in the
-argument `prior.tau.trt = "dunif(0, 3)"`, see below.
+argument `prior.tau.trt = "dunif(0, 3)"`.
+
+Finally, we calculate the Surface Under the Cumulative Ranking (SUCRA)
+in order to rank the treatments. It is essential to specify argument
+`small.values` to get the correct ranking. For the RRMS studies, a
+small number of relapses is desirable.
 
 
 ```{r}
@@ -417,7 +422,9 @@ mod1 <- crossnma.model(treat, id, relapse, n, design,
   #---------- bias adjustment ----------
   method.bias = "naive",
   #---------- assign a prior ----------
-  prior.tau.trt = "dunif(0, 3)"
+  prior.tau.trt = "dunif(0, 3)",
+  #---------- SUCRA ----------
+  sucra = TRUE, small.values = "desirable"
   )
 ```
 
@@ -444,7 +451,9 @@ jagsfit1
 By default (argument `backtransf = TRUE`), estimated odds ratios,
 i.e., exp(d.B), exp(d.C) and exp(d.D), are printed. The value of tau
 refers to the estimates of the heterogeneity standard deviation in the
-relative treatment effects d.B, d.C and d.D across studies.
+relative treatment effects d.B, d.C and d.D across studies. The SUCRA
+values are probabilities with treatment D being notably superior to
+the other treatments.
 
 We summarize the estimated parameters (argument `backtransf = FALSE`)
 in the following table.
