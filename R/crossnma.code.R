@@ -5,12 +5,12 @@ crossnma.code <- function(ipd = TRUE,
                           trt.effect = "random",
                           prior.tau.trt = NULL,
                           ## -------- SUCRA
-                          sucra=FALSE,
-                          outcome.dir=NULL,
-                          cov1.value=NULL,
-                          cov2.value=NULL,
-                          cov3.value=NULL,
-                          cov.ref=NULL,
+                          sucra = FALSE,
+                          small.values = NULL,
+                          cov1.value = NULL,
+                          cov2.value = NULL,
+                          cov3.value = NULL,
+                          cov.ref = NULL,
                           ## -------- meta-regression
                           split.regcoef = FALSE,
                           covariate = NULL,
@@ -116,7 +116,7 @@ crossnma.code <- function(ipd = TRUE,
   ## Meta-regression
   ##
   ##
-
+  
   if (n.covs > 0) {
     ##
     ## IPD
@@ -193,9 +193,9 @@ crossnma.code <- function(ipd = TRUE,
                           "\n  beta.t_", i, "[k]", dnmax,
                           "\n}"))
           }
-          beta.value <- paste0("beta.t_",seq_len(n.covs),"[k]") # needed for SUCRA
-
-          }
+          ## Needed for SUCRA
+          beta.value <- paste0("beta.t_", seq_len(n.covs), "[k]")
+        }
         else if (regb.effect == "random" || regw.effect == "random") {
           for (i in seq_len(n.covs)) {
             beta.prior.ipd <-
@@ -214,8 +214,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\ntau.b_", i, " ~ ", prior.tau.regw,
                             "\nprec.beta_", i, " <- pow(tau.b_", i, ", -2)"))
           }
-            beta.value <- paste0("b_",seq_len(n.covs)) # needed for SUCRA
-
+          ## Needed for SUCRA
+          beta.value <- paste0("b_", seq_len(n.covs))
         }
         else if (regb.effect == "common" & regw.effect == "common") {
           for (i in seq_len(n.covs)) {
@@ -230,7 +230,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\n}",
                             "\nb_", i, dnmax))
           }
-            beta.value <- paste0("b_",seq_len(n.covs)) # needed for SUCRA
+          ## Needed for SUCRA
+          beta.value <- paste0("b_", seq_len(n.covs))
         }
         else
           stop("The regb.effect and regw.effect need to both be assumed ",
@@ -240,16 +241,17 @@ crossnma.code <- function(ipd = TRUE,
         ## splitted within and between-study covariate
         if (regb.effect == "independent") {
           for (i in seq_len(n.covs)) {
-          betab.prior <-
-            paste0(betab.prior,
-                   paste0("\n# Random effect for betab ",
-                          "(the between-study covariate effect)",
-                          "\nbetab.t_", i, "[1] <- 0",
-                          "\nfor (k in 2:nt) {",
-                          "\n  betab.t_", i, "[k]", dnmax,
-                          "\n}"))
-        }
-          betab.value <- paste0("betab.t_",seq_len(n.covs),"[k]") # needed for SUCRA
+            betab.prior <-
+              paste0(betab.prior,
+                     paste0("\n# Random effect for betab ",
+                            "(the between-study covariate effect)",
+                            "\nbetab.t_", i, "[1] <- 0",
+                            "\nfor (k in 2:nt) {",
+                            "\n  betab.t_", i, "[k]", dnmax,
+                            "\n}"))
+          }
+          ## Needed for SUCRA
+          betab.value <- paste0("betab.t_", seq_len(n.covs), "[k]")
         }
         else if (regb.effect == "random") {
           for (i in seq_len(n.covs)) {
@@ -266,7 +268,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\ntau.bb_", i, " ~ ", prior.tau.regb,
                             "\nprec.betab_", i, " <- pow(tau.bb_", i, ", -2)"))
           }
-          betab.value <- paste0("bb_",seq_len(n.covs)) # needed for SUCRA
+          ## Needed for SUCRA
+          betab.value <- paste0("bb_", seq_len(n.covs))
         }
         else if (regb.effect == "common") {
           for (i in seq_len(n.covs)) {
@@ -280,7 +283,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\n}",
                             "\nbb_", i, dnmax))
           }
-          betab.value <- paste0("bb_",seq_len(n.covs)) # needed for SUCRA
+          ## Needed for SUCRA
+          betab.value <- paste0("bb_",seq_len(n.covs))
         }
         else
           stop("The between-study covariate effect need to be assumed ",
@@ -299,8 +303,8 @@ crossnma.code <- function(ipd = TRUE,
                           "\n  betaw.t_", i, "[k]", dnmax,
                           "\n}"))
           }
-          betaw.value <- paste0("betaw.t_",seq_len(n.covs),"[k]") # needed for SUCRA
-
+          ##
+          betaw.value <- paste0("betaw.t_", seq_len(n.covs),"[k]")
         }
         else if (regw.effect == "random") {
           for (i in seq_len(n.covs)) {
@@ -317,8 +321,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\nprec.betaw_", i, " <- pow(tau.bw_", i, ", -2)",
                             "\ntau.bw_", i, " ~ ", prior.tau.regw))
           }
-          betaw.value <- paste0("bw_",seq_len(n.covs)) # needed for SUCRA
-
+          ## Needed for SUCRA
+          betaw.value <- paste0("bw_", seq_len(n.covs))
         }
         else if (regw.effect == "common") {
           for (i in seq_len(n.covs)) {
@@ -332,8 +336,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\n}",
                             "\nbw_", i, dnmax))
           }
-          betaw.value <- paste0("bw_",seq_len(n.covs)) # needed for SUCRA
-
+          ## Needed for SUCRA
+          betaw.value <- paste0("bw_", seq_len(n.covs))
         }
         else
           stop("The within-study covariate effect can be assumed ",
@@ -372,8 +376,8 @@ crossnma.code <- function(ipd = TRUE,
                           "\n  beta.t_", i, "[k]", dnmax,
                           "\n}"))
           }
-          beta.value <- paste0("beta.t_",seq_len(n.covs),"[k]") # needed for SUCRA
-
+          ## Needed for SUCRA
+          beta.value <- paste0("beta.t_", seq_len(n.covs), "[k]")
         }
         else if (regb.effect == "random" && regw.effect == "random") {
           for (i in seq_len(n.covs)) {
@@ -392,7 +396,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\ntau.b_", i, " ~ ", prior.tau.regb,
                             "\nprec.beta_", i, " <- pow(tau.b_", i, ", -2)"))
           }
-          beta.value <- paste0("b_",seq_len(n.covs)) # needed for SUCRA
+          ## Needed for SUCRA
+          beta.value <- paste0("b_", seq_len(n.covs))
         }
         else if (regb.effect == "common" & regw.effect == "common") {
           for (i in seq_len(n.covs)) {
@@ -405,7 +410,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\n}",
                             "\nb_", i, dnmax))
           }
-          beta.value <- paste0("b_",seq_len(n.covs)) # needed for SUCRA
+          ## Needed for SUCRA
+          beta.value <- paste0("b_", seq_len(n.covs))
         }
         else
           stop("The regb.effect and regw.effect need to be assumed both ",
@@ -415,15 +421,17 @@ crossnma.code <- function(ipd = TRUE,
         betab.prior <- ""
         if (regb.effect == "independent") {
           for (i in seq_len(n.covs)) {
-          betab.prior <- paste0(betab.prior,
-                                paste0("\n# Random effect for betab ",
-                                       "(the between-study covariate effect)",
-                                       "\nbetab.t_", i, "[1] <- 0",
-                                       "\nfor (k in 2:nt) {",
-                                       "\n  betab.t_", i, "[k]", dnmax,
-                                       "\n}"))
-        }
-        betab.value <- paste0("betab.t_",seq_len(n.covs),"[k]") # needed for SUCRA
+            betab.prior <- paste0(betab.prior,
+                                  paste0(
+                                    "\n# Random effect for betab ",
+                                    "(the between-study covariate effect)",
+                                    "\nbetab.t_", i, "[1] <- 0",
+                                    "\nfor (k in 2:nt) {",
+                                    "\n  betab.t_", i, "[k]", dnmax,
+                                    "\n}"))
+          }
+          ## Needed for SUCRA
+          betab.value <- paste0("betab.t_", seq_len(n.covs), "[k]")
         }
         else if (regb.effect == "random") {
           for (i in seq_len(n.covs)) {
@@ -440,8 +448,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\ntau.bb_", i, " ~ ", prior.tau.regb,
                             "\nprec.betab_", i, " <- pow(tau.bb_", i, ", -2)"))
           }
-          betab.value <- paste0("bb.t_",seq_len(n.covs)) # needed for SUCRA
-
+          ## Needed for SUCRA
+          betab.value <- paste0("bb.t_", seq_len(n.covs))
         }
         else if (regb.effect == "common") {
           for (i in seq_len(n.covs)) {
@@ -455,7 +463,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\n}",
                             "\nbb_", i, dnmax))
           }
-          betab.value <- paste0("bb.t_",seq_len(n.covs)) # needed for SUCRA
+          ## Needed for SUCRA
+          betab.value <- paste0("bb.t_", seq_len(n.covs))
         }
         else
           stop("The between-study covariate effect need to be assumed ",
@@ -1294,12 +1303,12 @@ adj.ad,
 mreg.ad,
 theta.effect.ad,
 betab.consis.ad)
-
-
+  
+  
   ##
   ## Prior part
   ##
-
+  
   prior.code <- sprintf("
 
 
@@ -1318,28 +1327,35 @@ betaw.prior.ipd,
 beta.prior,
 adjust.prior,
 q.prior)
-
- ##
- ## SUCRA part
- ##
-
-  # The most effective treatment depends on the direction of outcome; lower (-1) or higher (1) values should be considered more effective
-  most.eff.code <- ""
-  if(sucra){
-  if(outcome.dir==1){
-    most.eff.code <- "equals(order[k],1)"
-  } else if(outcome.dir==-1) {
-    most.eff.code <- "nt+1-equals(order[k],1)"
-  } else {
-    print("The argument 'outcome.dir' should be set to either 1 or -1")
-  }
-  }
+  
+  
   ##
+  ## SUCRA part
+  ##
+  
+  ## The most effective treatment depends on the direction of outcome,
+  ## i.e., whether small values are desirable or undesirable
+  ##
+  if (sucra) {
+    if (is.null(small.values))
+      stop("Argument 'small.values' must be provided if sucra = TRUE.")
+    ##
+    small.values <- setsv(small.values)
+    ##
+    if (small.values == "desirable")
+      most.eff.code <- "nt + 1 - equals(order[k], 1)"
+    else
+      most.eff.code <- "equals(order[k], 1)"
+  }
+  else
+    most.eff.code <- ""
+  
+  
   ##
   ## For SUCRA and in the case of network meta-regression
   ##
-  ##
   dmat <- "d[k]"
+  ##
   if (!is.null(covariate)) {
     ##
     ## (a) If IPD is available
@@ -1349,244 +1365,221 @@ q.prior)
       bbmat.cov2 <- bbmat.cov3 <- 0
       bmat.cov2 <- bmat.cov3 <- 0
       ##
-      nc <- length(covariate)
-
+      nc <- length(covariate)      
       ##
       if (split.regcoef) {
         ## betaw
         if (regw.effect == "independent") {
-          # bwmat <- do.call(rbind, samples) %>% data.frame() %>%
-          #   select(starts_with("betaw.t_"))
-          ## split bwmat by nt_column to generate bwmat.cov for each covariate
-          ##
-          ## For factor covariate, multiply by 0 or 1 depends on what
-          ## value the user indicate in cov1.value
-          ##
-          bwmat.cov1 <- paste0("betaw.t_1[k]*",
+          bwmat.cov1 <- paste0(
+            "betaw.t_1[k] * ",
             if (is.numeric(cov1.value))
               "(cov1.value - cov.ref[1])"
-          else
-            "cov1.value"
+            else
+              "cov1.value"
           )
-          ##
-          if (nc == 2)
-            bwmat.cov2 <-
-            paste0("betaw.t_2[k]*",
-                   if (is.numeric(cov2.value))
-                     "(cov2.value - cov.ref[2])"
-                   else
-                     "cov2.value"
-            )
-          ##
-          if (nc == 3)
-            bwmat.cov3 <-
-            paste0("betaw.t_3[k]*",
-                   if (is.numeric(cov3.value))
-                     "(cov3.value - cov.ref[3])"
-                   else
-                     "cov3.value"
-            )
-          ##
-          dmat <- mapply(paste, dmat, bwmat.cov1,bwmat.cov2,bwmat.cov3, sep = "+")
-
-          #dmat <- dmat + bwmat.cov1 + bwmat.cov2 + bwmat.cov3
-        }
-        else {
-          # bwmat <- do.call(rbind, samples) %>% data.frame() %>%
-          #   select(starts_with("bw_"))
-          bwmat.cov1 <-
-            paste0("bw_1*",
-                   if (is.numeric(cov1.value))
-                     "(cov1.value - cov.ref[1])"
-                   else
-                     "cov1.value"
-            )
-          ## repeat the column for each trt to add it to dmat
-          # bwmat.cov1 <-
-          #   matrix(unlist(rep(bwmat.cov1, each = nt)), ncol = nt, byrow = TRUE)
           ##
           if (nc == 2) {
             bwmat.cov2 <-
-              paste0("bw_2*",
-                     if (is.numeric(cov2.value))
-                       "(cov2.value - cov.ref[2])"
-                     else
-                       "cov2.value"
+              paste0(
+                "betaw.t_2[k] * ",
+                if (is.numeric(cov2.value))
+                  "(cov2.value - cov.ref[2])"
+                else
+                  "cov2.value"
               )
-            # bwmat.cov2 <-
-            #   matrix(unlist(rep(bwmat.cov2, each = nt)),
-            #          ncol = nt, byrow = TRUE)
           }
           ##
           if (nc == 3) {
             bwmat.cov3 <-
-              paste0("bw_3*",
-                     if (is.numeric(cov3.value))
-                       "(cov3.value - cov.ref[3])"
-                     else
-                       "cov3.value"
+              paste0(
+                "betaw.t_3[k] * ",
+                if (is.numeric(cov3.value))
+                  "(cov3.value - cov.ref[3])"
+                else
+                  "cov3.value"
               )
-            # bwmat.cov3 <-
-            #   matrix(unlist(rep(bwmat.cov3, each = nt)),
-            #          ncol = nt, byrow = TRUE)
           }
           ##
-          dmat <- mapply(paste, dmat, bwmat.cov1,bwmat.cov2,bwmat.cov3, sep = "+")
+          dmat <-
+            mapply(paste, dmat, bwmat.cov1, bwmat.cov2, bwmat.cov3, sep = "+")
+        }
+        else {
+          bwmat.cov1 <-
+            paste0(
+              "bw_1 * ",
+              if (is.numeric(cov1.value))
+                "(cov1.value - cov.ref[1])"
+              else
+                "cov1.value"
+            )
+          ##
+          if (nc == 2) {
+            bwmat.cov2 <-
+              paste0(
+                "bw_2 * ",
+                if (is.numeric(cov2.value))
+                  "(cov2.value - cov.ref[2])"
+                else
+                  "cov2.value"
+              )
+          }
+          ##
+          if (nc == 3) {
+            bwmat.cov3 <-
+              paste0(
+                "bw_3 * ",
+                if (is.numeric(cov3.value))
+                  "(cov3.value - cov.ref[3])"
+                else
+                  "cov3.value"
+              )
+          }
+          ##
+          dmat <-
+            mapply(paste, dmat, bwmat.cov1, bwmat.cov2, bwmat.cov3, sep = "+")
         }
         ## betab
         if (regb.effect == "independent") {
-          # bbmat <- do.call(rbind, samples) %>% data.frame() %>%
-          #   select(starts_with("betab.t_"))
-          ## split bbmat by nt_column to generate bbmat.cov for each
-          ## covariate
-          #!!! Move this to crossnma.model() and pass it to jagsdata
-          # stds.mean1 <-
-          #   mean(c(x$model$data$xm1.ad, x$model$data$xm1.ipd), na.rm = TRUE)
-          bbmat.cov1 <-paste0("betab.t_1[k]*",
-                 if (is.numeric(cov1.value))
-                   "(stds.mean1 - cov.ref[1])"
-                 else
-                   "stds.mean1"
-          )
-          # bbmat.cov1 <- bbmat[, 1:nt] *
-          #   if (is.numeric(cov1.value))
-          #     stds.mean1 - x$model$cov.ref[1]
-          # else
-          #   stds.mean1
-          ##
-          if (nc == 2) {
-            # stds.mean2 <-
-            #   mean(c(x$model$data$xm2.ad, x$model$data$xm2.ipd), na.rm = TRUE)
-            bbmat.cov2 <- paste0("betab.t_2[k]*",
-                                   if (is.numeric(cov2.value))
-                                     "(stds.mean2 - cov.ref[2])"
-                                   else
-                                     "stds.mean2"
+          bbmat.cov1 <-
+            paste0(
+              "betab.t_1[k] * ",
+              if (is.numeric(cov1.value))
+                "(stds.mean1 - cov.ref[1])"
+              else
+                "stds.mean1"
             )
-          }
-          if (nc == 3) {
-            # stds.mean3 <-
-            #   mean(c(x$model$data$xm3.ad, x$model$data$xm3.ipd), na.rm = TRUE)
-            bbmat.cov3 <-paste0("betab.t_3[k]*",
-                                if (is.numeric(cov3.value))
-                                  "(stds.mean3 - cov.ref[3])"
-                                else
-                                  "stds.mean3"
-            )
-          }
-          ##
-          dmat <- mapply(paste, dmat, bbmat.cov1,bbmat.cov2,bbmat.cov3, sep = "+")
-
-        }
-        else {
-          # stds.mean <-
-          #   c(mean(c(x$model$data$xm1.ad, x$model$data$xm1.ipd),na.rm = TRUE),
-          #     mean(c(x$model$data$xm2.ad, x$model$data$xm2.ipd),na.rm = TRUE),
-          #     mean(c(x$model$data$xm3.ad, x$model$data$xm3.ipd),na.rm = TRUE))
-          ##
-          bbmat <- do.call(rbind, samples) %>% data.frame() %>%
-            select(starts_with("bb_"))
-          ##
-          bbmat.cov1 <-paste0("bb_1*",
-                              if (is.numeric(cov1.value))
-                                "(stds.mean1 - cov.ref[1])"
-                              else
-                                "stds.mean1"
-          )
-          # bbmat.cov1 <-
-          #   matrix(unlist(rep(bbmat.cov1, each = nt)), ncol = nt, byrow = TRUE)
           ##
           if (nc == 2) {
             bbmat.cov2 <-
-              paste0("bb_2*",
-                     if (is.numeric(cov2.value))
-                       "(stds.mean2 - cov.ref[2])"
-                     else
-                       "stds.mean2"
+              paste0(
+                "betab.t_2[k] * ",
+                if (is.numeric(cov2.value))
+                  "(stds.mean2 - cov.ref[2])"
+                else
+                  "stds.mean2"
+              )
+          }
+          if (nc == 3) {
+            bbmat.cov3 <-
+              paste0(
+                "betab.t_3[k] * ",
+                if (is.numeric(cov3.value))
+                  "(stds.mean3 - cov.ref[3])"
+                else
+                  "stds.mean3"
+              )
+          }
+          ##
+          dmat <-
+            mapply(paste, dmat, bbmat.cov1, bbmat.cov2, bbmat.cov3, sep = "+")
+        }
+        else {
+          bbmat.cov1 <-
+            paste0(
+              "bb_1 * ",
+              if (is.numeric(cov1.value))
+                "(stds.mean1 - cov.ref[1])"
+              else
+                "stds.mean1"
+            )
+          ##
+          if (nc == 2) {
+            bbmat.cov2 <-
+              paste0(
+                "bb_2 * ",
+                if (is.numeric(cov2.value))
+                  "(stds.mean2 - cov.ref[2])"
+                else
+                  "stds.mean2"
               )
           }
           ##
           if (nc == 3) {
             bbmat.cov3 <-
-              paste0("bb_3*",
-                     if (is.numeric(cov3.value))
-                       "(stds.mean3 - cov.ref[3])"
-                     else
-                       "stds.mean3"
+              paste0(
+                "bb_3 * ",
+                if (is.numeric(cov3.value))
+                  "(stds.mean3 - cov.ref[3])"
+                else
+                  "stds.mean3"
               )
           }
           ##
-          dmat <- mapply(paste, dmat, bbmat.cov1,bbmat.cov2,bbmat.cov3, sep = "+")
+          dmat <-
+            mapply(paste, dmat, bbmat.cov1, bbmat.cov2, bbmat.cov3, sep = "+")
         }
       }
       else {
         if (regb.effect == "independent" &&
             regw.effect == "independent") {
-          # bmat <- do.call(rbind, samples) %>% data.frame() %>%
-          #   select(starts_with("beta.t_"))
-          ## For factor covariate, multiply by 0 or 1 depends on what
-          ## value the user indicate in cov1.value
-          ##
-          bmat.cov1 <-paste0("beta.t_1[k]*",
-                 if (is.numeric(cov1.value))
-                   "(cov1.value - cov.ref[1])"
-                 else
-                   "cov1.value"
-          )
-
-          ##
-          if (nc == 2)
-            bmat.cov2 <-
-            paste0("beta.t_2[k]*",
-                   if (is.numeric(cov2.value))
-                     "(cov2.value - cov.ref[2])"
-                   else
-                     "cov2.value"
+          bmat.cov1 <-
+            paste0(
+              "beta.t_1[k] * ",
+              if (is.numeric(cov1.value))
+                "(cov1.value - cov.ref[1])"
+              else
+                "cov1.value"
             )
-          ##
-          if (nc == 3)
-            bmat.cov3 <-
-            paste0("beta.t_3[k]*",
-                   if (is.numeric(cov3.value))
-                     "(cov3.value - cov.ref[3])"
-                   else
-                     "cov3.value"
-            )
-          ##
-          dmat <- mapply(paste, dmat, bmat.cov1,bmat.cov2,bmat.cov3, sep = "+")
-
-        }
-        else {
-          # bmat <- do.call(rbind, samples) %>% data.frame() %>%
-          #   select(starts_with("b_"))
-          bmat.cov1 <- paste0("b_1*",
-                 if (is.numeric(cov1.value))
-                   "(cov1.value - cov.ref[1])"
-                 else
-                   "cov1.value"
-          )
-
           ##
           if (nc == 2) {
-            bmat.cov2 <-paste0("b_2*",
-                               if (is.numeric(cov2.value))
-                                 "(cov2.value - cov.ref[2])"
-                               else
-                                 "cov2.value"
-            )
+            bmat.cov2 <-
+              paste0(
+                "beta.t_2[k] * ",
+                if (is.numeric(cov2.value))
+                  "(cov2.value - cov.ref[2])"
+                else
+                  "cov2.value"
+              )
           }
           ##
           if (nc == 3) {
             bmat.cov3 <-
-              paste0("b_3*",
-                     if (is.numeric(cov3.value))
-                       "(cov3.value - cov.ref[3])"
-                     else
-                       "cov3.value"
+              paste0(
+                "beta.t_3[k] * ",
+                if (is.numeric(cov3.value))
+                  "(cov3.value - cov.ref[3])"
+                else
+                  "cov3.value"
+              )
+          }
+          
+          ##
+          dmat <-
+            mapply(paste, dmat, bmat.cov1, bmat.cov2, bmat.cov3, sep = "+")
+        }
+        else {
+          bmat.cov1 <- paste0(
+            "b_1 * ",
+            if (is.numeric(cov1.value))
+              "(cov1.value - cov.ref[1])"
+            else
+              "cov1.value"
+          )
+          ##
+          if (nc == 2) {
+            bmat.cov2 <-
+              paste0(
+                "b_2 * ",
+                if (is.numeric(cov2.value))
+                  "(cov2.value - cov.ref[2])"
+                else
+                  "cov2.value"
               )
           }
           ##
-          dmat <- mapply(paste, dmat, bmat.cov1,bmat.cov2,bmat.cov3, sep = "+")
+          if (nc == 3) {
+            bmat.cov3 <-
+              paste0(
+                "b_3 * ",
+                if (is.numeric(cov3.value))
+                  "(cov3.value - cov.ref[3])"
+                else
+                  "cov3.value"
+              )
+          }
+          ##
+          dmat <-
+            mapply(paste, dmat, bmat.cov1, bmat.cov2, bmat.cov3, sep = "+")
 
         }
       }
@@ -1598,160 +1591,121 @@ q.prior)
       bbmat.cov2 <- bbmat.cov3 <- 0
       ##
       if (regb.effect == "independent") {
-        # bbmat <- do.call(rbind, samples) %>% data.frame() %>%
-        #   select(starts_with("beta.t_"))
-        ## split bbmat by nt_column to generate bbmat.cov for each
-        ## covariate
-        #stds.mean1 <- x$model$data$xm1.ad
-        bbmat.cov1 <-paste0("beta.t_1[k]*",
-                            if (!is.na(cov.ref[1]))
-                              "(stds.mean1 - cov.ref[1])"
-                            else
-                              "stds.mean1"
-        )
-
-        ##
-        if (nc == 2) {
-          #stds.mean2 <- x$model$data$xm2.ad
-          bbmat.cov2 <-
-            paste0("beta.t_2[k]*",
-                   if (!is.na(cov.ref[2]))
-                     "(stds.mean2 - cov.ref[2])"
-                   else
-                     "stds.mean2"
-            )
-        }
-        ##
-        if (nc == 3) {
-          #stds.mean3 <- x$model$data$xm3.ad
-          bbmat.cov3 <- paste0("beta.t_3[k]*",
-                               if (!is.na(cov.ref[3]))
-                                 "(stds.mean3 - cov.ref[3])"
-                               else
-                                 "stds.mean3"
-          )
-        }
-        ##
-        dmat <- mapply(paste, dmat, bbmat.cov1,bbmat.cov2,bbmat.cov3, sep = "+")
-              }else {
-        # stds.mean <-
-        #   c(x$model$data$xm1.ad, x$model$data$xm2.ad, x$model$data$xm3.ad)
-        # bbmat <- do.call(rbind, samples) %>% data.frame() %>%
-        #   select(starts_with("b_"))
         bbmat.cov1 <-
-          paste0("b_1*",
-                 if (!is.na(cov.ref[1]))
-                   "(stds.mean1 - cov.ref[1])"
-                 else
-                   "stds.mean1"
+          paste0(
+            "beta.t_1[k] * ",
+            if (!is.na(cov.ref[1]))
+              "(stds.mean1 - cov.ref[1])"
+            else
+              "stds.mean1"
           )
-        # bbmat.cov1 <-
-        #   matrix(unlist(rep(bbmat.cov1, each = nt)), ncol = nt, byrow = TRUE)
         ##
         if (nc == 2) {
           bbmat.cov2 <-
-            paste0("b_2*",
-                   if (!is.na(cov.ref[2]))
-                     "(stds.mean2 - cov.ref[2])"
-                   else
-                     "stds.mean2"
+            paste0(
+              "beta.t_2[k] * ",
+              if (!is.na(cov.ref[2]))
+                "(stds.mean2 - cov.ref[2])"
+              else
+                "stds.mean2"
             )
         }
         ##
         if (nc == 3) {
           bbmat.cov3 <-
-            paste0("b_3*",
-                   if (!is.na(cov.ref[3]))
-                     "(stds.mean3 - cov.ref[3])"
-                   else
-                     "stds.mean3"
+            paste0(
+              "beta.t_3[k] * ",
+              if (!is.na(cov.ref[3]))
+                "(stds.mean3 - cov.ref[3])"
+              else
+                "stds.mean3"
             )
-
         }
         ##
-        dmat <- mapply(paste, dmat, bbmat.cov1,bbmat.cov2,bbmat.cov3, sep = "+")
-
+        dmat <-
+          mapply(paste, dmat, bbmat.cov1, bbmat.cov2, bbmat.cov3, sep = "+")
+      }
+      else {
+        bbmat.cov1 <-
+          paste0(
+            "b_1 * ",
+            if (!is.na(cov.ref[1]))
+              "(stds.mean1 - cov.ref[1])"
+            else
+              "stds.mean1"
+          )
+        ##
+        if (nc == 2) {
+          bbmat.cov2 <-
+            paste0(
+              "b_2 * ",
+              if (!is.na(cov.ref[2]))
+                "(stds.mean2 - cov.ref[2])"
+              else
+                "stds.mean2"
+            )
+        }
+        ##
+        if (nc == 3) {
+          bbmat.cov3 <-
+            paste0(
+              "b_3 * ",
+              if (!is.na(cov.ref[3]))
+                "(stds.mean3 - cov.ref[3])"
+              else
+                "stds.mean3"
+            )
+          
+        }
+        ##
+        dmat <-
+          mapply(paste, dmat, bbmat.cov1, bbmat.cov2, bbmat.cov3, sep = "+")
       }
     }
   }
-
-  #
-#   if(any(beta.value != "")){
-#     v1 <- beta.value
-#   } else if(any(betaw.value!="")){
-#     v1 <-betaw.value
-#   } else if(any(betab.value!="")){
-#     v1 <-betab.value
-#   } else {
-#     v1 <- ""
-#   }
-#
-#
-# # v2 can be either cov.value (for betaw) or std.mean (for betab)
-#
-# # v3 can be either cov.ref (for continuous covariates) or 0 (for dichotomous covariates )
-#
-#  # The d's will be adjusted for the regression coefficients and the coefficient names will be different based on the regression effect and the split of within- and between- regression coefficients
-#   if(!is.null(covariate)){
-#     v2 <- paste0("(cov",seq_len(n.covs),".value")
-#     v3 <- paste0("cov",seq_len(n.covs),".ref)")
-#     v23 <- mapply(paste, v2, v3, sep = "-")
-#     v123 <- mapply(paste, v1, v23, sep = "*")
-#     beta.code.str <- paste(v123, collapse = "+") # Merge the elements in merged_vector with "*"
-#   } else {
-#     # beta.value <- "0"
-#     # betab.value <- "0"
-#     # betaw.value <- "0"
-#     beta.code.str <- "0"
-#   }
-
-
-
-
+  
+  
   sucra.code <- sprintf("
 
+
 #
-# (4) SUCRA
+# (4) Ranking measures
 #
 
-
-#Treatment hierarchy
-
-for(k in 1:nt){
-  d.adjust[k]<- %s
+# Treatment hierarchy
+for (k in 1:nt) {
+  d.adjust[k] <- %s
 }
-order[1:nt]<- rank(d.adjust[1:nt])
-  for(k in 1:nt) {
-    # this is when the outcome is positive - omit  'nt+1-' when the outcome is negative
-    most.effective[k]<-%s
-    for(j in 1:nt) {
-      effectiveness[k,j]<- equals(order[k],j)
-    }
+order[1:nt] <- rank(d.adjust[1:nt])
+for(k in 1:nt) {
+  # argument 'small.values'
+  most.effective[k] <- %s
+  for (j in 1:nt) {
+    effectiveness[k, j] <- equals(order[k], j)
   }
-
-  for(k in 1:nt) {
-    for(j in 1:nt) {
-      cumeffectiveness[k,j]<- sum(effectiveness[k,1:j])
-    }
+}
+for (k in 1:nt) {
+  for(j in 1:nt) {
+    cumeffectiveness[k, j] <- sum(effectiveness[k, 1:j])
   }
+}
 
-  #SUCRAS#
-
-  for(k in 1:nt) {
-    SUCRA[k]<- sum(cumeffectiveness[k,1:(nt-1)])/(nt-1)
-  }",
-                        dmat,
-                        most.eff.code
-                        )
+# SUCRAS
+for (k in 1:nt) {
+  SUCRA[k]<- sum(cumeffectiveness[k,1:(nt-1)])/(nt-1)
+}",
+dmat,
+most.eff.code)
 
 
   ##
   ## Everything
   ##
-
+  
   ad.code <- if (ad) ad.code else ""
   ipd.code <- if (ipd) ipd.code else ""
   sucra.code <- if(sucra) sucra.code else ""
+  ##
   code.str <-
     paste0("model {", ipd.code, ad.code, prior.code, sucra.code, "\n\n}\n")
   ##

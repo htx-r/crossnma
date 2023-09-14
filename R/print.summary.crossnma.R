@@ -85,9 +85,10 @@ print.summary.crossnma <- function(x, digits = gs("digits"), ...) {
   ##             mat[!sel.d, , drop = FALSE])
   ##
   if (attr(x, "exp")) {
-    sel.tau <- startsWith(row.names(mat), "tau")
-    row.names(mat)[!sel.tau] <-
-      paste0("exp(", row.names(mat)[!sel.tau], ")")
+    sel <- !(startsWith(rownames(mat), "tau") |
+             startsWith(rownames(mat), "SUCRA"))
+    row.names(mat)[sel] <-
+      paste0("exp(", row.names(mat)[sel], ")")
   }
   ##
   prmatrix(mat, quote = FALSE, right = TRUE, ...)

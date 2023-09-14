@@ -26,7 +26,7 @@ crossnma.model(
   trt.effect = "random",
   level.ma = gs("level.ma"),
   sucra = FALSE,
-  outcome.dir = NULL,
+  small.values = NULL,
   cov1.value = NULL,
   cov2.value = NULL,
   cov3.value = NULL,
@@ -149,30 +149,34 @@ or "common".}
 \item{level.ma}{The level used to calculate credible intervals for
 network estimates.}
 
-\item{sucra}{Logical. If TRUE SUCRA (Surface Under the Cumulative Ranking) values
-will be calculated within JAGS.}
+\item{sucra}{Logical. If TRUE SUCRA (Surface Under the Cumulative
+Ranking) values will be calculated within JAGS.}
 
-\item{outcome.dir}{Direction of preference for the outcome: Assign a value of 1 if
-higher values are favored, and -1 if lower values are favored.
-This argument is required when\code{sucra} is TRUE.}
+\item{small.values}{A character string specifying whether small
+treatment effects indicate a beneficial (\code{"desirable"}) or
+harmful (\code{"undesirable"}) effect, can be abbreviated. This
+argument is required when \code{sucra} is TRUE.}
 
 \item{cov1.value}{The participant covariate value of \code{cov1}
 for which to report the results. Must be specified for network
-meta-regression, \code{sucra} is TRUE and when individual participant dataset is used
-in the analysis. For dichotomous covariates, a character of the
-level (used in the data) should be indicated.}
+meta-regression, \code{sucra} is TRUE and when individual
+participant dataset is used in the analysis. For dichotomous
+covariates, a character of the level (used in the data) should be
+indicated.}
 
 \item{cov2.value}{The participant covariate value of \code{cov2}
 for which to report the results. Must be specified for network
-meta-regression, \code{sucra} is TRUE and when individual participant dataset is used
-in the analysis. For dichotomous covariates, a character of the
-level (used in the data) should be indicated.}
+meta-regression, \code{sucra} is TRUE and when individual
+participant dataset is used in the analysis. For dichotomous
+covariates, a character of the level (used in the data) should be
+indicated.}
 
 \item{cov3.value}{The participant covariate value of \code{cov3}
 for which to report the results. Must be specified for network
-meta-regression, \code{sucra} is TRUE and when individual participant dataset is used
-in the analysis. For dichotomous covariates, a character of the
-level (used in the data) should be indicated.}
+meta-regression, \code{sucra} is TRUE and when individual
+participant dataset is used in the analysis. For dichotomous
+covariates, a character of the level (used in the data) should be
+indicated.}
 
 \item{cov1.ref}{An optional value to center the first covariate
 which is only useful for a continuous covariate. Dichotomous

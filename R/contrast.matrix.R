@@ -1,50 +1,30 @@
 contrast.matrix <- function(x,
                             median = FALSE,
-                            backtransf = x$model$backtransf,
                             order = NULL,
-                            cov1.value=NULL,
-                            cov2.value=NULL,
-                            cov3.value=NULL,
-                            digits = gs("digits"),
-                            direction = "wide",
-                            exp = backtransf,
+                            cov1.value = NULL,
+                            cov2.value = NULL,
+                            cov3.value = NULL,
                             ...) {
-
+  
   chkclass(x, "crossnma")
   ##
   chklogical(median)
+  
   if (median)
     central.tdcy <- "median"
   else
     central.tdcy <- "mean"
-  ##
-  chknumeric(digits, min = 0, length = 1)
-  direction <- setchar(direction, c("wide", "long"))
-  ##
-  missing.backtransf <- missing(backtransf)
-  backtransf <-
-    deprecated2(backtransf, missing.backtransf, exp, missing(exp))
-  chklogical(backtransf)
-  if (backtransf & x$model$sm %in% c("MD", "SMD")) {
-    if (!missing.backtransf)
-      warning("No back transformation of results for (standardised) ",
-              "mean differences (argument 'backtransf').")
-    backtransf <- FALSE
-  }
-  ##
-  exp <- backtransf
-  quant <- x$model$quantiles
-
-
+  
+  
   if (!is.null(x$model$covariate) & is.null(cov1.value))
     stop("cov1.value must be specified for network meta-regression")
 
 
   ## Bind variables to function
+  ##
   trt <- Treatment <- Comparator <- cov.ref <- NULL
-  #samples <- as.mcmc(x$jagsfit)
   samples <- x$samples
-
+  
   dmat <-
     do.call(rbind, samples) %>% data.frame() %>% select(starts_with("d."))
   trt.names <- x$trt.key$trt.ini
@@ -54,13 +34,14 @@ contrast.matrix <- function(x,
     order <- trt.names
   else
     order <- setseq(order, trt.names)
-
-
+  
+  
   ##
   ##
   ## In the case of network meta-regression
   ##
   ##
+  
   if (!is.null(x$model$covariate)) {
     ##
     ## (a) If IPD is available
@@ -188,9 +169,9 @@ contrast.matrix <- function(x,
         }
         else {
           stds.mean <-
-            c(mean(c(x$model$data$xm1.ad, x$model$data$xm1.ipd),na.rm = TRUE),
-              mean(c(x$model$data$xm2.ad, x$model$data$xm2.ipd),na.rm = TRUE),
-              mean(c(x$model$data$xm3.ad, x$model$data$xm3.ipd),na.rm = TRUE))
+            c(mean(c(x$model$data$xm1.ad, x$model$data$xm1.ipd), na.rm = TRUE),
+              mean(c(x$model$data$xm2.ad, x$model$data$xm2.ipd), na.rm = TRUE),
+              mean(c(x$model$data$xm3.ad, x$model$data$xm3.ipd), na.rm = TRUE))
           ##
           bbmat <- do.call(rbind, samples) %>% data.frame() %>%
             select(starts_with("bb_"))
@@ -398,60 +379,12 @@ contrast.matrix <- function(x,
   ##
   dmat %<>% select(order)
   trt.names <- order
-
-
-  ## # when we adjust for covariate, add a message with the values that we adjusted for
-  ## if (!is.null(prt.cov.value)) {
-  ##   msg.adjust <-  paste0("The estimates of treatment effect are adjusted for \n
-  ##                               participant ",x$model$covariate[1],"= ",cov1.value,
-  ##                          "and study mean = ",round(mean(c(x$model$data$xm1.ad, x$model$data$xm1.ipd),na.rm = TRUE),2)
-  ##   )
-  ##   if (nc == 2) msg.adjust <- paste0(msg.adjust, paste0("\n participant ",x$model$covariate[2],"= ",cov2.value,
-  ##                                       "and study mean = ",round(mean(c(x$model$data$xm2.ad, x$model$data$xm2.ipd),na.rm = TRUE),2)))
-  ##   if (nc == 3) msg.adjust <- paste0(msg.adjust, paste0("\n participant ",x$model$covariate[3],"= ",cov3.value,
-  ##                                       "and study mean = ",round(mean(c(x$model$data$xm3.ad, x$model$data$xm3.ipd),na.rm = TRUE),2))
-  ##                    )
-  ## }
-
-
-  ## Useful functions to compute some statistics
-  ##
-  calc.report <- function(x, fct = "identity", arg = NULL,
-                          trans = "identity") {
-    if (is.null(arg))
-      eval(call(fct,(call(trans, x))))
-    else
-      eval(call(fct,(call(trans, x)), arg))
-  }
-  ##
-  exp.mean <- function(x)
-    calc.report(x, "mean", trans = "exp")
-  exp.median <- function(x)
-    calc.report(x, "median", trans = "exp")
-  exp.sd <- function(x)
-    calc.report(x, "sd", trans = "exp")
-  exp.lcl <- function(x)
-    calc.report(x, "quantile", arg = quant[1], trans = "exp")
-  exp.ucl <- function(x)
-    calc.report(x, "quantile", arg = quant[3], trans = "exp")
-  ##
-  id.mean <- function(x)
-    calc.report(x, "mean", trans = "identity")
-  id.median <- function(x)
-    calc.report(x, "median", trans = "identity")
-  id.sd <- function(x)
-    calc.report(x, "sd", trans = "identity")
-  id.lcl <- function(x)
-    calc.report(x, "quantile", arg = quant[1], trans = "identity")
-  id.ucl <- function(x)
-    calc.report(x, "quantile", arg = quant[3], trans = "identity")
-  ##
-  colvals <- function(dmat, b.col=1, paste = TRUE) {
+  
+  
+  colvals <- function(dmat, b.col = 1, paste = TRUE) {
     ## Bind variables to function
     key <- value <- trt <- estimate <- lcl <- ucl <- result <- NULL
-
-    base <- colnames(dmat)[b.col]
-
+    ##
     dmat2 <- dmat
     new.vars <- paste0(colnames(dmat2), "-", b.col)
     for (i in 1:ncol(dmat)) {
@@ -459,122 +392,76 @@ contrast.matrix <- function(x,
     }
     dmat2 %<>% select(new.vars)
     colnames(dmat2) <- trt.names
-
-    if (central.tdcy == "mean" & exp) {
-      tmp.estimate <- dmat2 %>%
-        summarise_all(list(estimate = exp.mean)) %>% gather() %>%
+    
+    if (central.tdcy == "mean") {
+      TE <- dmat2 %>%
+        summarise_all(list(estimate = mean)) %>% gather() %>%
         rename(trt = key, estimate = value) %>%
         mutate(trt = sub("_estimate", "", trt))
-    }
-    else if (central.tdcy == "mean" & exp == FALSE) {
-      tmp.estimate <- dmat2 %>%
-        summarise_all(list(estimate = id.mean)) %>% gather() %>%
-        rename(trt = key, estimate = value) %>%
-        mutate(trt = sub("_estimate", "", trt))
-    }
-    ##
-    if (central.tdcy == "median" & exp) {
-      tmp.estimate <- dmat2 %>%
-        summarise_all(list(estimate = exp.median))%>% gather() %>%
-        rename(trt = key, estimate = value) %>%
-        mutate(trt = sub("_estimate", "", trt))
-    }
-    else if (central.tdcy == "median" & exp == FALSE) {
-      tmp.estimate <- dmat2 %>%
-        summarise_all(list(estimate = id.median)) %>% gather() %>%
-        rename(trt = key, estimate = value) %>%
-        mutate(trt = sub("_estimate", "", trt))
-    }
-    ##
-    if (exp) {
-      tmp.sd <- dmat2 %>%
-        summarise_all(list(sd = exp.sd)) %>% gather() %>%
-        rename(trt = key, sd = value) %>%
-        mutate(trt = sub("_sd", "", trt))
-      ##
-      null.value <- 0
     }
     else {
-      tmp.sd <- dmat2 %>%
-        summarise_all(list(sd = id.sd)) %>% gather() %>%
-        rename(trt = key, sd = value) %>%
-        mutate(trt = sub("_sd", "", trt))
-      ##
-      null.value <- 0
+      TE <- dmat2 %>%
+        summarise_all(list(estimate = median)) %>% gather() %>%
+        rename(trt = key, estimate = value) %>%
+        mutate(trt = sub("_estimate", "", trt))
     }
-
-
-    ## Create C-style formatting string from the digits parameter
+    TE <- dmat2 %>%
+      summarise_all(list(estimate =
+                           if (central.tdcy == "median")
+                             median
+                           else
+                             mean)) %>%
+      gather() %>%
+      rename(trt = key, estimate = value) %>%
+      mutate(trt = sub("_estimate", "", trt))
     ##
-    # fmt <- paste0("%.", digits, "f")
-
-    # if (paste) {
-    #   tmp1 <- left_join(tmp.estimate, tmp.lcl, by = "trt") %>%
-    #     left_join(tmp.ucl, by = "trt") %>%
-    #     mutate(result = paste(sprintf(fmt, estimate),
-    #                           formatCI(round(lcl, digits),
-    #                                    round(ucl, digits)))) %>%
-    #     select(trt, result)
-    #   colnames(tmp1)[2] <-
-    #     as.character(tmp.estimate %>% filter(estimate == null.value) %>%
-    #                    select(trt))
-    # }
-    # else {
-    #   tmp1 <- left_join(tmp.estimate, tmp.lcl, by = "trt") %>%
-    #     left_join(tmp.ucl, by = "trt")
-    #   colnames(tmp1)[2] <- central.tdcy
-    # }
-    return(list(tmp.estimate=tmp.estimate, tmp.sd=tmp.sd))
+    sdTE <- dmat2 %>%
+      summarise_all(list(sd = sd)) %>% gather() %>%
+      rename(trt = key, sd = value) %>%
+      mutate(trt = sub("_sd", "", trt))
+    ##
+    return(list(TE = TE, sdTE = sdTE))
   }
-
-
+  
+  
   ##
   ##
   ## Return two matrices for every relative treatment effect and standard deviation
   ##
   ##
 
-
-    tmp1.list <- list()
-    tmp2.list <- list()
-    ##
-    for (i in 1:ncol(dmat))
-      tmp1.list[[i]] <- colvals(dmat, b.col=i)[[1]]
-    for (i in 1:ncol(dmat))
-      tmp2.list[[i]] <- colvals(dmat, b.col=i)[[2]]
-    ##
-    widetable1 <- suppressMessages(bind_cols(tmp1.list)) %>%
-      select(-starts_with("trt")) %>%
-      t()
-    widetable2 <- suppressMessages(bind_cols(tmp2.list)) %>%
-      select(-starts_with("trt")) %>%
-      t()
-    ##
-    colnames(widetable1) <- colnames(dmat)
-    rownames(widetable1) <- colnames(dmat)
-
-    colnames(widetable2) <- colnames(dmat)
-    rownames(widetable2) <- colnames(dmat)
-    ##
-    # class(widetable) <- c("league.crossnma", class(widetable))
-    # attr(widetable, "direction") <- direction
-    # ##
-    for (i in 1:dim(widetable1)[1])
-      widetable1[i, i] <- 0#colnames(widetable1)[i]
-    ##
-    for (i in 1:dim(widetable2)[1])
-      widetable2[i, i] <- 0#colnames(widetable2)[i]
-    ##
-
-    class(widetable1) <- "matrix"
-    class(widetable2) <- "matrix"
-    # rownames(widetable1) <- rep("", nrow(widetable1))
-    # colnames(widetable1) <- rep("", ncol(widetable1))
-    #prmatrix(widetable1, quote = FALSE, right = TRUE)
-
-  invisible(NULL)
-  return(list(TE=widetable1, sdTE=widetable2))
+  n <- ncol(dmat)
+  ##
+  TE.list <- list("list", n)
+  ##
+  for (i in seq_len(n))
+    TE.list[[i]] <- colvals(dmat, b.col = i)[["TE"]]
+  ##
+  TE <- suppressMessages(bind_cols(TE.list)) %>%
+    select(-starts_with("trt")) %>% t()
+  ##
+  colnames(TE) <- colnames(dmat)
+  rownames(TE) <- colnames(dmat)
+  ##
+  TE[row(TE) == col(TE)] <- 0
+  ##
+  class(TE) <- "matrix"
+  
+  sdTE.list <- list("list", n)
+  ##
+  for (i in seq_len(n))
+    sdTE.list[[i]] <- colvals(dmat, b.col = i)[["sdTE"]]
+  ##
+  sdTE <- suppressMessages(bind_cols(sdTE.list)) %>%
+    select(-starts_with("trt")) %>% t()
+  ##
+  colnames(sdTE) <- colnames(dmat)
+  rownames(sdTE) <- colnames(dmat)
+  ##
+  sdTE[row(sdTE) == col(sdTE)] <- 0
+  ##
+  class(sdTE) <- "matrix"
+  
+  
+  return(list(TE = t(TE), sdTE = t(sdTE)))
 }
-
-
-

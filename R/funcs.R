@@ -523,3 +523,19 @@ chkchar <- function(x, length = 0, name = NULL, nchar = NULL, single = FALSE) {
              call. = FALSE)
   }
 }
+
+
+setsv <- function(x) {
+  if (is.null(x))
+    res <- "desirable"
+  else {
+    res <- setchar(x, c("good", "bad"), stop.at.error = FALSE)
+    ##
+    if (!is.null(res))
+      res <- switch(res, good = "desirable", bad = "undesirable")
+    else
+      res <- x
+  }
+  ##
+  setchar(res, c("desirable", "undesirable"))
+}
