@@ -1455,6 +1455,7 @@ crossnma.model <- function(trt,
         unlist())
     jagsdata1$np <- data1 %>%
       nrow()
+    ##
     ## Add cov1.value, cov2.value, cov3.value, needed when sucra = TRUE
     ## and cov1, cov2, cov3 are provided
     if (sucra) {
@@ -2327,9 +2328,9 @@ crossnma.model <- function(trt,
                          ## ---------- SUCRA score ----------
                          sucra = sucra,
                          small.values = small.values,
-                         cov1.value=cov1.value,
-                         cov2.value=cov2.value,
-                         cov3.value=cov3.value,
+                         cov1.value = cov1.value,
+                         cov2.value = cov2.value,
+                         cov3.value = cov3.value,
                          cov.ref = cov.ref,
                          covariate = covariates,
                          split.regcoef = split.regcoef,
