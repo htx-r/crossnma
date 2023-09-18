@@ -523,3 +523,200 @@ chkchar <- function(x, length = 0, name = NULL, nchar = NULL, single = FALSE) {
              call. = FALSE)
   }
 }
+
+
+setsv <- function(x) {
+  if (is.null(x))
+    res <- "desirable"
+  else {
+    res <- setchar(x, c("good", "bad"), stop.at.error = FALSE)
+    ##
+    if (!is.null(res))
+      res <- switch(res, good = "desirable", bad = "undesirable")
+    else
+      res <- x
+  }
+  ##
+  setchar(res, c("desirable", "undesirable"))
+}
+
+
+addmapvars <- function(x, key1, key2) {
+  ## Bind variables to function
+  trt <- study <- NULL
+  ##
+  x %<>%
+    mutate(trt.jags =
+             mapvalues(as.character(trt),
+                       from = key1$trt.ini, to = key1$trt.jags,
+                       warn_missing = FALSE) %>%
+             as.integer)
+  ##
+  x %<>%
+    mutate(study.jags =
+             mapvalues(as.character(study),
+                       from = key2$std.id, to = key2$study.jags,
+                       warn_missing = FALSE) %>%
+             as.integer)
+  ##
+  x
+}
+
+
+addbiasvars <- function(x, ipd = TRUE, txt) {
+  ## Bind variables to function
+  study.jags <- trt.jags <- bias_index <- NULL
+  ##
+  if (!is.null(x$bias)) {
+    x %<>%
+      mutate(bias_index = case_when(
+               design == "rct" & bias == "high"~ 1,
+               design == "rct" & bias == "low"~ 2,
+               design == "nrs" & bias == "high"~ 3,
+               design == "nrs" & bias == "low"~ 4,
+               bias == "unclear"~ 5
+             ))
+    ##
+    if (ipd)
+      idx <- x %>%
+        arrange(study.jags, trt.jags) %>%
+        group_by(study.jags, bias_index) %>%
+        group_keys() %>%
+        select("bias_index") %>% as.vector
+    else
+      idx <- x %>%
+        arrange(study.jags, trt.jags) %>%
+        group_by(study.jags) %>%
+        group_keys() %>%
+        select("bias_index") %>% as.vector
+    ##
+    attr(x, "bias_index") <- idx
+    ##
+    if (!is.null(x$x.bias)) {
+      if (is.numeric(x$x.bias)) {
+        ## Mean bias covariate
+        suppressMessages(
+          attr(x, "x.bias") <-
+            x %>%
+            arrange(study.jags, trt.jags) %>%
+            group_by(study.jags) %>%
+            group_map(~mean(.x$x.bias, na.rm = TRUE)) %>%
+            unlist())
+      }
+      else if (is.factor(x$x.bias) || is.character(x$x.bias)) {
+        ## Check that covariate has fewer than three levels and
+        ## convert strings and factors to binary covariates
+        if (length(unique(x$x.bias)) > 2)
+          stop(txt, call. = FALSE)
+        ##
+        if (length(unique(x$x.bias)) == 1)
+            stop("Covariate should have more than one unique value.")
+        ##
+        if (is.character(x$x.bias))
+          x$x.bias <- as.factor(x$x.bias)
+        ##
+        x$x.bias <- as.numeric(x$x.bias != levels(x$x.bias)[1])
+        ##
+        suppressMessages(
+          attr(x, "x.bias") <-
+            x %>%
+            arrange(study.jags, trt.jags) %>%
+            group_by(study.jags) %>%
+            group_map(~mean(.x$x.bias, na.rm = TRUE)) %>%
+            unlist())
+      }
+      else
+        stop("Invalid datatype for bias covariate.")
+    }
+  }
+  ##
+  x <- as.data.frame(x)
+  x
+}
+
+
+addmeancov <- function(x, cov, ref, ipd = TRUE, txt) {
+  ## Bind variables to function
+  study.jags <- trt.jags <- mytempvar <- mytempvar.f <- NULL
+  ##
+  if (!isCol(x, cov))
+    return(x)
+  else if (is.numeric(x[[cov]])) {
+    x$mytempvar <- x[[cov]]
+    ## Mean covariate value
+    if (ipd)
+      suppressMessages(
+        cov.mean <- x %>%
+          group_by(study.jags) %>%
+          mutate(cov.mean = mean(mytempvar, na.rm = TRUE) - ref) %>%
+          select(cov.mean) %>%
+          pull(cov.mean))
+    else
+      suppressMessages(
+        cov.mean <- x %>%
+          arrange(study.jags, trt.jags) %>%
+          group_by(study.jags) %>%
+          summarize(cov.mean = mean(mytempvar, na.rm = TRUE) - ref) %>%
+          pull(cov.mean))
+    ## Center covariate and its mean
+    if (ipd)
+      x$mytempvar <- x$mytempvar - ref
+    ##
+    attr(x, "cov.mean") <- cov.mean
+    ##
+    return(as.data.frame(x))
+  }
+  else if (is.factor(x[[cov]]) || is.character(x[[cov]])) {
+    x$mytempvar <- x[[cov]]
+    ## Check that covariate has fewer than three levels and
+    ## convert strings and factors to binary covariates
+    if (length(unique(x$mytempvar)) > 2)      
+      stop(txt, " (argument '",
+           paste0("cov", substring(cov, 2, 2)), "')",
+           call. = FALSE)
+    ##
+    if (length(unique(x$mytempvar)) == 1)
+      stop("Covariate '",
+           paste0("cov", substring(cov, 2, 2)),
+           "' should have more than one unique value.",
+           call. = FALSE)
+    ## Represent the covariate as a factor
+    if (is.character(x$mytempvar))
+      x$mytempvar.f <- as.factor(x$mytempvar)
+    else
+      x$mytempvar.f <- x$mytempvar
+    ##
+    ## Tranfer it to numeric to be used in JAGS
+    x$mytempvar <-
+      as.numeric(x$mytempvar.f != levels(x$mytempvar.f)[1])
+    ##
+    if (ipd)
+      suppressMessages(
+        cov.mean <- x %>%
+          group_by(study.jags) %>%
+          mutate(cov.mean = mean(mytempvar, na.rm = TRUE) - ref) %>%
+          select(cov.mean) %>%
+          pull(cov.mean))
+    else
+      suppressMessages(
+        cov.mean <- x %>%
+          arrange(study.jags, trt.jags) %>%
+          group_by(study.jags) %>%
+          summarize(cov.mean = mean(mytempvar, na.rm = TRUE) - ref) %>%
+          pull(cov.mean))
+    ##
+    attr(x, "cov.mean") <- cov.mean
+    ##
+    attr(x, "cov.labels") <- x %>%
+      group_by(mytempvar.f, mytempvar) %>%
+      group_keys()
+    ##
+    x$mytempvar.f <- NULL # no need for the factor version of x1
+    ##
+    return(as.data.frame(x))
+  }
+  else
+    stop("Invalid datatype for covariate '",
+         paste0("cov", substring(cov, 2, 2)), "'.",
+         call. = FALSE)
+}

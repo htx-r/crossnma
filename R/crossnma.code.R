@@ -4,6 +4,13 @@ crossnma.code <- function(ipd = TRUE,
                           max.d = NULL,
                           trt.effect = "random",
                           prior.tau.trt = NULL,
+                          ## -------- SUCRA
+                          sucra = FALSE,
+                          small.values = NULL,
+                          cov1.value = NULL,
+                          cov2.value = NULL,
+                          cov3.value = NULL,
+                          cov.ref = NULL,
                           ## -------- meta-regression
                           split.regcoef = FALSE,
                           covariate = NULL,
@@ -44,6 +51,10 @@ crossnma.code <- function(ipd = TRUE,
   beta0.prior.ipd <- betab.prior <- betaw.prior.ipd <-
     beta.prior.ipd <- beta.prior.ad <- ""
   ##
+  beta.value  <- ""
+  betab.value <- ""
+  betaw.value <- ""
+  ##
   mreg.ipd <- mreg.ad <- ""
   ##
   betab.consis.ipd <- betaw.consis.ipd <- betab.consis.ad <- ""
@@ -52,14 +63,14 @@ crossnma.code <- function(ipd = TRUE,
   ##
   ref.trt.effect.ipd <- ""
   ref.trt.effect.ad <- ""
-  
-  
+
+
   ##
   ##
   ##  Priors
   ##
   ##
-  
+
   ##
   ## Trial baseline effects
   ##
@@ -74,8 +85,8 @@ crossnma.code <- function(ipd = TRUE,
       paste0("for (j in 1:(ns.ipd + ns.ad)) {",
              "\n  u[j]", dnmax,
              "\n}")
-  
-  
+
+
   ##
   ## Construct default priors following basic paramaters
   ##
@@ -98,8 +109,8 @@ crossnma.code <- function(ipd = TRUE,
   prior.pi.low.rct  <- replaceNULL(prior.pi.low.rct, "dbeta(1, 10)")
   prior.pi.high.nrs <- replaceNULL(prior.pi.high.nrs, "dbeta(30, 1)")
   prior.pi.low.nrs  <- replaceNULL(prior.pi.low.nrs, "dbeta(1, 30)")
-  
-  
+
+
   ##
   ##
   ## Meta-regression
@@ -169,6 +180,7 @@ crossnma.code <- function(ipd = TRUE,
       ##
       if (!split.regcoef) { # not splitted within and between-study covariate
         if (regb.effect == "independent" || regw.effect == "independent") {
+          for (i in seq_len(n.covs)) {
           beta.prior.ipd <-
             paste0(beta.prior.ipd,
                    paste0("\n# Independent effect for beta (within = between)",
@@ -180,6 +192,9 @@ crossnma.code <- function(ipd = TRUE,
                           "\nfor (k in 2:nt) {",
                           "\n  beta.t_", i, "[k]", dnmax,
                           "\n}"))
+          }
+          ## Needed for SUCRA
+          beta.value <- paste0("beta.t_", seq_len(n.covs), "[k]")
         }
         else if (regb.effect == "random" || regw.effect == "random") {
           for (i in seq_len(n.covs)) {
@@ -199,6 +214,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\ntau.b_", i, " ~ ", prior.tau.regw,
                             "\nprec.beta_", i, " <- pow(tau.b_", i, ", -2)"))
           }
+          ## Needed for SUCRA
+          beta.value <- paste0("b_", seq_len(n.covs))
         }
         else if (regb.effect == "common" & regw.effect == "common") {
           for (i in seq_len(n.covs)) {
@@ -213,6 +230,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\n}",
                             "\nb_", i, dnmax))
           }
+          ## Needed for SUCRA
+          beta.value <- paste0("b_", seq_len(n.covs))
         }
         else
           stop("The regb.effect and regw.effect need to both be assumed ",
@@ -221,14 +240,18 @@ crossnma.code <- function(ipd = TRUE,
       else {
         ## splitted within and between-study covariate
         if (regb.effect == "independent") {
-          betab.prior <-
-            paste0(betab.prior,
-                   paste0("\n# Random effect for betab ",
-                          "(the between-study covariate effect)",
-                          "\nbetab.t_", i, "[1] <- 0",
-                          "\nfor (k in 2:nt) {",
-                          "\n  betab.t_", i, "[k]", dnmax,
-                          "\n}"))
+          for (i in seq_len(n.covs)) {
+            betab.prior <-
+              paste0(betab.prior,
+                     paste0("\n# Random effect for betab ",
+                            "(the between-study covariate effect)",
+                            "\nbetab.t_", i, "[1] <- 0",
+                            "\nfor (k in 2:nt) {",
+                            "\n  betab.t_", i, "[k]", dnmax,
+                            "\n}"))
+          }
+          ## Needed for SUCRA
+          betab.value <- paste0("betab.t_", seq_len(n.covs), "[k]")
         }
         else if (regb.effect == "random") {
           for (i in seq_len(n.covs)) {
@@ -245,6 +268,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\ntau.bb_", i, " ~ ", prior.tau.regb,
                             "\nprec.betab_", i, " <- pow(tau.bb_", i, ", -2)"))
           }
+          ## Needed for SUCRA
+          betab.value <- paste0("bb_", seq_len(n.covs))
         }
         else if (regb.effect == "common") {
           for (i in seq_len(n.covs)) {
@@ -258,6 +283,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\n}",
                             "\nbb_", i, dnmax))
           }
+          ## Needed for SUCRA
+          betab.value <- paste0("bb_",seq_len(n.covs))
         }
         else
           stop("The between-study covariate effect need to be assumed ",
@@ -266,6 +293,7 @@ crossnma.code <- function(ipd = TRUE,
         ## Within-study covariate
         ##
         if (regw.effect == "independent") {
+          for (i in seq_len(n.covs)) {
           betaw.prior.ipd <-
             paste0(betaw.prior.ipd,
                    paste0("\n# Random effect for betab ",
@@ -274,6 +302,9 @@ crossnma.code <- function(ipd = TRUE,
                           "\nfor (k in 2:nt) {",
                           "\n  betaw.t_", i, "[k]", dnmax,
                           "\n}"))
+          }
+          ##
+          betaw.value <- paste0("betaw.t_", seq_len(n.covs),"[k]")
         }
         else if (regw.effect == "random") {
           for (i in seq_len(n.covs)) {
@@ -290,6 +321,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\nprec.betaw_", i, " <- pow(tau.bw_", i, ", -2)",
                             "\ntau.bw_", i, " ~ ", prior.tau.regw))
           }
+          ## Needed for SUCRA
+          betaw.value <- paste0("bw_", seq_len(n.covs))
         }
         else if (regw.effect == "common") {
           for (i in seq_len(n.covs)) {
@@ -303,14 +336,16 @@ crossnma.code <- function(ipd = TRUE,
                             "\n}",
                             "\nbw_", i, dnmax))
           }
+          ## Needed for SUCRA
+          betaw.value <- paste0("bw_", seq_len(n.covs))
         }
         else
           stop("The within-study covariate effect can be assumed ",
                "'independent', 'random' or 'common' across studies.")
       }
     }
-    
-    
+
+
     ##
     ## AD
     ##
@@ -329,6 +364,7 @@ crossnma.code <- function(ipd = TRUE,
       }
       if (!split.regcoef) { # not splitted
         if (regb.effect == "independent" && regw.effect == "independent") {
+          for (i in seq_len(n.covs)) {
           beta.prior.ad <-
             paste0(beta.prior.ad,
                    paste0("\n# Random effect for beta (within = between)",
@@ -339,6 +375,9 @@ crossnma.code <- function(ipd = TRUE,
                           "\nfor (k in 2:nt) {",
                           "\n  beta.t_", i, "[k]", dnmax,
                           "\n}"))
+          }
+          ## Needed for SUCRA
+          beta.value <- paste0("beta.t_", seq_len(n.covs), "[k]")
         }
         else if (regb.effect == "random" && regw.effect == "random") {
           for (i in seq_len(n.covs)) {
@@ -357,6 +396,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\ntau.b_", i, " ~ ", prior.tau.regb,
                             "\nprec.beta_", i, " <- pow(tau.b_", i, ", -2)"))
           }
+          ## Needed for SUCRA
+          beta.value <- paste0("b_", seq_len(n.covs))
         }
         else if (regb.effect == "common" & regw.effect == "common") {
           for (i in seq_len(n.covs)) {
@@ -369,6 +410,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\n}",
                             "\nb_", i, dnmax))
           }
+          ## Needed for SUCRA
+          beta.value <- paste0("b_", seq_len(n.covs))
         }
         else
           stop("The regb.effect and regw.effect need to be assumed both ",
@@ -377,13 +420,18 @@ crossnma.code <- function(ipd = TRUE,
       else { # splitted
         betab.prior <- ""
         if (regb.effect == "independent") {
-          betab.prior <- paste0(betab.prior,
-                                paste0("\n# Random effect for betab ",
-                                       "(the between-study covariate effect)",
-                                       "\nbetab.t_", i, "[1] <- 0",
-                                       "\nfor (k in 2:nt) {",
-                                       "\n  betab.t_", i, "[k]", dnmax,
-                                       "\n}"))
+          for (i in seq_len(n.covs)) {
+            betab.prior <- paste0(betab.prior,
+                                  paste0(
+                                    "\n# Random effect for betab ",
+                                    "(the between-study covariate effect)",
+                                    "\nbetab.t_", i, "[1] <- 0",
+                                    "\nfor (k in 2:nt) {",
+                                    "\n  betab.t_", i, "[k]", dnmax,
+                                    "\n}"))
+          }
+          ## Needed for SUCRA
+          betab.value <- paste0("betab.t_", seq_len(n.covs), "[k]")
         }
         else if (regb.effect == "random") {
           for (i in seq_len(n.covs)) {
@@ -400,6 +448,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\ntau.bb_", i, " ~ ", prior.tau.regb,
                             "\nprec.betab_", i, " <- pow(tau.bb_", i, ", -2)"))
           }
+          ## Needed for SUCRA
+          betab.value <- paste0("bb.t_", seq_len(n.covs))
         }
         else if (regb.effect == "common") {
           for (i in seq_len(n.covs)) {
@@ -413,6 +463,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\n}",
                             "\nbb_", i, dnmax))
           }
+          ## Needed for SUCRA
+          betab.value <- paste0("bb.t_", seq_len(n.covs))
         }
         else
           stop("The between-study covariate effect need to be assumed ",
@@ -429,8 +481,8 @@ crossnma.code <- function(ipd = TRUE,
   }
   else
     beta.prior <- ""
-  
-  
+
+
   ##
   ## Treatment effect is zero for reference treatment
   ##
@@ -456,8 +508,8 @@ crossnma.code <- function(ipd = TRUE,
       }
     }
   }
-  
-  
+
+
   ##
   ##
   ## Relative treatment effects
@@ -468,8 +520,8 @@ crossnma.code <- function(ipd = TRUE,
     q.prior <- ""
   else
     q.prior <- paste0("q ~ dbeta(", v, ", 1)")
-  
-  
+
+
   if (trt.effect == "random") {
     if (!is.null(v)) {
       theta.effect.ipd <-
@@ -541,8 +593,8 @@ crossnma.code <- function(ipd = TRUE,
   else
     stop("Please indicate the treatment effect model as either ",
          "'random' or 'common' ")
-  
-  
+
+
   ##
   ##
   ## Adjust for NRS
@@ -833,8 +885,8 @@ crossnma.code <- function(ipd = TRUE,
           stop("Please indicate the model of treatment effect as either ",
                "'random' or 'common'.")
         }
-        
-        
+
+
         if (!is.null(v)) { # with v
           gamma.effect <-
             paste0("\n# Common effect for gamma (bias effect)\n",
@@ -1002,8 +1054,8 @@ crossnma.code <- function(ipd = TRUE,
         else
           stop("Please indicate the model of treatment effect as ",
                "either 'random' or 'common'.")
-        
-        
+
+
         if (!is.null(v)) { # with v
           gamma.effect <-
             paste0("\n# Common effect for gamma (bias effect)",
@@ -1072,7 +1124,7 @@ crossnma.code <- function(ipd = TRUE,
             warning("Bias effect is assumed common across studies")
           }
         }
-        ##        
+        ##
         adjust.prior <-
           paste0(gamma.effect,
                  "\n# Bias adjustment",
@@ -1091,8 +1143,8 @@ crossnma.code <- function(ipd = TRUE,
               "design differences.")
     }
   }
-  
-  
+
+
   ##
   ## Set up the likelihood and the link
   ##
@@ -1169,19 +1221,19 @@ crossnma.code <- function(ipd = TRUE,
       paste0("\n    delta.ad[j, t.ad[j, k]] <- u[j + ns.ipd] + ",
              "(theta[j + ns.ipd, t.ad[j, k]])")
   }
-  
-  
+
+
   ##
   ##
   ## Combine the code
   ##
   ##
-  
-  
+
+
   ##
   ## IPD part
   ##
-  
+
   ipd.code <- sprintf("
 
 #
@@ -1213,8 +1265,8 @@ ref.trt.effect.ipd, #%s6
 theta.effect.ipd,   #%s7
 betab.consis.ipd,   #%s8
 betaw.consis.ipd)   #%s9
-  
-  
+
+
   ##
   ## AD part
   ##
@@ -1278,13 +1330,384 @@ q.prior)
   
   
   ##
+  ## SUCRA part
+  ##
+  
+  ## The most effective treatment depends on the direction of outcome,
+  ## i.e., whether small values are desirable or undesirable
+  ##
+  if (sucra) {
+    if (is.null(small.values))
+      stop("Argument 'small.values' must be provided if sucra = TRUE.")
+    ##
+    small.values <- setsv(small.values)
+    ##
+    if (small.values == "desirable")
+      most.eff.code <- "nt + 1 - equals(order[k], 1)"
+    else
+      most.eff.code <- "equals(order[k], 1)"
+  }
+  else
+    most.eff.code <- ""
+  
+  
+  ##
+  ## For SUCRA and in the case of network meta-regression
+  ##
+  dmat <- "d[k]"
+  ##
+  if (!is.null(covariate)) {
+    ##
+    ## (a) If IPD is available
+    ##
+    if (ipd) {
+      bwmat.cov2 <- bwmat.cov3 <- 0
+      bbmat.cov2 <- bbmat.cov3 <- 0
+      bmat.cov2 <- bmat.cov3 <- 0
+      ##
+      nc <- length(covariate)      
+      ##
+      if (split.regcoef) {
+        ## betaw
+        if (regw.effect == "independent") {
+          bwmat.cov1 <- paste0(
+            "betaw.t_1[k] * ",
+            if (is.numeric(cov1.value))
+              "(cov1.value - cov.ref[1])"
+            else
+              "cov1.value"
+          )
+          ##
+          if (nc == 2) {
+            bwmat.cov2 <-
+              paste0(
+                "betaw.t_2[k] * ",
+                if (is.numeric(cov2.value))
+                  "(cov2.value - cov.ref[2])"
+                else
+                  "cov2.value"
+              )
+          }
+          ##
+          if (nc == 3) {
+            bwmat.cov3 <-
+              paste0(
+                "betaw.t_3[k] * ",
+                if (is.numeric(cov3.value))
+                  "(cov3.value - cov.ref[3])"
+                else
+                  "cov3.value"
+              )
+          }
+          ##
+          dmat <-
+            mapply(paste, dmat, bwmat.cov1, bwmat.cov2, bwmat.cov3, sep = "+")
+        }
+        else {
+          bwmat.cov1 <-
+            paste0(
+              "bw_1 * ",
+              if (is.numeric(cov1.value))
+                "(cov1.value - cov.ref[1])"
+              else
+                "cov1.value"
+            )
+          ##
+          if (nc == 2) {
+            bwmat.cov2 <-
+              paste0(
+                "bw_2 * ",
+                if (is.numeric(cov2.value))
+                  "(cov2.value - cov.ref[2])"
+                else
+                  "cov2.value"
+              )
+          }
+          ##
+          if (nc == 3) {
+            bwmat.cov3 <-
+              paste0(
+                "bw_3 * ",
+                if (is.numeric(cov3.value))
+                  "(cov3.value - cov.ref[3])"
+                else
+                  "cov3.value"
+              )
+          }
+          ##
+          dmat <-
+            mapply(paste, dmat, bwmat.cov1, bwmat.cov2, bwmat.cov3, sep = "+")
+        }
+        ## betab
+        if (regb.effect == "independent") {
+          bbmat.cov1 <-
+            paste0(
+              "betab.t_1[k] * ",
+              if (is.numeric(cov1.value))
+                "(stds.mean1 - cov.ref[1])"
+              else
+                "stds.mean1"
+            )
+          ##
+          if (nc == 2) {
+            bbmat.cov2 <-
+              paste0(
+                "betab.t_2[k] * ",
+                if (is.numeric(cov2.value))
+                  "(stds.mean2 - cov.ref[2])"
+                else
+                  "stds.mean2"
+              )
+          }
+          if (nc == 3) {
+            bbmat.cov3 <-
+              paste0(
+                "betab.t_3[k] * ",
+                if (is.numeric(cov3.value))
+                  "(stds.mean3 - cov.ref[3])"
+                else
+                  "stds.mean3"
+              )
+          }
+          ##
+          dmat <-
+            mapply(paste, dmat, bbmat.cov1, bbmat.cov2, bbmat.cov3, sep = "+")
+        }
+        else {
+          bbmat.cov1 <-
+            paste0(
+              "bb_1 * ",
+              if (is.numeric(cov1.value))
+                "(stds.mean1 - cov.ref[1])"
+              else
+                "stds.mean1"
+            )
+          ##
+          if (nc == 2) {
+            bbmat.cov2 <-
+              paste0(
+                "bb_2 * ",
+                if (is.numeric(cov2.value))
+                  "(stds.mean2 - cov.ref[2])"
+                else
+                  "stds.mean2"
+              )
+          }
+          ##
+          if (nc == 3) {
+            bbmat.cov3 <-
+              paste0(
+                "bb_3 * ",
+                if (is.numeric(cov3.value))
+                  "(stds.mean3 - cov.ref[3])"
+                else
+                  "stds.mean3"
+              )
+          }
+          ##
+          dmat <-
+            mapply(paste, dmat, bbmat.cov1, bbmat.cov2, bbmat.cov3, sep = "+")
+        }
+      }
+      else {
+        if (regb.effect == "independent" &&
+            regw.effect == "independent") {
+          bmat.cov1 <-
+            paste0(
+              "beta.t_1[k] * ",
+              if (is.numeric(cov1.value))
+                "(cov1.value - cov.ref[1])"
+              else
+                "cov1.value"
+            )
+          ##
+          if (nc == 2) {
+            bmat.cov2 <-
+              paste0(
+                "beta.t_2[k] * ",
+                if (is.numeric(cov2.value))
+                  "(cov2.value - cov.ref[2])"
+                else
+                  "cov2.value"
+              )
+          }
+          ##
+          if (nc == 3) {
+            bmat.cov3 <-
+              paste0(
+                "beta.t_3[k] * ",
+                if (is.numeric(cov3.value))
+                  "(cov3.value - cov.ref[3])"
+                else
+                  "cov3.value"
+              )
+          }
+          
+          ##
+          dmat <-
+            mapply(paste, dmat, bmat.cov1, bmat.cov2, bmat.cov3, sep = "+")
+        }
+        else {
+          bmat.cov1 <- paste0(
+            "b_1 * ",
+            if (is.numeric(cov1.value))
+              "(cov1.value - cov.ref[1])"
+            else
+              "cov1.value"
+          )
+          ##
+          if (nc == 2) {
+            bmat.cov2 <-
+              paste0(
+                "b_2 * ",
+                if (is.numeric(cov2.value))
+                  "(cov2.value - cov.ref[2])"
+                else
+                  "cov2.value"
+              )
+          }
+          ##
+          if (nc == 3) {
+            bmat.cov3 <-
+              paste0(
+                "b_3 * ",
+                if (is.numeric(cov3.value))
+                  "(cov3.value - cov.ref[3])"
+                else
+                  "cov3.value"
+              )
+          }
+          ##
+          dmat <-
+            mapply(paste, dmat, bmat.cov1, bmat.cov2, bmat.cov3, sep = "+")
+
+        }
+      }
+    }
+    else {
+      ##
+      ## (b) if only AD is available (i.e., only betab)
+      ##
+      bbmat.cov2 <- bbmat.cov3 <- 0
+      ##
+      if (regb.effect == "independent") {
+        bbmat.cov1 <-
+          paste0(
+            "beta.t_1[k] * ",
+            if (!is.na(cov.ref[1]))
+              "(stds.mean1 - cov.ref[1])"
+            else
+              "stds.mean1"
+          )
+        ##
+        if (nc == 2) {
+          bbmat.cov2 <-
+            paste0(
+              "beta.t_2[k] * ",
+              if (!is.na(cov.ref[2]))
+                "(stds.mean2 - cov.ref[2])"
+              else
+                "stds.mean2"
+            )
+        }
+        ##
+        if (nc == 3) {
+          bbmat.cov3 <-
+            paste0(
+              "beta.t_3[k] * ",
+              if (!is.na(cov.ref[3]))
+                "(stds.mean3 - cov.ref[3])"
+              else
+                "stds.mean3"
+            )
+        }
+        ##
+        dmat <-
+          mapply(paste, dmat, bbmat.cov1, bbmat.cov2, bbmat.cov3, sep = "+")
+      }
+      else {
+        bbmat.cov1 <-
+          paste0(
+            "b_1 * ",
+            if (!is.na(cov.ref[1]))
+              "(stds.mean1 - cov.ref[1])"
+            else
+              "stds.mean1"
+          )
+        ##
+        if (nc == 2) {
+          bbmat.cov2 <-
+            paste0(
+              "b_2 * ",
+              if (!is.na(cov.ref[2]))
+                "(stds.mean2 - cov.ref[2])"
+              else
+                "stds.mean2"
+            )
+        }
+        ##
+        if (nc == 3) {
+          bbmat.cov3 <-
+            paste0(
+              "b_3 * ",
+              if (!is.na(cov.ref[3]))
+                "(stds.mean3 - cov.ref[3])"
+              else
+                "stds.mean3"
+            )
+          
+        }
+        ##
+        dmat <-
+          mapply(paste, dmat, bbmat.cov1, bbmat.cov2, bbmat.cov3, sep = "+")
+      }
+    }
+  }
+  
+  
+  sucra.code <- sprintf("
+
+
+#
+# (4) Ranking measures
+#
+
+# Treatment hierarchy
+for (k in 1:nt) {
+  d.adjust[k] <- %s
+}
+order[1:nt] <- rank(d.adjust[1:nt])
+for(k in 1:nt) {
+  # argument 'small.values'
+  most.effective[k] <- %s
+  for (j in 1:nt) {
+    effectiveness[k, j] <- equals(order[k], j)
+  }
+}
+for (k in 1:nt) {
+  for(j in 1:nt) {
+    cumeffectiveness[k, j] <- sum(effectiveness[k, 1:j])
+  }
+}
+
+# SUCRAS
+for (k in 1:nt) {
+  SUCRA[k]<- sum(cumeffectiveness[k,1:(nt-1)])/(nt-1)
+}",
+dmat,
+most.eff.code)
+
+
+  ##
   ## Everything
   ##
   
   ad.code <- if (ad) ad.code else ""
   ipd.code <- if (ipd) ipd.code else ""
+  sucra.code <- if(sucra) sucra.code else ""
+  ##
   code.str <-
-    paste0("model {", ipd.code, ad.code, prior.code, "\n\n}\n")
+    paste0("model {", ipd.code, ad.code, prior.code, sucra.code, "\n\n}\n")
   ##
   code.str
 }

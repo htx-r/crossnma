@@ -1,3 +1,28 @@
+## crossnma, version 1.2.0 (2023-09-18)
+
+### Major changes
+
+* Surface under the cumulative ranking (SUCRA) can be calculated
+
+* Studies with zero or all events excluded from network meta-analysis
+  with binary outcome
+
+* More flexible network graphs
+
+* Rename argument names containing *n.thin* to *thin* to match
+  argument name in R packages **rjags** and **coda**
+
+### User-visible changes
+
+* crossnma.model():
+  - new arguments 'sucra', 'small.values', 'cov1.value', 'cov2.value'
+    and 'cov3.value' for SUCRAs
+  - argument 'run.nrs.n.thin' renamed to 'run.nrs.thin'
+
+* crossnma():
+  - argument 'n.thin' renamed to 'thin'
+
+
 ## crossnma, version 1.1.0 (2023-05-08)
 
 ### Major changes

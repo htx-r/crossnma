@@ -25,6 +25,11 @@ crossnma.model(
   reference = NULL,
   trt.effect = "random",
   level.ma = gs("level.ma"),
+  sucra = FALSE,
+  small.values = NULL,
+  cov1.value = NULL,
+  cov2.value = NULL,
+  cov3.value = NULL,
   cov1.ref = NULL,
   cov2.ref = NULL,
   cov3.ref = NULL,
@@ -51,9 +56,10 @@ crossnma.model(
   run.nrs.n.adapt = 1000,
   run.nrs.n.iter = 10000,
   run.nrs.n.burnin = 4000,
-  run.nrs.n.thin = 1,
+  run.nrs.thin = 1,
   run.nrs.n.chains = 2,
-  backtransf = gs("backtransf")
+  backtransf = gs("backtransf"),
+  run.nrs.n.thin = NULL
 )
 }
 \arguments{
@@ -143,6 +149,35 @@ or "common".}
 \item{level.ma}{The level used to calculate credible intervals for
 network estimates.}
 
+\item{sucra}{Logical. If TRUE SUCRA (Surface Under the Cumulative
+Ranking) values will be calculated within JAGS.}
+
+\item{small.values}{A character string specifying whether small
+treatment effects indicate a beneficial (\code{"desirable"}) or
+harmful (\code{"undesirable"}) effect, can be abbreviated. This
+argument is required when \code{sucra} is TRUE.}
+
+\item{cov1.value}{The participant covariate value of \code{cov1}
+for which to report the results. Must be specified for network
+meta-regression, \code{sucra} is TRUE and when individual
+participant dataset is used in the analysis. For dichotomous
+covariates, a character of the level (used in the data) should be
+indicated.}
+
+\item{cov2.value}{The participant covariate value of \code{cov2}
+for which to report the results. Must be specified for network
+meta-regression, \code{sucra} is TRUE and when individual
+participant dataset is used in the analysis. For dichotomous
+covariates, a character of the level (used in the data) should be
+indicated.}
+
+\item{cov3.value}{The participant covariate value of \code{cov3}
+for which to report the results. Must be specified for network
+meta-regression, \code{sucra} is TRUE and when individual
+participant dataset is used in the analysis. For dichotomous
+covariates, a character of the level (used in the data) should be
+indicated.}
+
 \item{cov1.ref}{An optional value to center the first covariate
 which is only useful for a continuous covariate. Dichotomous
 covariates should be given NA value. The default is the overall
@@ -185,7 +220,7 @@ Options are "independent", "random" and "common". Default is
 between-study coefficients will be splitted in the analysis of
 \code{prt.data}.  When the split.regcoef = FALSE, only a single
 regression coefficient will be estimated to represent both the
-between-studies and within-studies covariate effects.  In this
+between-studies and within-studies covariate effects. In this
 case, both arguments \code{regb.effect} and \code{regw.effect}
 need to be given the same option to model the single regression
 effect.}
@@ -296,10 +331,9 @@ burn-in to run MCMC chains for NRS network.  Default is
 4000. This argument can be provided when the NRS used as a prior
 (method.bias = "prior").}
 
-\item{run.nrs.n.thin}{Optional numeric specifies the number of
-thinning to run MCMC chains for NRS network.  Default is 1. This
-argument can be provided when the NRS used as a prior
-(method.bias = "prior").}
+\item{run.nrs.thin}{Optional numeric specifying thinning to run
+MCMC chains for NRS network. Default is 1. This argument can be
+provided when the NRS used as a prior (method.bias = "prior").}
 
 \item{run.nrs.n.chains}{Optional numeric specifies the number of
 chains to run MCMC chains for NRS network.  Default is 2. This
@@ -310,6 +344,9 @@ argument can be provided when the NRS used as a prior
 back transformed in printouts. If \code{backtransf = TRUE},
 results for \code{sm = "OR"} are presented as odds ratios rather
 than log odds ratios, for example.}
+
+\item{run.nrs.n.thin}{Deprecated argument (replaced by
+\code{run.nrs.thin}).}
 }
 \value{
 An object of class \code{crossnma.model} containing information on

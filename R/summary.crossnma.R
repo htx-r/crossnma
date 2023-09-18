@@ -94,11 +94,12 @@ summary.crossnma <- function(object,
   ## add quantiles
   mat <- cbind(mat, sum.fit$quantiles)
   ##
-  if (backtransf)
-    mat[row.names(mat)[!startsWith(rownames(mat), "tau")],
-        colnames(mat) != "SD"] <-
-      exp(mat[row.names(mat)[!startsWith(rownames(mat), "tau")],
-              colnames(mat) != "SD"])
+  if (backtransf) {
+    sel <- !(startsWith(rownames(mat), "tau") |
+             startsWith(rownames(mat), "SUCRA"))
+    mat[row.names(mat)[sel], colnames(mat) != "SD"] <-
+      exp(mat[row.names(mat)[sel], colnames(mat) != "SD"])
+  }
   
   ## Add Rhat
   ##
@@ -117,13 +118,21 @@ summary.crossnma <- function(object,
   ##
   mat[row.names(mat) %in% paste("d", ref, sep = "."), ] <- NA
 
+  ## Attach treatment names to SUCRA values (SUCRA's)
+  ##
+  row.names(mat)[startsWith(rownames(mat), "SUCRA")] <-
+    paste("SUCRA", as.character(object$model$trt.key$trt.ini), sep = ".")
+
   ## Reorder entries in results matrix
   ##
   sel.d <- startsWith(rownames(mat), "d.")
-  sel.tau <- rownames(mat) == "tau"
+  sel.tau <- startsWith(rownames(mat), "tau")
+  sel.sucra <- startsWith(rownames(mat), "SUCRA")
+  ##
   mat <- rbind(mat[sel.d, , drop = FALSE],
+               mat[!(sel.d | sel.tau | sel.sucra), , drop = FALSE],
                mat[sel.tau, , drop = FALSE],
-               mat[!(sel.d | sel.tau), , drop = FALSE])
+               mat[sel.sucra, , drop = FALSE])
   
   class(mat) <- c("summary.crossnma", class(mat))
   attr(mat, "backtransf") <- backtransf
