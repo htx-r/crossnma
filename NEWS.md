@@ -1,18 +1,16 @@
-## crossnma, version 1.2.0 (2023-mm-dd)
+## crossnma, version 1.2.0 (2023-09-18)
 
 ### Major changes
 
 * Surface under the cumulative ranking (SUCRA) can be calculated
 
-* More flexible network graphs
-
 * Studies with zero or all events excluded from network meta-analysis
   with binary outcome
 
+* More flexible network graphs
+
 * Rename argument names containing *n.thin* to *thin* to match
   argument name in R packages **rjags** and **coda**
-
-* More flexible network graphs
 
 ### User-visible changes
 

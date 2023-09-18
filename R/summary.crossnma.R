@@ -126,12 +126,12 @@ summary.crossnma <- function(object,
   ## Reorder entries in results matrix
   ##
   sel.d <- startsWith(rownames(mat), "d.")
-  sel.tau <- rownames(mat) == "tau"
-  sel.sucra <- rownames(mat) == "SUCRA"
+  sel.tau <- startsWith(rownames(mat), "tau")
+  sel.sucra <- startsWith(rownames(mat), "SUCRA")
   ##
   mat <- rbind(mat[sel.d, , drop = FALSE],
-               mat[sel.tau, , drop = FALSE],
                mat[!(sel.d | sel.tau | sel.sucra), , drop = FALSE],
+               mat[sel.tau, , drop = FALSE],
                mat[sel.sucra, , drop = FALSE])
   
   class(mat) <- c("summary.crossnma", class(mat))
