@@ -1,9 +1,10 @@
 # crossnma: Cross-Design and Cross-Format Synthesis using Network Meta-Analysis and Network Meta-Regression
 Official Git repository of R package **crossnma**
 
-[![CRAN Version](http://www.r-pkg.org/badges/version/crossnma)](https://cran.r-project.org/package=crossnma)
-[![Monthly Downloads](http://cranlogs.r-pkg.org/badges/crossnma)](http://cranlogs.r-pkg.org/badges/crossnma)
-[![Total Downloads](http://cranlogs.r-pkg.org/badges/grand-total/crossnma)](http://cranlogs.r-pkg.org/badges/grand-total/crossnma)
+[![License: GPL (>=2)](https://img.shields.io/badge/license-GPL-blue)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+[![CRAN Version](https://www.r-pkg.org/badges/version/crossnma)](https://cran.r-project.org/package=crossnma)
+[![Monthly Downloads](https://cranlogs.r-pkg.org/badges/crossnma)](https://cranlogs.r-pkg.org/badges/crossnma)
+[![Total Downloads](https://cranlogs.r-pkg.org/badges/grand-total/crossnma)](https://cranlogs.r-pkg.org/badges/grand-total/crossnma)
 
 
 ## Authors
@@ -25,7 +26,7 @@ through JAGS software.
 
 ## Installation
 
-### Current stable [![CRAN Version](http://www.r-pkg.org/badges/version/crossnma)](https://cran.r-project.org/package=crossnma) release:
+### Current stable [![CRAN Version](https://www.r-pkg.org/badges/version/crossnma)](https://cran.r-project.org/package=crossnma) release:
 ```r
 install.packages("crossnma")
 ```
