@@ -2379,7 +2379,7 @@ crossnma.model <- function(trt,
               level.ma = level.ma,
               quantiles =
                 c((1 - level.ma) / 2, 0.5, 1 - (1 - level.ma) / 2),
-              backtransf = backtransf,
+              backtransf = if (sm %in% c("MD", "SMD")) FALSE else backtransf,
               ##
               covariate = covariates,
               cov.ref = cov.ref,

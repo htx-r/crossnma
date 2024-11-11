@@ -1,8 +1,8 @@
 ##
 ## (1) Make R packages available
 ##
-library(devtools)
-library(roxygen2)
+library("devtools")
+library("roxygen2")
 
 
 ##

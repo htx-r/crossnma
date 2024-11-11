@@ -8,7 +8,7 @@ max_TE <- function(data, sm) {
   if (sm %in% c("OR", "RR"))
     deltas <- pairwise(treat = data$trt, event = data$outcome, n = data$n,
                        studlab = data$study, sm = sm,
-                       incr = 0.5, addincr = TRUE, RR.Cochrane = TRUE)$TE
+                       incr = 0.5, method.incr = "all", RR.Cochrane = TRUE)$TE
   ##
   else if (sm %in% c("MD", "SMD")) {
     deltas <- pairwise(treat = data$trt, mean = data$outcome, n = data$n,
@@ -21,7 +21,7 @@ max_TE <- function(data, sm) {
     s.pooled <- rep(1, length(deltas))
     deltas <- deltas / s.pooled
   }
-  
+
   ## Return maximum delta for priors
   max(abs(deltas))
 }

@@ -43,8 +43,6 @@
 #'}
 #' @name crossnma-package
 #'
-#' @docType package
-#'
 #' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch},
 #' Guido Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de},
 #' Georgia Salanti \email{georgia.salanti@@ispm.unibe.ch}
@@ -107,5 +105,6 @@
 #' @importFrom coda as.mcmc.list effectiveSize nchain niter nvar
 #'   traceplot varnames
 
+"_PACKAGE"
 
 NULL

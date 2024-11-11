@@ -81,6 +81,13 @@ different types and quality.
 \emph{Biometrical Journal},
 \bold{63}, 406-22
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/htx-r/crossnma}
+}
+
+}
 \author{
 Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch},
 Guido Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de},
