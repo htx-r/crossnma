@@ -94,9 +94,8 @@ netgraph.crossnma <- function(x,
   if (!missing(labels)) {
     ##
     labels <- catch("labels", mc, x, sfsp)
-    print(labels)
-    labels <- catch("labels", mc, net, sfsp)
-    print(labels)
+    if (is.null(labels))
+      labels <- catch("labels", mc, net, sfsp)
     ##
     if (is.null(labels))
       stop("Argument 'labels' must be not NULL.")

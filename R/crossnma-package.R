@@ -43,8 +43,6 @@
 #'}
 #' @name crossnma-package
 #'
-#' @docType package
-#'
 #' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch},
 #' Guido Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de},
 #' Georgia Salanti \email{georgia.salanti@@ispm.unibe.ch}
@@ -100,12 +98,12 @@
 #' @importFrom rlang quo
 #' @importFrom stats start end qf sd var update window
 #' @importFrom utils packageDescription combn
-#' @importFrom meta gs
-#' @importFrom netmeta pairwise netmeta netgraph heatplot
-#'   netconnection
+#' @importFrom meta gs pairwise
+#' @importFrom netmeta netmeta netgraph heatplot netconnection
 #' @importFrom rjags jags.model coda.samples
 #' @importFrom coda as.mcmc.list effectiveSize nchain niter nvar
 #'   traceplot varnames
 
+"_PACKAGE"
 
 NULL

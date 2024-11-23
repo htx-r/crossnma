@@ -1276,6 +1276,373 @@ beta.prior,
 adjust.prior,
 q.prior)
 
+  ##
+  ## SUCRA part
+  ##
+
+  ## The most effective treatment depends on the direction of outcome,
+  ## i.e., whether small values are desirable or undesirable
+  ##
+  if (sucra) {
+    if (is.null(small.values))
+      stop("Argument 'small.values' must be provided if sucra = TRUE.")
+    ##
+    small.values <- setsv(small.values)
+    ##
+    if (small.values == "desirable")
+      most.eff.code <- "nt + 1 - equals(order[k], 1)"
+    else
+      most.eff.code <- "equals(order[k], 1)"
+  }
+  else
+    most.eff.code <- ""
+
+
+  ##
+  ## For SUCRA and in the case of network meta-regression
+  ##
+  dmat <- "d[k]"
+  ##
+  if (!is.null(covariate)) {
+    nc <- length(covariate)
+    ##
+    ## (a) If IPD is available
+    ##
+    if (ipd) {
+      bwmat.cov2 <- bwmat.cov3 <- 0
+      bbmat.cov2 <- bbmat.cov3 <- 0
+      bmat.cov2 <- bmat.cov3 <- 0
+      ##
+      if (split.regcoef) {
+        ## betaw
+        if (regw.effect == "independent") {
+          bwmat.cov1 <- paste0(
+            "betaw.t_1[k] * ",
+            if (is.numeric(cov1.value))
+              "(cov1.value - cov.ref[1])"
+            else
+              "cov1.value"
+          )
+          ##
+          if (nc == 2) {
+            bwmat.cov2 <-
+              paste0(
+                "betaw.t_2[k] * ",
+                if (is.numeric(cov2.value))
+                  "(cov2.value - cov.ref[2])"
+                else
+                  "cov2.value"
+              )
+          }
+          ##
+          if (nc == 3) {
+            bwmat.cov3 <-
+              paste0(
+                "betaw.t_3[k] * ",
+                if (is.numeric(cov3.value))
+                  "(cov3.value - cov.ref[3])"
+                else
+                  "cov3.value"
+              )
+          }
+          ##
+          dmat <-
+            mapply(paste, dmat, bwmat.cov1, bwmat.cov2, bwmat.cov3, sep = "+")
+        }
+        else {
+          bwmat.cov1 <-
+            paste0(
+              "bw_1 * ",
+              if (is.numeric(cov1.value))
+                "(cov1.value - cov.ref[1])"
+              else
+                "cov1.value"
+            )
+          ##
+          if (nc == 2) {
+            bwmat.cov2 <-
+              paste0(
+                "bw_2 * ",
+                if (is.numeric(cov2.value))
+                  "(cov2.value - cov.ref[2])"
+                else
+                  "cov2.value"
+              )
+          }
+          ##
+          if (nc == 3) {
+            bwmat.cov3 <-
+              paste0(
+                "bw_3 * ",
+                if (is.numeric(cov3.value))
+                  "(cov3.value - cov.ref[3])"
+                else
+                  "cov3.value"
+              )
+          }
+          ##
+          dmat <-
+            mapply(paste, dmat, bwmat.cov1, bwmat.cov2, bwmat.cov3, sep = "+")
+        }
+        ## betab
+        if (regb.effect == "independent") {
+          bbmat.cov1 <-
+            paste0(
+              "betab.t_1[k] * ",
+              if (is.numeric(cov1.value))
+                "(stds.mean1 - cov.ref[1])"
+              else
+                "stds.mean1"
+            )
+          ##
+          if (nc == 2) {
+            bbmat.cov2 <-
+              paste0(
+                "betab.t_2[k] * ",
+                if (is.numeric(cov2.value))
+                  "(stds.mean2 - cov.ref[2])"
+                else
+                  "stds.mean2"
+              )
+          }
+          if (nc == 3) {
+            bbmat.cov3 <-
+              paste0(
+                "betab.t_3[k] * ",
+                if (is.numeric(cov3.value))
+                  "(stds.mean3 - cov.ref[3])"
+                else
+                  "stds.mean3"
+              )
+          }
+          ##
+          dmat <-
+            mapply(paste, dmat, bbmat.cov1, bbmat.cov2, bbmat.cov3, sep = "+")
+        }
+        else {
+          bbmat.cov1 <-
+            paste0(
+              "bb_1 * ",
+              if (is.numeric(cov1.value))
+                "(stds.mean1 - cov.ref[1])"
+              else
+                "stds.mean1"
+            )
+          ##
+          if (nc == 2) {
+            bbmat.cov2 <-
+              paste0(
+                "bb_2 * ",
+                if (is.numeric(cov2.value))
+                  "(stds.mean2 - cov.ref[2])"
+                else
+                  "stds.mean2"
+              )
+          }
+          ##
+          if (nc == 3) {
+            bbmat.cov3 <-
+              paste0(
+                "bb_3 * ",
+                if (is.numeric(cov3.value))
+                  "(stds.mean3 - cov.ref[3])"
+                else
+                  "stds.mean3"
+              )
+          }
+          ##
+          dmat <-
+            mapply(paste, dmat, bbmat.cov1, bbmat.cov2, bbmat.cov3, sep = "+")
+        }
+      }
+      else {
+        if (regb.effect == "independent" &&
+            regw.effect == "independent") {
+          bmat.cov1 <-
+            paste0(
+              "beta.t_1[k] * ",
+              if (is.numeric(cov1.value))
+                "(cov1.value - cov.ref[1])"
+              else
+                "cov1.value"
+            )
+          ##
+          if (nc == 2) {
+            bmat.cov2 <-
+              paste0(
+                "beta.t_2[k] * ",
+                if (is.numeric(cov2.value))
+                  "(cov2.value - cov.ref[2])"
+                else
+                  "cov2.value"
+              )
+          }
+          ##
+          if (nc == 3) {
+            bmat.cov3 <-
+              paste0(
+                "beta.t_3[k] * ",
+                if (is.numeric(cov3.value))
+                  "(cov3.value - cov.ref[3])"
+                else
+                  "cov3.value"
+              )
+          }
+
+          ##
+          dmat <-
+            mapply(paste, dmat, bmat.cov1, bmat.cov2, bmat.cov3, sep = "+")
+        }
+        else {
+          bmat.cov1 <- paste0(
+            "b_1 * ",
+            if (is.numeric(cov1.value))
+              "(cov1.value - cov.ref[1])"
+            else
+              "cov1.value"
+          )
+          ##
+          if (nc == 2) {
+            bmat.cov2 <-
+              paste0(
+                "b_2 * ",
+                if (is.numeric(cov2.value))
+                  "(cov2.value - cov.ref[2])"
+                else
+                  "cov2.value"
+              )
+          }
+          ##
+          if (nc == 3) {
+            bmat.cov3 <-
+              paste0(
+                "b_3 * ",
+                if (is.numeric(cov3.value))
+                  "(cov3.value - cov.ref[3])"
+                else
+                  "cov3.value"
+              )
+          }
+          ##
+          dmat <-
+            mapply(paste, dmat, bmat.cov1, bmat.cov2, bmat.cov3, sep = "+")
+
+        }
+      }
+    }
+    else {
+      ##
+      ## (b) if only AD is available (i.e., only betab)
+      ##
+      bbmat.cov2 <- bbmat.cov3 <- 0
+      ##
+      if (regb.effect == "independent") {
+        bbmat.cov1 <-
+          paste0(
+            "beta.t_1[k] * ",
+            if (!is.na(cov.ref[1]))
+              "(stds.mean1 - cov.ref[1])"
+            else
+              "stds.mean1"
+          )
+        ##
+        if (nc == 2) {
+          bbmat.cov2 <-
+            paste0(
+              "beta.t_2[k] * ",
+              if (!is.na(cov.ref[2]))
+                "(stds.mean2 - cov.ref[2])"
+              else
+                "stds.mean2"
+            )
+        }
+        ##
+        if (nc == 3) {
+          bbmat.cov3 <-
+            paste0(
+              "beta.t_3[k] * ",
+              if (!is.na(cov.ref[3]))
+                "(stds.mean3 - cov.ref[3])"
+              else
+                "stds.mean3"
+            )
+        }
+        ##
+        dmat <-
+          mapply(paste, dmat, bbmat.cov1, bbmat.cov2, bbmat.cov3, sep = "+")
+      }
+      else {
+        bbmat.cov1 <-
+          paste0(
+            "b_1 * ",
+            if (!is.na(cov.ref[1]))
+              "(stds.mean1 - cov.ref[1])"
+            else
+              "stds.mean1"
+          )
+        ##
+        if (nc == 2) {
+          bbmat.cov2 <-
+            paste0(
+              "b_2 * ",
+              if (!is.na(cov.ref[2]))
+                "(stds.mean2 - cov.ref[2])"
+              else
+                "stds.mean2"
+            )
+        }
+        ##
+        if (nc == 3) {
+          bbmat.cov3 <-
+            paste0(
+              "b_3 * ",
+              if (!is.na(cov.ref[3]))
+                "(stds.mean3 - cov.ref[3])"
+              else
+                "stds.mean3"
+            )
+
+        }
+        ##
+        dmat <-
+          mapply(paste, dmat, bbmat.cov1, bbmat.cov2, bbmat.cov3, sep = "+")
+      }
+    }
+  }
+
+
+  sucra.code <- sprintf("
+
+
+#
+# (4) Ranking measures
+#
+
+# Treatment hierarchy
+for (k in 1:nt) {
+  d.adjust[k] <- %s
+}
+order[1:nt] <- rank(d.adjust[1:nt])
+for(k in 1:nt) {
+  # argument 'small.values'
+  most.effective[k] <- %s
+  for (j in 1:nt) {
+    effectiveness[k, j] <- equals(order[k], j)
+  }
+}
+for (k in 1:nt) {
+  for(j in 1:nt) {
+    cumeffectiveness[k, j] <- sum(effectiveness[k, 1:j])
+  }
+}
+
+# SUCRAS
+for (k in 1:nt) {
+  SUCRA[k]<- sum(cumeffectiveness[k,1:(nt-1)])/(nt-1)
+}",
+dmat,
+most.eff.code)
+
 
   ##
   ## Everything
