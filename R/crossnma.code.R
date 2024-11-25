@@ -4,6 +4,13 @@ crossnma.code <- function(ipd = TRUE,
                           max.d = NULL,
                           trt.effect = "random",
                           prior.tau.trt = NULL,
+                          ## -------- SUCRA
+                          sucra = FALSE,
+                          small.values = NULL,
+                          cov1.value = NULL,
+                          cov2.value = NULL,
+                          cov3.value = NULL,
+                          cov.ref = NULL,
                           ## -------- meta-regression
                           split.regcoef = FALSE,
                           covariate = NULL,
@@ -43,6 +50,10 @@ crossnma.code <- function(ipd = TRUE,
   ##
   beta0.prior.ipd <- betab.prior <- betaw.prior.ipd <-
     beta.prior.ipd <- beta.prior.ad <- ""
+  ##
+  beta.value  <- ""
+  betab.value <- ""
+  betaw.value <- ""
   ##
   mreg.ipd <- mreg.ad <- ""
   ##
@@ -169,6 +180,7 @@ crossnma.code <- function(ipd = TRUE,
       ##
       if (!split.regcoef) { # not splitted within and between-study covariate
         if (regb.effect == "independent" || regw.effect == "independent") {
+          for (i in seq_len(n.covs)) {
           beta.prior.ipd <-
             paste0(beta.prior.ipd,
                    paste0("\n# Independent effect for beta (within = between)",
@@ -180,6 +192,9 @@ crossnma.code <- function(ipd = TRUE,
                           "\nfor (k in 2:nt) {",
                           "\n  beta.t_", i, "[k]", dnmax,
                           "\n}"))
+          }
+          ## Needed for SUCRA
+          beta.value <- paste0("beta.t_", seq_len(n.covs), "[k]")
         }
         else if (regb.effect == "random" || regw.effect == "random") {
           for (i in seq_len(n.covs)) {
@@ -199,6 +214,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\ntau.b_", i, " ~ ", prior.tau.regw,
                             "\nprec.beta_", i, " <- pow(tau.b_", i, ", -2)"))
           }
+          ## Needed for SUCRA
+          beta.value <- paste0("b_", seq_len(n.covs))
         }
         else if (regb.effect == "common" & regw.effect == "common") {
           for (i in seq_len(n.covs)) {
@@ -213,6 +230,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\n}",
                             "\nb_", i, dnmax))
           }
+          ## Needed for SUCRA
+          beta.value <- paste0("b_", seq_len(n.covs))
         }
         else
           stop("The regb.effect and regw.effect need to both be assumed ",
@@ -221,14 +240,18 @@ crossnma.code <- function(ipd = TRUE,
       else {
         ## splitted within and between-study covariate
         if (regb.effect == "independent") {
-          betab.prior <-
-            paste0(betab.prior,
-                   paste0("\n# Random effect for betab ",
-                          "(the between-study covariate effect)",
-                          "\nbetab.t_", i, "[1] <- 0",
-                          "\nfor (k in 2:nt) {",
-                          "\n  betab.t_", i, "[k]", dnmax,
-                          "\n}"))
+          for (i in seq_len(n.covs)) {
+            betab.prior <-
+              paste0(betab.prior,
+                     paste0("\n# Random effect for betab ",
+                            "(the between-study covariate effect)",
+                            "\nbetab.t_", i, "[1] <- 0",
+                            "\nfor (k in 2:nt) {",
+                            "\n  betab.t_", i, "[k]", dnmax,
+                            "\n}"))
+          }
+          ## Needed for SUCRA
+          betab.value <- paste0("betab.t_", seq_len(n.covs), "[k]")
         }
         else if (regb.effect == "random") {
           for (i in seq_len(n.covs)) {
@@ -245,6 +268,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\ntau.bb_", i, " ~ ", prior.tau.regb,
                             "\nprec.betab_", i, " <- pow(tau.bb_", i, ", -2)"))
           }
+          ## Needed for SUCRA
+          betab.value <- paste0("bb_", seq_len(n.covs))
         }
         else if (regb.effect == "common") {
           for (i in seq_len(n.covs)) {
@@ -258,6 +283,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\n}",
                             "\nbb_", i, dnmax))
           }
+          ## Needed for SUCRA
+          betab.value <- paste0("bb_",seq_len(n.covs))
         }
         else
           stop("The between-study covariate effect need to be assumed ",
@@ -266,6 +293,7 @@ crossnma.code <- function(ipd = TRUE,
         ## Within-study covariate
         ##
         if (regw.effect == "independent") {
+          for (i in seq_len(n.covs)) {
           betaw.prior.ipd <-
             paste0(betaw.prior.ipd,
                    paste0("\n# Random effect for betab ",
@@ -274,6 +302,9 @@ crossnma.code <- function(ipd = TRUE,
                           "\nfor (k in 2:nt) {",
                           "\n  betaw.t_", i, "[k]", dnmax,
                           "\n}"))
+          }
+          ##
+          betaw.value <- paste0("betaw.t_", seq_len(n.covs),"[k]")
         }
         else if (regw.effect == "random") {
           for (i in seq_len(n.covs)) {
@@ -290,6 +321,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\nprec.betaw_", i, " <- pow(tau.bw_", i, ", -2)",
                             "\ntau.bw_", i, " ~ ", prior.tau.regw))
           }
+          ## Needed for SUCRA
+          betaw.value <- paste0("bw_", seq_len(n.covs))
         }
         else if (regw.effect == "common") {
           for (i in seq_len(n.covs)) {
@@ -303,6 +336,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\n}",
                             "\nbw_", i, dnmax))
           }
+          ## Needed for SUCRA
+          betaw.value <- paste0("bw_", seq_len(n.covs))
         }
         else
           stop("The within-study covariate effect can be assumed ",
@@ -329,6 +364,7 @@ crossnma.code <- function(ipd = TRUE,
       }
       if (!split.regcoef) { # not splitted
         if (regb.effect == "independent" && regw.effect == "independent") {
+          for (i in seq_len(n.covs)) {
           beta.prior.ad <-
             paste0(beta.prior.ad,
                    paste0("\n# Random effect for beta (within = between)",
@@ -339,6 +375,9 @@ crossnma.code <- function(ipd = TRUE,
                           "\nfor (k in 2:nt) {",
                           "\n  beta.t_", i, "[k]", dnmax,
                           "\n}"))
+          }
+          ## Needed for SUCRA
+          beta.value <- paste0("beta.t_", seq_len(n.covs), "[k]")
         }
         else if (regb.effect == "random" && regw.effect == "random") {
           for (i in seq_len(n.covs)) {
@@ -357,6 +396,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\ntau.b_", i, " ~ ", prior.tau.regb,
                             "\nprec.beta_", i, " <- pow(tau.b_", i, ", -2)"))
           }
+          ## Needed for SUCRA
+          beta.value <- paste0("b_", seq_len(n.covs))
         }
         else if (regb.effect == "common" & regw.effect == "common") {
           for (i in seq_len(n.covs)) {
@@ -369,6 +410,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\n}",
                             "\nb_", i, dnmax))
           }
+          ## Needed for SUCRA
+          beta.value <- paste0("b_", seq_len(n.covs))
         }
         else
           stop("The regb.effect and regw.effect need to be assumed both ",
@@ -377,13 +420,18 @@ crossnma.code <- function(ipd = TRUE,
       else { # splitted
         betab.prior <- ""
         if (regb.effect == "independent") {
-          betab.prior <- paste0(betab.prior,
-                                paste0("\n# Random effect for betab ",
-                                       "(the between-study covariate effect)",
-                                       "\nbetab.t_", i, "[1] <- 0",
-                                       "\nfor (k in 2:nt) {",
-                                       "\n  betab.t_", i, "[k]", dnmax,
-                                       "\n}"))
+          for (i in seq_len(n.covs)) {
+            betab.prior <- paste0(betab.prior,
+                                  paste0(
+                                    "\n# Random effect for betab ",
+                                    "(the between-study covariate effect)",
+                                    "\nbetab.t_", i, "[1] <- 0",
+                                    "\nfor (k in 2:nt) {",
+                                    "\n  betab.t_", i, "[k]", dnmax,
+                                    "\n}"))
+          }
+          ## Needed for SUCRA
+          betab.value <- paste0("betab.t_", seq_len(n.covs), "[k]")
         }
         else if (regb.effect == "random") {
           for (i in seq_len(n.covs)) {
@@ -400,6 +448,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\ntau.bb_", i, " ~ ", prior.tau.regb,
                             "\nprec.betab_", i, " <- pow(tau.bb_", i, ", -2)"))
           }
+          ## Needed for SUCRA
+          betab.value <- paste0("bb.t_", seq_len(n.covs))
         }
         else if (regb.effect == "common") {
           for (i in seq_len(n.covs)) {
@@ -413,6 +463,8 @@ crossnma.code <- function(ipd = TRUE,
                             "\n}",
                             "\nbb_", i, dnmax))
           }
+          ## Needed for SUCRA
+          betab.value <- paste0("bb.t_", seq_len(n.covs))
         }
         else
           stop("The between-study covariate effect need to be assumed ",
@@ -1276,6 +1328,7 @@ beta.prior,
 adjust.prior,
 q.prior)
 
+
   ##
   ## SUCRA part
   ##
@@ -1650,8 +1703,10 @@ most.eff.code)
 
   ad.code <- if (ad) ad.code else ""
   ipd.code <- if (ipd) ipd.code else ""
+  sucra.code <- if(sucra) sucra.code else ""
+  ##
   code.str <-
-    paste0("model {", ipd.code, ad.code, prior.code, "\n\n}\n")
+    paste0("model {", ipd.code, ad.code, prior.code, sucra.code, "\n\n}\n")
   ##
   code.str
 }

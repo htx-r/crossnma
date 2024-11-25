@@ -1,7 +1,7 @@
 Package: crossnma
 Title: Cross-Design & Cross-Format Network Meta-Analysis and Regression
 Version: 1.3.0
-Date: 2024-11-18
+Date: 2024-11-25
 Depends: R (>= 3.5), meta (>= 8.0-1), netmeta (>= 2.8-0)
 Imports: rjags, coda, dplyr, plyr, rlang, magrittr, tidyr, ggplot2
 Suggests: rmarkdown, knitr
