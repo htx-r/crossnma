@@ -75,7 +75,7 @@ bug.report(package = "crossnma")
 ```
 
 The bug.report function is not supported in RStudio. Please send an
-email to Tasnim Hamza <tasnim.hamza@ispm.unibe.ch> if you use RStudio.
+email to Tasnim Hamza <hamza.a.tasnim@gmail.com> if you use RStudio.
 
 You can also report bugs on GitHub under [Issues](https://github.com/htx-r/crossnma/issues/).
 

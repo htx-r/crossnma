@@ -43,7 +43,7 @@
 #'}
 #' @name crossnma-package
 #'
-#' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch},
+#' @author Tasnim Hamza \email{hamza.a.tasnim@@gmail.com},
 #' Guido Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de},
 #' Georgia Salanti \email{georgia.salanti@@ispm.unibe.ch}
 #'
@@ -59,7 +59,7 @@
 #' network meta-regression.
 #' \emph{Research Synthesis Methods},
 #' \bold{14}, 283-300
-#' 
+#'
 #' Plummer M (2003):
 #' JAGS: A program for analysis of Bayesian graphical models using
 #' Gibbs sampling

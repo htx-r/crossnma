@@ -7,7 +7,7 @@ Imports: rjags, coda, dplyr, plyr, rlang, magrittr, tidyr, ggplot2
 Suggests: rmarkdown, knitr
 Authors@R: c(
 	person("Tasnim", "Hamza",
-	       email = "tasnim.hamza@ispm.unibe.ch", role = "aut",
+	       email = "hamza.a.tasnim@gmail.com", role = "aut",
                comment = c(ORCID = "0000-0002-4700-6990")),
 	person("Guido", "Schwarzer",
 	       email = "guido.schwarzer@uniklinik-freiburg.de",
