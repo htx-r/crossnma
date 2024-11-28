@@ -211,7 +211,10 @@
 #'   \code{"RR"}) from NRS network (0 is the default).  This argument
 #'   can be provided when the NRS used as a prior (\code{method.bias =
 #'   "prior"}).
-#' @param run.nrs.n.adapt \bold{DESCRIBE ARGUMENT}.
+#' @param run.nrs.n.adapt Optional numeric specifies the number of iterations for adaptation.
+#' This determines how many steps the algorithm takes to adjust its parameters before starting
+#' the main sampling process. Default is 1000. This argument can be provided when the NRS used as a prior
+#'   (method.bias = "prior").
 #' @param run.nrs.trt.effect Optional character indicates how to
 #'   combine treatment effects across NRS studies. Options are
 #'   "random" or "common" (default).  This argument can be provided
@@ -295,7 +298,7 @@
 #' \item{version}{Version of R package \bold{crossnma} used to create
 #'   object.}
 #'
-#' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch}, Guido
+#' @author Tasnim Hamza \email{hamza.a.tasnim@@gmail.com}, Guido
 #'   Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de}
 #'
 #' @seealso \code{\link{crossnma}}, \code{\link[R2jags]{jags.parallel}}
@@ -412,7 +415,7 @@ crossnma.model <- function(trt,
   ##
   sfsp <- sys.frame(sys.parent())
   mc <- match.call()
-  ## 
+  ##
   missing.se <- missing(se)
   ##
   if (missing(sm)) {
@@ -434,7 +437,7 @@ crossnma.model <- function(trt,
   trt.effect <- setchar(trt.effect, c("common", "random"))
   chklevel(level.ma)
   ##
-  cov1.prt <- cov2.prt <- cov3.prt <- 
+  cov1.prt <- cov2.prt <- cov3.prt <-
     cov1.std <- cov2.std <- cov3.std <- NULL
   ##
   if (!is.null(prt.data)) {
@@ -710,8 +713,8 @@ crossnma.model <- function(trt,
   }
   else
     data11 <- NULL
-  
-  
+
+
   ## Prepare AD dataset
   ##
   excl2 <- FALSE
@@ -771,8 +774,8 @@ crossnma.model <- function(trt,
                          outcome = outcome, n = n,
                          design = design,
                          stringsAsFactors = FALSE)
-    
-    
+
+
     ## ** se (standard error) needed for continuous outcome
     ##
     if (sm %in% c("MD", "SMD")) {
@@ -901,8 +904,8 @@ crossnma.model <- function(trt,
   }
   else
     data22 <- NULL
-  
-  
+
+
   ## Messages for missing values
   ##
   if (any(excl1))
@@ -914,13 +917,13 @@ crossnma.model <- function(trt,
     message("Arms with missing data in these variables: ",
             "outcome, n, bias, unfav or bias.group are ",
             "discarded from the analysis")
-  
-  
+
+
   ## jagsdata for IPD
   ##
-  
+
   ## Pull relevant fields from the data and apply naming convention
-  
+
   ## Include / exclude NRS
   ##
   if (is.null(method.bias)) {
@@ -1563,8 +1566,6 @@ crossnma.model <- function(trt,
       ##
       attr(data2, "cov.mean") <- NULL
     }
-    
-    
     ## Generate JAGS data object
     ## Create the matrix of trt index following the values of unfav
     ## column (adjust 1 & 2)
@@ -2150,7 +2151,7 @@ crossnma.model <- function(trt,
       names(jagsdata2.nrs)[names(jagsdata2.nrs) == "trt.jags"] <- "t.ad"
       if (sm %in% c("MD", "SMD"))
         names(jagsdata2.nrs)[names(jagsdata2) == "outcome"] <- "ybar"
-      
+
       ## Add number of treatments, studies, and arms to JAGS data
       ## object
       jagsdata2.nrs$ns.ad <- data2.nrs$study %>%
@@ -2379,7 +2380,7 @@ crossnma.model <- function(trt,
               level.ma = level.ma,
               quantiles =
                 c((1 - level.ma) / 2, 0.5, 1 - (1 - level.ma) / 2),
-              backtransf = backtransf,
+              backtransf = if (sm %in% c("MD", "SMD")) FALSE else backtransf,
               ##
               covariate = covariates,
               cov.ref = cov.ref,

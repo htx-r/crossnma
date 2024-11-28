@@ -116,7 +116,7 @@ crossnma.code <- function(ipd = TRUE,
   ## Meta-regression
   ##
   ##
-  
+
   if (n.covs > 0) {
     ##
     ## IPD
@@ -1303,12 +1303,12 @@ adj.ad,
 mreg.ad,
 theta.effect.ad,
 betab.consis.ad)
-  
-  
+
+
   ##
   ## Prior part
   ##
-  
+
   prior.code <- sprintf("
 
 
@@ -1327,12 +1327,12 @@ betaw.prior.ipd,
 beta.prior,
 adjust.prior,
 q.prior)
-  
-  
+
+
   ##
   ## SUCRA part
   ##
-  
+
   ## The most effective treatment depends on the direction of outcome,
   ## i.e., whether small values are desirable or undesirable
   ##
@@ -1349,14 +1349,15 @@ q.prior)
   }
   else
     most.eff.code <- ""
-  
-  
+
+
   ##
   ## For SUCRA and in the case of network meta-regression
   ##
   dmat <- "d[k]"
   ##
   if (!is.null(covariate)) {
+    nc <- length(covariate)
     ##
     ## (a) If IPD is available
     ##
@@ -1364,8 +1365,6 @@ q.prior)
       bwmat.cov2 <- bwmat.cov3 <- 0
       bbmat.cov2 <- bbmat.cov3 <- 0
       bmat.cov2 <- bmat.cov3 <- 0
-      ##
-      nc <- length(covariate)      
       ##
       if (split.regcoef) {
         ## betaw
@@ -1542,7 +1541,7 @@ q.prior)
                   "cov3.value"
               )
           }
-          
+
           ##
           dmat <-
             mapply(paste, dmat, bmat.cov1, bmat.cov2, bmat.cov3, sep = "+")
@@ -1655,7 +1654,7 @@ q.prior)
               else
                 "stds.mean3"
             )
-          
+
         }
         ##
         dmat <-
@@ -1663,8 +1662,8 @@ q.prior)
       }
     }
   }
-  
-  
+
+
   sucra.code <- sprintf("
 
 
@@ -1701,7 +1700,7 @@ most.eff.code)
   ##
   ## Everything
   ##
-  
+
   ad.code <- if (ad) ad.code else ""
   ipd.code <- if (ipd) ipd.code else ""
   sucra.code <- if(sucra) sucra.code else ""

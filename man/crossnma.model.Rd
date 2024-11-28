@@ -319,7 +319,10 @@ combine treatment effects across NRS studies. Options are
 "random" or "common" (default).  This argument can be provided
 when the NRS used as a prior (method.bias = "prior").}
 
-\item{run.nrs.n.adapt}{\bold{DESCRIBE ARGUMENT}.}
+\item{run.nrs.n.adapt}{Optional numeric specifies the number of iterations for adaptation.
+This determines how many steps the algorithm takes to adjust its parameters before starting
+the main sampling process. Default is 1000. This argument can be provided when the NRS used as a prior
+  (method.bias = "prior").}
 
 \item{run.nrs.n.iter}{Optional numeric specifies the number of
 iterations to run MCMC chains for NRS network.  Default is
@@ -444,6 +447,6 @@ plot(fit)
 \code{\link{crossnma}}, \code{\link[R2jags]{jags.parallel}}
 }
 \author{
-Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}, Guido
+Tasnim Hamza \email{hamza.a.tasnim@gmail.com}, Guido
   Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de}
 }

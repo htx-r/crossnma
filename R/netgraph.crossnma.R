@@ -18,8 +18,8 @@
 #' @param cex.points Corresponding size for points. Can be a vector
 #'   with length equal to the number of treatments.
 #' @param ... \dots Additional arguments (passed on to
-#'   \code{\link{netgraph.netmeta}})
-#' 
+#'   \code{\link[netmeta]{netgraph.netmeta}}).
+#'
 #' @return A data frame containing the following columns:
 #' \item{labels}{Treatment labels.}
 #' \item{seq}{Sequence of treatment labels.}
@@ -36,7 +36,7 @@
 #' \item{adj.z}{Adjustment for treatment label on z-axis (for 3-D
 #'   plots).}
 #'
-#' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch}
+#' @author Tasnim Hamza \email{hamza.a.tasnim@@gmail.com}
 #'
 #' @seealso \code{\link[netmeta]{netgraph.netmeta}}
 #'
@@ -81,7 +81,7 @@ netgraph.crossnma <- function(x,
                               cex.points = 1,
                               ##
                               ...) {
-  
+
   chkclass(x, "crossnma")
   ##
   pw <- crossnma.model2pairwise(x$model)
@@ -94,9 +94,8 @@ netgraph.crossnma <- function(x,
   if (!missing(labels)) {
     ##
     labels <- catch("labels", mc, x, sfsp)
-    print(labels)
-    labels <- catch("labels", mc, net, sfsp)
-    print(labels)
+    if (is.null(labels))
+      labels <- catch("labels", mc, net, sfsp)
     ##
     if (is.null(labels))
       stop("Argument 'labels' must be not NULL.")

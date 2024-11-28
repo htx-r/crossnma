@@ -2,8 +2,8 @@
 #'
 #' @description
 #' This function takes the JAGS model from an object produced by
-#' \code{\link{crossnma.model}} and runs it using \code{jags.model} in
-#' rjags package.
+#' \code{\link{crossnma.model}} and runs it using
+#' \code{\link[rjags]{jags.model}} from R package \bold{rjags}.
 #'
 #' @param x An object produced by \code{\link{crossnma.model}}.
 #' @param inits A list of lists with \code{n.chains} elements; each
@@ -30,7 +30,7 @@
 #'   back transformed in printouts. If \code{backtransf = TRUE},
 #'   results for \code{sm = "OR"} are presented as odds ratios rather
 #'   than log odds ratios, for example.
-#' @param quiet A logical passed on to \code{\link{jags.model}}.
+#' @param quiet A logical passed on to \code{\link[rjags]{jags.model}}.
 #' @param n.thin Deprecated argument (replaced by \code{thin}).
 #'
 #' @return
@@ -48,11 +48,10 @@
 #' \item{version}{Version of R package \bold{crossnma} used to create
 #'   object.}
 #'
-#' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch}, Guido
+#' @author Tasnim Hamza \email{hamza.a.tasnim@@gmail.com}, Guido
 #'   Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de}
 #'
-#' @seealso \code{\link{crossnma.model}},
-#'   \code{\link[rjags]{jags.model}}
+#' @seealso \code{\link{crossnma.model}}, \code{\link[rjags]{jags.model}}
 #'
 #' @examples
 #' \dontrun{

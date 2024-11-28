@@ -40,7 +40,7 @@
 #' A league table. Row names indicate comparator treatments.  The
 #' table will be displayed in a long or wide formatting.
 #'
-#' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch}
+#' @author Tasnim Hamza \email{hamza.a.tasnim@@gmail.com}
 #'
 #' @seealso \code{\link{crossnma}}
 #'
@@ -107,12 +107,12 @@ league.crossnma <- function(x,
   ##
   exp <- backtransf
   quant <- x$model$quantiles
-  
-  
+
+
   if (!is.null(x$model$covariate) & is.null(cov1.value))
     stop("cov1.value must be specified for network meta-regression")
-  
-  
+
+
   ## Bind variables to function
   trt <- Treatment <- Comparator <- cov.ref <- NULL
   #samples <- as.mcmc(x$jagsfit)
@@ -397,7 +397,7 @@ league.crossnma <- function(x,
         ## covariate
         stds.mean1 <- x$model$data$xm1.ad
         bbmat.cov1 <- bbmat[, 1:nt] *
-          if (!is.na(cov.ref[1]))
+          if (!is.na(x$model$cov.ref[1]))
             stds.mean1 - x$model$cov.ref[1]
           else
             stds.mean1
@@ -406,7 +406,7 @@ league.crossnma <- function(x,
           stds.mean2 <- x$model$data$xm2.ad
           bbmat.cov2 <-
             bbmat[, (nt + 1):(nt * 2)] *
-            if (!is.na(cov.ref[2]))
+            if (!is.na(x$model$cov.ref[2]))
               stds.mean2 - x$model$cov.ref[2]
             else
               stds.mean2
@@ -415,7 +415,7 @@ league.crossnma <- function(x,
         if (nc == 3) {
           stds.mean3 <- x$model$data$xm3.ad
           bbmat.cov3 <- bbmat[, (nt * 2 + 1):(nt * 3)] *
-            if (!is.na(cov.ref[3]))
+            if (!is.na(x$model$cov.ref[3]))
               stds.mean3 - x$model$cov.ref[3]
             else
               stds.mean3
@@ -430,7 +430,7 @@ league.crossnma <- function(x,
           select(starts_with("b_"))
         bbmat.cov1 <-
           sweep(cbind(bbmat[, 1]), MARGIN = 2,
-                if (!is.na(cov.ref[1]))
+                if (!is.na(x$model$cov.ref[1]))
                   stds.mean[1] - x$model$cov.ref[1]
                 else stds.mean[1],
                 '*')
@@ -440,7 +440,7 @@ league.crossnma <- function(x,
         if (nc == 2) {
           bbmat.cov2 <-
             sweep(cbind(bbmat[, 2]), MARGIN = 2,
-                  if (!is.na(cov.ref[2]))
+                  if (!is.na(x$model$cov.ref[2]))
                     stds.mean[2] - x$model$cov.ref[2]
                   else
                     stds.mean[2],
@@ -452,7 +452,7 @@ league.crossnma <- function(x,
         if (nc == 3) {
           bbmat.cov3 <-
             sweep(cbind(bbmat[, 3]), MARGIN = 2,
-                  if (!is.na(cov.ref[3]))
+                  if (!is.na(x$model$cov.ref[3]))
                     stds.mean[3] - x$model$cov.ref[3]
                   else
                     stds.mean[3],
@@ -609,8 +609,8 @@ league.crossnma <- function(x,
     }
     tmp1
   }
-  
-  
+
+
   ##
   ##
   ## Return league table
@@ -685,8 +685,8 @@ league.crossnma <- function(x,
     ##
     return(longtable)
   }
-  
-  
+
+
   invisible(NULL)
 }
 
@@ -721,6 +721,6 @@ print.league.crossnma <- function(x, ...) {
   }
   else if (attr(x, "direction") == "long")
     prmatrix(x, quote = FALSE, right = TRUE, ...)
-  
+
   invisible(NULL)
 }

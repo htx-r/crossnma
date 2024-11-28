@@ -46,6 +46,6 @@ plot(fit)
 \code{\link{crossnma}}, \code{\link[coda]{traceplot}}
 }
 \author{
-Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}
+Tasnim Hamza \email{hamza.a.tasnim@gmail.com}
 }
 \keyword{hplot}
