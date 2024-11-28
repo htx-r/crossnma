@@ -55,7 +55,7 @@ back transformed in printouts. If \code{backtransf = TRUE},
 results for \code{sm = "OR"} are presented as odds ratios rather
 than log odds ratios, for example.}
 
-\item{quiet}{A logical passed on to \code{\link{jags.model}}.}
+\item{quiet}{A logical passed on to \code{\link[rjags]{jags.model}}.}
 
 \item{n.thin}{Deprecated argument (replaced by \code{thin}).}
 }
@@ -76,8 +76,8 @@ following components:
 }
 \description{
 This function takes the JAGS model from an object produced by
-\code{\link{crossnma.model}} and runs it using \code{jags.model} in
-rjags package.
+\code{\link{crossnma.model}} and runs it using
+\code{\link[rjags]{jags.model}} from R package \bold{rjags}.
 }
 \examples{
 \dontrun{
@@ -104,10 +104,9 @@ plot(fit)
 
 }
 \seealso{
-\code{\link{crossnma.model}},
-  \code{\link[rjags]{jags.model}}
+\code{\link{crossnma.model}}, \code{\link[rjags]{jags.model}}
 }
 \author{
-Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}, Guido
+Tasnim Hamza \email{hamza.a.tasnim@gmail.com}, Guido
   Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de}
 }

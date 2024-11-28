@@ -11,8 +11,8 @@
 #'
 #' @param data An object produced by \code{\link{crossnma}}.
 #' @param ... \dots Additional arguments (passed on to
-#'   \code{\link{netconnection}})
-#' 
+#'   \code{\link[netmeta]{netconnection}}).
+#'
 #' @return
 #' An object of class \code{netconnection} with corresponding
 #' \code{print} function. The object is a list containing the
@@ -61,7 +61,7 @@
 #'@export
 
 
-netconnection.crossnma <- function(data, ...) { 
+netconnection.crossnma <- function(data, ...) {
   chkclass(data, "crossnma")
   ##
   pw <- crossnma.model2pairwise(data$model)

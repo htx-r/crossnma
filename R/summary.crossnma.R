@@ -34,7 +34,7 @@
 #'   smaller the value of n.eff the greater the uncertainty associated
 #'   with the corresponding parameter.
 #'
-#' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch}, Guido
+#' @author Tasnim Hamza \email{hamza.a.tasnim@@gmail.com}, Guido
 #'   Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de}
 #'
 #' @seealso \code{\link{print.summary.crossnma}}

@@ -52,7 +52,7 @@ fit
 \code{\link{crossnma}}
 }
 \author{
-Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}, Guido
+Tasnim Hamza \email{hamza.a.tasnim@gmail.com}, Guido
   Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de}
 }
 \keyword{print}
