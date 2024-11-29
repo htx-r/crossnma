@@ -50,7 +50,7 @@ print(summary(fit), digits = 5)
 \code{\link{summary.crossnma}}
 }
 \author{
-Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}, Guido
+Tasnim Hamza \email{hamza.a.tasnim@gmail.com}, Guido
   Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de}
 }
 \keyword{print}

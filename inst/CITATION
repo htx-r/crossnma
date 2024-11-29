@@ -1,13 +1,17 @@
-year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date, perl = TRUE)
-vers <- paste("R package version", meta$Version)
+citHeader("To cite package 'crossnma' in publications use:")
 
-bibentry(bibtype = "Manual",
-  title = "crossnma: Cross-Design and Cross-Format Synthesis using Network Meta-Analysis and Network Meta-Regression",
-  author = c(person(given = "Tasnim", family = "Hamza"),
-             person(given = "Guido", family = "Schwarzer",
-                    email = "guido.schwarzer@uniklinik-freiburg.de"),
-             person("Georgia", "Salanti")),
-  year = year,
-  note = vers,
-  url = "https://github.com/htx-r/crossnma",
+bibentry("Article",
+  title   = "crossnma: An R Package to Synthesize Cross-Design Evidence and Cross-Format Data Using Network Meta-Analysis and Network Meta-Regression",
+  author  = c("Tasnim Hamza", "Guido Schwarzer", "Georgia Salanti"),
+  journal = "BMC Medical Research Methodology",
+  year    = "2024",
+  number  = "24",
+  pages    = "169",
+  textVersion = paste("Hamza T, Schwarzer G, Salanti G (2024):",
+                      paste("crossnma: An R Package to Synthesize Cross-Design",
+                      "Evidence and Cross-Format Data Using Network",
+                      "Meta-Analysis and Network Meta-Regression."),
+                      "BMC Medical Research Methodology; 24: 169.")
 )
+
+citFooter("DOI: 10.1186/s12874-023-02130-0")

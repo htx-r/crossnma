@@ -35,7 +35,7 @@ at nodes (i.e. treatments) of the network graph.}
 with length equal to the number of treatments.}
 
 \item{...}{\dots Additional arguments (passed on to
-\code{\link{netgraph.netmeta}})}
+\code{\link[netmeta]{netgraph.netmeta}}).}
 }
 \value{
 A data frame containing the following columns:
@@ -79,6 +79,6 @@ netgraph(mod, plastic = FALSE, cex.points = 7, adj = 0.5)
 \code{\link[netmeta]{netgraph.netmeta}}
 }
 \author{
-Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}, Guido
+Tasnim Hamza \email{hamza.a.tasnim@gmail.com}, Guido
   Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de}
 }

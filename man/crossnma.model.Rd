@@ -447,6 +447,6 @@ plot(fit)
 \code{\link{crossnma}}, \code{\link[R2jags]{jags.parallel}}
 }
 \author{
-Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}, Guido
+Tasnim Hamza \email{hamza.a.tasnim@gmail.com}, Guido
   Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de}
 }

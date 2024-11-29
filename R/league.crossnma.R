@@ -40,7 +40,7 @@
 #' A league table. Row names indicate comparator treatments.  The
 #' table will be displayed in a long or wide formatting.
 #'
-#' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch}
+#' @author Tasnim Hamza \email{hamza.a.tasnim@@gmail.com}
 #'
 #' @seealso \code{\link{crossnma}}
 #'

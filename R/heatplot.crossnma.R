@@ -49,7 +49,7 @@
 #' League heat plot, where a color scale is used to represent the
 #' values of relative treatment effects.
 #'
-#' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch}
+#' @author Tasnim Hamza \email{hamza.a.tasnim@@gmail.com}
 #'
 #' @seealso \code{\link{crossnma}}
 #' 

@@ -1,3 +1,23 @@
+## crossnma, version 1.3.0 (2024-11-28)
+
+### Major changes
+
+* Preferred citation for R package **crossnma**:
+  [Hamza et al., 2024, BMC Med Res Meth](https://doi.org/10.1186/s12874-023-02130-0)
+
+### Bug fixes
+
+* crossnma.code():
+  - fix bug for network meta-regression of only aggregated data
+
+* league.crossnma():
+  - fix bug for aggregated data only
+
+### Internal changes
+
+* R function pairwise() provided by R package **meta** not **netmeta**
+
+
 ## crossnma, version 1.2.0 (2023-09-18)
 
 ### Major changes

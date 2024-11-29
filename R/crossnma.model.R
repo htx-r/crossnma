@@ -298,7 +298,7 @@
 #' \item{version}{Version of R package \bold{crossnma} used to create
 #'   object.}
 #'
-#' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch}, Guido
+#' @author Tasnim Hamza \email{hamza.a.tasnim@@gmail.com}, Guido
 #'   Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de}
 #'
 #' @seealso \code{\link{crossnma}}, \code{\link[R2jags]{jags.parallel}}

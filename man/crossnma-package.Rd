@@ -10,8 +10,8 @@ and network meta-regression}
 An R package \bold{crossnma} for performing (network) meta-analysis
 and (network) meta-regression (allows including up to 3 covariates)
 of individual participant data and aggregate data or combination of
-both. Each format can come from randomized controlled trials or
-non-randomized studies. Estimates are generated in a Bayesian
+both (Hamza et al., 2024). Each format can come from randomized controlled
+trials or non-randomized studies. Estimates are generated in a Bayesian
 framework using JAGS. The implemented models are described by Hamza
 et al. (2023).
 }
@@ -38,10 +38,11 @@ Further details:
 \itemize{
 \item To have a list of all R functions available in
   \bold{crossnma} type \code{help(package = "crossnma")}
-\item The R command \code{citation("crossnma")} shows how to cite
-  \bold{crossnma} in publications.
+\item Hamza et al. (2024) is the preferred citation in publications
+  for \bold{crossnma}. Type \code{citation("crossnma")} for a BibTeX entry of
+  this publication.
 \item To report problems and bugs send an email to
-  \email{tasnim.hamza@ispm.unibe.ch}
+  \email{hamza.a.tasnim@gmail.com}
 \item The development version of \bold{crossnma} is available on
   GitHub \url{https://github.com/htx-r/crossnma}.
 }
@@ -58,6 +59,12 @@ Synthesizing cross-design evidence and cross-format data using
 network meta-regression.
 \emph{Research Synthesis Methods},
 \bold{14}, 283-300
+
+Hamza T, Schwarzer G, Salanti G (2024):
+crossnma: An R Package to Synthesize Cross-Design Evidence and Cross-Format
+Data Using Network Meta-Analysis and Network Meta-Regression.
+\emph{BMC Medical Research Methodology},
+\bold{24}, 169.
 
 Plummer M (2003):
 JAGS: A program for analysis of Bayesian graphical models using
@@ -89,7 +96,7 @@ Useful links:
 
 }
 \author{
-Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch},
+Tasnim Hamza \email{hamza.a.tasnim@gmail.com},
 Guido Schwarzer \email{guido.schwarzer@uniklinik-freiburg.de},
 Georgia Salanti \email{georgia.salanti@ispm.unibe.ch}
 }

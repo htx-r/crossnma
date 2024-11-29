@@ -11,7 +11,7 @@ distance matrix)}
 \item{data}{An object produced by \code{\link{crossnma}}.}
 
 \item{...}{\dots Additional arguments (passed on to
-\code{\link{netconnection}})}
+\code{\link[netmeta]{netconnection}}).}
 }
 \value{
 An object of class \code{netconnection} with corresponding

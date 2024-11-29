@@ -103,5 +103,5 @@ league(fit, direction = "long") #  long format
 \code{\link{crossnma}}
 }
 \author{
-Tasnim Hamza \email{tasnim.hamza@ispm.unibe.ch}
+Tasnim Hamza \email{hamza.a.tasnim@gmail.com}
 }

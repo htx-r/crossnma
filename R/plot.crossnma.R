@@ -11,7 +11,7 @@
 #' @return
 #' No return value (plot function).
 #'
-#' @author Tasnim Hamza \email{tasnim.hamza@@ispm.unibe.ch}
+#' @author Tasnim Hamza \email{hamza.a.tasnim@@gmail.com}
 #'
 #' @seealso \code{\link{crossnma}}, \code{\link[coda]{traceplot}}
 #'
